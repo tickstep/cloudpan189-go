@@ -1,0 +1,35 @@
+# Binaries for programs and plugins
+*.exe
+*.dll
+*.so
+*.dylib
+cloudpan189-go
+cmd/AndroidNDKBuild/AndroidNDKBuild
+
+# Test binary, build with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+out/
+*.dl
+
+# Project-local glide cache, RE: https://github.com/Masterminds/glide/issues/736
+.glide/
+
+# Others
+.DS_Store
+*.proc
+*.txt
+*.log
+*.gz
+captcha.png
+pcs_config.json
+test/
+download/
+*-downloading
+
+# GoLand
+.idea/
+
+demos/
