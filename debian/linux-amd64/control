@@ -1,0 +1,9 @@
+Package: cloudpan189-go
+Version: 1.0
+Homepage: https://github.com/tickstep/cloudpan189-go
+Section: utils
+Priority: optional
+Architecture: amd64
+Installed-Size: 4096
+Maintainer: tickstep <i@mail.tickstep.com>
+Description: cloudpan189-go 使用Go语言编写的天翼云盘命令行客户端, 为操作天翼云盘, 提供实用功能.
