@@ -1,18 +1,16 @@
-module github.com/tickstep/cloudpan189-go
+module github.com/iikira/BaiduPCS-Go
 
-go 1.14
+go 1.12
 
 require (
 	github.com/GeertJohan/go.incremental v1.0.0
 	github.com/GeertJohan/go.rice v0.0.0-20170420135705-c02ca9a983da // indirect
-	github.com/akavel/rsrc v0.9.0 // indirect
 	github.com/astaxie/beego v1.10.1 // indirect
 	github.com/bitly/go-simplejson v0.5.0 // indirect
 	github.com/daaku/go.zipexe v0.0.0-20150329023125-a5fe2436ffcb // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/fatih/color v0.0.0-20150510220652-1b35f289c47d
 	github.com/golang/protobuf v1.3.2
-	github.com/josephspurrier/goversioninfo v0.0.0-20200309025242-14b0ab84c6ca // indirect
 	github.com/json-iterator/go v1.1.7
 	github.com/kardianos/osext v0.0.0-20170510131534-ae77be60afb1
 	github.com/mattn/go-runewidth v0.0.5-0.20181218000649-703b5e6b11ae
