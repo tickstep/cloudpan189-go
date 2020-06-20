@@ -10,9 +10,8 @@ fi
 output="out/"
 
 old_golang() {
-  GOROOT=/usr/local/Cellar/go/1.13.1
+  GOROOT=/usr/local/go
   go=$GOROOT/bin/go
-  GOPATH=/Users/tickstep/Documents/Workspace/go/projects/cloudpan189-go
 }
 
 new_golang() {
