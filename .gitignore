@@ -4,6 +4,7 @@
 *.so
 *.dylib
 cloudpan189-go
+cloudpan189-go.exe
 cmd/AndroidNDKBuild/AndroidNDKBuild
 
 # Test binary, build with `go test -c`
