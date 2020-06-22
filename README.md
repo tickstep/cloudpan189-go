@@ -5,7 +5,7 @@
 ## 关于 Windows EXE ICO 和应用信息编译
 为了编译出来的windows的exe文件带有ico和应用程序信息，需要使用 github.com/josephspurrier/goversioninfo/cmd/goversioninfo 工具
 
-工具安装，运行下面的命令即可生成工具。也可以直接用 cmd/ 文件夹下面的编译好的
+工具安装，运行下面的命令即可生成工具。也可以直接用 bin/ 文件夹下面的编译好的
 ```
 go get github.com/josephspurrier/goversioninfo/cmd/goversioninfo
 ```

@@ -1,4 +1,4 @@
-module github.com/iikira/BaiduPCS-Go
+module github.com/tickstep/cloudpan189-go
 
 go 1.12
 
