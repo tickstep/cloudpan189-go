@@ -26,7 +26,7 @@ func NewLineHistory(filePath string) (lh *LineHistory, err error) {
 }
 
 // DoWriteHistory 执行写入历史
-func (pl *PCSLiner) DoWriteHistory() (err error) {
+func (pl *CmdLiner) DoWriteHistory() (err error) {
 	if pl.History == nil {
 		return fmt.Errorf("history not set")
 	}
@@ -45,7 +45,7 @@ func (pl *PCSLiner) DoWriteHistory() (err error) {
 }
 
 // ReadHistory 读取历史
-func (pl *PCSLiner) ReadHistory() (err error) {
+func (pl *CmdLiner) ReadHistory() (err error) {
 	if pl.History == nil {
 		return fmt.Errorf("history not set")
 	}

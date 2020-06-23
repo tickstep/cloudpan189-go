@@ -35,7 +35,7 @@ type (
 )
 
 // ClearScreen 清空屏幕
-func (pl *PCSLiner) ClearScreen() {
+func (pl *CmdLiner) ClearScreen() {
 	ClearScreen()
 }
 

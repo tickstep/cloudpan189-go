@@ -4,8 +4,8 @@ import (
 	"github.com/peterh/liner"
 )
 
-// PCSLiner 封装 *liner.State, 提供更简便的操作
-type PCSLiner struct {
+// CmdLiner 封装 *liner.State, 提供更简便的操作
+type CmdLiner struct {
 	State   *liner.State
 	History *LineHistory
 
@@ -15,9 +15,9 @@ type PCSLiner struct {
 	paused bool
 }
 
-// NewLiner 返回 *PCSLiner, 默认设置允许 Ctrl+C 结束
-func NewLiner() *PCSLiner {
-	pl := &PCSLiner{}
+// NewLiner 返回 *CmdLiner, 默认设置允许 Ctrl+C 结束
+func NewLiner() *CmdLiner {
+	pl := &CmdLiner{}
 	pl.tmode, _ = liner.TerminalMode()
 
 	line := liner.NewLiner()
@@ -32,9 +32,9 @@ func NewLiner() *PCSLiner {
 }
 
 // Pause 暂停服务
-func (pl *PCSLiner) Pause() error {
+func (pl *CmdLiner) Pause() error {
 	if pl.paused {
-		panic("PCSLiner already paused")
+		panic("CmdLiner already paused")
 	}
 
 	pl.paused = true
@@ -44,9 +44,9 @@ func (pl *PCSLiner) Pause() error {
 }
 
 // Resume 恢复服务
-func (pl *PCSLiner) Resume() error {
+func (pl *CmdLiner) Resume() error {
 	if !pl.paused {
-		panic("PCSLiner is not paused")
+		panic("CmdLiner is not paused")
 	}
 
 	pl.paused = false
@@ -55,7 +55,7 @@ func (pl *PCSLiner) Resume() error {
 }
 
 // Close 关闭服务
-func (pl *PCSLiner) Close() (err error) {
+func (pl *CmdLiner) Close() (err error) {
 	err = pl.State.Close()
 	if err != nil {
 		return err

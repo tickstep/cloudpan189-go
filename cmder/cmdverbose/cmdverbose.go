@@ -19,35 +19,34 @@ var (
 	Outputs = []io.Writer{os.Stderr}
 )
 
-// PCSVerbose 调试
-type PCSVerbose struct {
+// CmdVerbose 调试
+type CmdVerbose struct {
 	Module string
 }
 
-// New 根据module, 初始化PCSVerbose
-func New(module string) *PCSVerbose {
-	return &PCSVerbose{
+func New(module string) *CmdVerbose {
+	return &CmdVerbose{
 		Module: module,
 	}
 }
 
 // Info 提示
-func (pv *PCSVerbose) Info(l string) {
+func (pv *CmdVerbose) Info(l string) {
 	Verbosef("DEBUG: %s INFO: %s\n", pv.Module, l)
 }
 
 // Infof 提示, 格式输出
-func (pv *PCSVerbose) Infof(format string, a ...interface{}) {
+func (pv *CmdVerbose) Infof(format string, a ...interface{}) {
 	Verbosef("DEBUG: %s INFO: %s", pv.Module, fmt.Sprintf(format, a...))
 }
 
 // Warn 警告
-func (pv *PCSVerbose) Warn(l string) {
+func (pv *CmdVerbose) Warn(l string) {
 	Verbosef("DEBUG: %s WARN: %s\n", pv.Module, l)
 }
 
 // Warnf 警告, 格式输出
-func (pv *PCSVerbose) Warnf(format string, a ...interface{}) {
+func (pv *CmdVerbose) Warnf(format string, a ...interface{}) {
 	Verbosef("DEBUG: %s WARN: %s", pv.Module, fmt.Sprintf(format, a...))
 }
 
