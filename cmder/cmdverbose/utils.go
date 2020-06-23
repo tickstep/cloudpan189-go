@@ -2,7 +2,7 @@ package cmdverbose
 
 import (
 	"fmt"
-	"github.com/tickstep/cloudpan189-go/cmder/pcsutil/pcstime"
+	"github.com/tickstep/cloudpan189-go/cmder/cmdutil/cmdtime"
 	"io"
 	"io/ioutil"
 )

@@ -29,13 +29,15 @@ var (
 
 // CmdConfig 配置详情
 type CmdConfig struct {
-	CmdActiveUID uint64
-	CmdUserList CmdUserList
+	ActiveUID uint64
+	UserList cmduser.CmdUserList
 
 	SaveDir        string // 下载储存路径
+
 	configFilePath string
 	configFile     *os.File
 	fileMu         sync.Mutex
+	activeUser     *cmduser.CmdUser
 }
 
 // NewConfig 返回 CmdConfig 指针对象
@@ -207,6 +209,12 @@ func GetConfigDir() string {
 	return cmdutil.ExecutablePathJoin(configDir)
 }
 
+func (c *CmdConfig) ActiveUser() *cmduser.CmdUser {
+	if c.activeUser == nil {
+		return &cmduser.CmdUser{}
+	}
+	return c.activeUser
+}
 func (c *CmdConfig) fix() {
 
 }

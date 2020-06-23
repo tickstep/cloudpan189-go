@@ -15,8 +15,14 @@ import (
 	"path"
 	"path/filepath"
 	"runtime"
+	"sort"
 	"strings"
 	"unicode"
+)
+
+const (
+	// NameShortDisplayNum 文件名缩略显示长度
+	NameShortDisplayNum = 16
 )
 
 var (
@@ -120,6 +126,7 @@ func main()  {
 				numArgs                    = len(lineArgs)
 				acceptCompleteFileCommands = []string{
 					"cd", "cp", "download", "ls", "mkdir", "mv", "rm", "share", "upload", "login",
+					"clear", "quit", "exit",
 				}
 				closed = strings.LastIndex(line, " ") == len(line)-1
 			)
@@ -153,14 +160,15 @@ func main()  {
 			}
 
 			var (
+				activeUser  = cmdconfig.Config.ActiveUser()
 				runeFunc    = unicode.IsSpace
-				cmdRuneFunc = func(r rune) bool {
-					switch r {
-					case '\'', '"':
-						return true
-					}
-					return unicode.IsSpace(r)
-				}
+				//cmdRuneFunc = func(r rune) bool {
+				//	switch r {
+				//	case '\'', '"':
+				//		return true
+				//	}
+				//	return unicode.IsSpace(r)
+				//}
 				targetPath string
 			)
 
@@ -194,46 +202,6 @@ func main()  {
 					targetDir = path.Dir(targetDir)
 				}
 			}
-			files, err := cmd.CacheFilesDirectoriesList(targetDir, baiducmd.DefaultOrderOptions)
-			if err != nil {
-				return
-			}
-
-			for _, file := range files {
-				if file == nil {
-					continue
-				}
-
-				var (
-					appendLine string
-				)
-
-				// 已经有的情况
-				if !closed {
-					if !strings.HasPrefix(file.Path, path.Clean(path.Join(targetDir, path.Base(targetPath)))) {
-						if path.Base(targetDir) == path.Base(targetPath) {
-							appendLine = strings.Join(append(lineArgs[:numArgs-1], escaper.EscapeByRuneFunc(path.Join(targetPath, file.Filename), cmdRuneFunc)), " ")
-							goto handle
-						}
-						// fmt.Println(file.Path, targetDir, targetPath)
-						continue
-					}
-					// fmt.Println(path.Clean(path.Join(path.Dir(targetPath), file.Filename)), targetPath, file.Filename)
-					appendLine = strings.Join(append(lineArgs[:numArgs-1], escaper.EscapeByRuneFunc(path.Clean(path.Join(path.Dir(targetPath), file.Filename)), cmdRuneFunc)), " ")
-					goto handle
-				}
-				// 没有的情况
-				appendLine = strings.Join(append(lineArgs, escaper.EscapeByRuneFunc(file.Filename, cmdRuneFunc)), " ")
-				goto handle
-
-			handle:
-				if file.Isdir {
-					s = append(s, appendLine+"/")
-					continue
-				}
-				s = append(s, appendLine+" ")
-				continue
-			}
 
 			return
 		})
@@ -249,11 +217,11 @@ func main()  {
 			)
 
 			if activeUser.Name != "" {
-				// 格式: Baiducmd-Go:<工作目录> <百度ID>$
+				// 格式: cloudpan189-go:<工作目录> <UserName>$
 				// 工作目录太长时, 会自动缩略
 				prompt = app.Name + ":" + converter.ShortDisplay(path.Base(activeUser.Workdir), NameShortDisplayNum) + " " + activeUser.Name + "$ "
 			} else {
-				// Baiducmd-Go >
+				// cloudpan189-go >
 				prompt = app.Name + " > "
 			}
 
@@ -285,4 +253,76 @@ func main()  {
 			line.Resume()
 		}
 	}
+
+	// 命令配置和对应的处理func
+	app.Commands = []cli.Command{
+		// 登录账号 login
+		{
+			Name:  "login",
+			Usage: "登录天翼云盘账号",
+			Description: `
+	示例:
+		cloudpan189-go login
+		cloudpan189-go login -username=liuhua
+
+	常规登录:
+		按提示一步一步来即可.
+`,
+			Category: "天翼云盘账号",
+			Before:   reloadFn, // 每次进行登录动作的时候需要调用刷新配置
+			After:    saveFunc, // 登录完成需要调用保存配置
+			Action: func(c *cli.Context) error {
+				if c.NArg() == 0 {
+					fmt.Printf("准备登陆 %s %s", c.String("username"), c.String("password"))
+				} else {
+					cli.ShowCommandHelp(c, c.Command.Name)
+					return nil
+				}
+
+				fmt.Println("天翼帐号登录成功:", "tickstep")
+				return nil
+			},
+			// 命令的附加options参数说明，使用 help login 命令即可查看
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:  "username",
+					Usage: "登录百度帐号的用户名(手机号/邮箱/用户名)",
+				},
+				cli.StringFlag{
+					Name:  "password",
+					Usage: "登录百度帐号的用户名的密码",
+				},
+			},
+		},
+		// 清空控制台 clear
+		{
+			Name:        "clear",
+			Aliases:     []string{"cls"},
+			Usage:       "清空控制台",
+			UsageText:   app.Name + " clear",
+			Description: "清空控制台屏幕",
+			Category:    "其他",
+			Action: func(c *cli.Context) error {
+				cmdliner.ClearScreen()
+				return nil
+			},
+		},
+		// 退出程序 quit
+		{
+			Name:    "quit",
+			Aliases: []string{"exit"},
+			Usage:   "退出程序",
+			Description: "退出程序",
+			Category:    "其他",
+			Action: func(c *cli.Context) error {
+				return cli.NewExitError("", 0)
+			},
+			Hidden:   true,
+			HideHelp: true,
+		},
+	}
+
+	sort.Sort(cli.FlagsByName(app.Flags))
+	sort.Sort(cli.CommandsByName(app.Commands))
+	app.Run(os.Args)
 }

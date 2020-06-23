@@ -25,7 +25,8 @@ out/
 *.log
 *.gz
 captcha.png
-pcs_config.json
+cloud189_config.json
+cloud189_command_history.txt
 test/
 download/
 *-downloading
