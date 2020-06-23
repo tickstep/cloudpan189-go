@@ -10,6 +10,7 @@ import (
 	"github.com/tickstep/cloudpan189-go/cmder/cmdutil/converter"
 	"github.com/tickstep/cloudpan189-go/cmder/cmdutil/escaper"
 	"github.com/tickstep/cloudpan189-go/cmder/cmdverbose"
+	"github.com/tickstep/cloudpan189-go/internal/command"
 	"github.com/urfave/cli"
 	"os"
 	"path"
@@ -93,7 +94,7 @@ func main()  {
 		},
 	}
 
-	// 即会进入交互CLI命令行界面
+	// 进入交互CLI命令行界面
 	app.Action = func(c *cli.Context) {
 		if c.NArg() != 0 {
 			fmt.Printf("未找到命令: %s\n运行命令 %s help 获取帮助\n", c.Args().Get(0), app.Name)
@@ -273,7 +274,12 @@ func main()  {
 			After:    saveFunc, // 登录完成需要调用保存配置
 			Action: func(c *cli.Context) error {
 				if c.NArg() == 0 {
-					fmt.Printf("准备登陆 %s %s", c.String("username"), c.String("password"))
+					var err error
+					err = command.RunLogin(c.String("username"), c.String("password"))
+					if err != nil {
+						fmt.Println(err)
+						return err
+					}
 				} else {
 					cli.ShowCommandHelp(c, c.Command.Name)
 					return nil
