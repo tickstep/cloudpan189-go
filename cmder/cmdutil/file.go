@@ -1,8 +1,8 @@
 package cmdutil
 
 import (
-	"github.com/tickstep/cloudpan189-go/cmder/cmdverbose"
 	"github.com/kardianos/osext"
+	"github.com/tickstep/cloudpan189-go/library/logger"
 	"os"
 	"path"
 	"path/filepath"
@@ -46,10 +46,10 @@ func ChWorkDir() {
 func Executable() string {
 	executablePath, err := osext.Executable()
 	if err != nil {
-		cmdverbose.Verbosef("DEBUG: osext.Executable: %s\n", err)
+		logger.Verbosef("DEBUG: osext.Executable: %s\n", err)
 		executablePath, err = filepath.Abs(filepath.Dir(os.Args[0]))
 		if err != nil {
-			cmdverbose.Verbosef("DEBUG: filepath.Abs: %s\n", err)
+			logger.Verbosef("DEBUG: filepath.Abs: %s\n", err)
 			executablePath = filepath.Dir(os.Args[0])
 		}
 	}
@@ -61,7 +61,7 @@ func Executable() string {
 	// 读取链接
 	linkedExecutablePath, err := filepath.EvalSymlinks(executablePath)
 	if err != nil {
-		cmdverbose.Verbosef("DEBUG: filepath.EvalSymlinks: %s\n", err)
+		logger.Verbosef("DEBUG: filepath.EvalSymlinks: %s\n", err)
 		return executablePath
 	}
 	return linkedExecutablePath

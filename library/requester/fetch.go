@@ -11,8 +11,8 @@ import (
 	"strings"
 )
 
-// HTTPGet 简单实现 http 访问 GET 请求
-func HTTPGet(urlStr string) (body []byte, err error) {
+// HttpGet 简单实现 http 访问 GET 请求
+func HttpGet(urlStr string) (body []byte, err error) {
 	resp, err := DefaultClient.Get(urlStr)
 	if resp != nil {
 		defer resp.Body.Close()
@@ -21,6 +21,11 @@ func HTTPGet(urlStr string) (body []byte, err error) {
 		return nil, err
 	}
 	return ioutil.ReadAll(resp.Body)
+}
+
+// HttpPost 简单的HTTP POST方法
+func HttpPost(urlStr string, postData interface{}) (body []byte, err error) {
+	return Fetch("POST", urlStr, postData, nil)
 }
 
 // Req 参见 *HTTPClient.Req, 使用默认 http 客户端
@@ -136,4 +141,8 @@ func (h *HTTPClient) Fetch(method string, urlStr string, post interface{}, heade
 	}
 
 	return ioutil.ReadAll(resp.Body)
+}
+
+func (h *HTTPClient) DoGet(urlStr string) (body []byte, err error) {
+	return h.Fetch("GET", urlStr, nil, nil)
 }

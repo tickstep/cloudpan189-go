@@ -3,14 +3,14 @@ package main
 import (
 	"fmt"
 	"github.com/peterh/liner"
-	"github.com/tickstep/cloudpan189-go/cmder/cmdconfig"
 	"github.com/tickstep/cloudpan189-go/cmder/cmdliner"
 	"github.com/tickstep/cloudpan189-go/cmder/cmdliner/args"
 	"github.com/tickstep/cloudpan189-go/cmder/cmdutil"
 	"github.com/tickstep/cloudpan189-go/cmder/cmdutil/converter"
 	"github.com/tickstep/cloudpan189-go/cmder/cmdutil/escaper"
-	"github.com/tickstep/cloudpan189-go/cmder/cmdverbose"
 	"github.com/tickstep/cloudpan189-go/internal/command"
+	"github.com/tickstep/cloudpan189-go/internal/config"
+	"github.com/tickstep/cloudpan189-go/library/logger"
 	"github.com/urfave/cli"
 	"os"
 	"path"
@@ -30,16 +30,16 @@ var (
 	// Version 版本号
 	Version = "v1.0.0-dev"
 
-	historyFilePath = filepath.Join(cmdconfig.GetConfigDir(), "cloud189_command_history.txt")
+	historyFilePath = filepath.Join(config.GetConfigDir(), "cloud189_command_history.txt")
 	reloadFn        = func(c *cli.Context) error {
-		err := cmdconfig.Config.Reload()
+		err := config.Config.Reload()
 		if err != nil {
 			fmt.Printf("重载配置错误: %s\n", err)
 		}
 		return nil
 	}
 	saveFunc = func(c *cli.Context) error {
-		err := cmdconfig.Config.Save()
+		err := config.Config.Save()
 		if err != nil {
 			fmt.Printf("保存配置错误: %s\n", err)
 		}
@@ -52,10 +52,10 @@ var (
 func init() {
 	cmdutil.ChWorkDir()
 
-	err := cmdconfig.Config.Init()
+	err := config.Config.Init()
 	switch err {
 	case nil:
-	case cmdconfig.ErrConfigFileNoPermission, cmdconfig.ErrConfigContentsParseError:
+	case config.ErrConfigFileNoPermission, config.ErrConfigContentsParseError:
 		fmt.Fprintf(os.Stderr, "FATAL ERROR: config file error: %s\n", err)
 		os.Exit(1)
 	default:
@@ -64,7 +64,7 @@ func init() {
 }
 
 func main()  {
-	defer cmdconfig.Config.Close()
+	defer config.Config.Close()
 
 	app := cli.NewApp()
 	app.Name = "cloudpan189-go"
@@ -89,8 +89,8 @@ func main()  {
 		cli.BoolFlag{
 			Name:        "verbose",
 			Usage:       "启用调试",
-			EnvVar:      cmdverbose.EnvVerbose,
-			Destination: &cmdverbose.IsVerbose,
+			EnvVar:      logger.EnvVerbose,
+			Destination: &logger.IsVerbose,
 		},
 	}
 
@@ -102,7 +102,7 @@ func main()  {
 		}
 
 		isCli = true
-		cmdverbose.Verbosef("VERBOSE: 这是一条调试信息\n\n")
+		logger.Verbosef("VERBOSE: 这是一条调试信息\n\n")
 
 		var (
 			line = cmdliner.NewLiner()
@@ -127,7 +127,7 @@ func main()  {
 				numArgs                    = len(lineArgs)
 				acceptCompleteFileCommands = []string{
 					"cd", "cp", "download", "ls", "mkdir", "mv", "rm", "share", "upload", "login",
-					"clear", "quit", "exit",
+					"clear", "quit", "exit", "quota", "who",
 				}
 				closed = strings.LastIndex(line, " ") == len(line)-1
 			)
@@ -161,7 +161,7 @@ func main()  {
 			}
 
 			var (
-				activeUser  = cmdconfig.Config.ActiveUser()
+				activeUser  = config.Config.ActiveUser()
 				runeFunc    = unicode.IsSpace
 				//cmdRuneFunc = func(r rune) bool {
 				//	switch r {
@@ -214,10 +214,10 @@ func main()  {
 		for {
 			var (
 				prompt     string
-				activeUser = cmdconfig.Config.ActiveUser()
+				activeUser = config.Config.ActiveUser()
 			)
 
-			if activeUser.Name != "" {
+			if activeUser != nil && activeUser.Name != "" {
 				// 格式: cloudpan189-go:<工作目录> <UserName>$
 				// 工作目录太长时, 会自动缩略
 				prompt = app.Name + ":" + converter.ShortDisplay(path.Base(activeUser.Workdir), NameShortDisplayNum) + " " + activeUser.Name + "$ "
@@ -275,17 +275,18 @@ func main()  {
 			Action: func(c *cli.Context) error {
 				if c.NArg() == 0 {
 					var err error
-					err = command.RunLogin(c.String("username"), c.String("password"))
+					cookieOfToken, err := command.RunLogin(c.String("username"), c.String("password"))
 					if err != nil {
 						fmt.Println(err)
 						return err
 					}
+					cloudUser := config.SetupUserByCookie(cookieOfToken)
+					config.Config.SetActiveUser(cloudUser)
+					fmt.Println("天翼帐号登录成功: ", cloudUser.Name)
 				} else {
 					cli.ShowCommandHelp(c, c.Command.Name)
 					return nil
 				}
-
-				fmt.Println("天翼帐号登录成功:", "tickstep")
 				return nil
 			},
 			// 命令的附加options参数说明，使用 help login 命令即可查看

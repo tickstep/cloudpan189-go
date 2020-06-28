@@ -1,0 +1,53 @@
+package apierror
+
+const (
+	// 成功
+	ApiCodeOk ApiCode = 0
+	// 成功
+	ApiCodeNeedCaptchaCode ApiCode = 10
+	// 失败
+	ApiCodeFailed ApiCode = 999
+)
+
+type ApiCode int
+
+type ApiError struct {
+	Code ApiCode
+	Err string
+}
+
+func NewApiError(code ApiCode, err string) *ApiError {
+	return &ApiError {
+		code,
+		err,
+	}
+}
+
+func NewApiErrorWithError(err error) *ApiError {
+	if err == nil {
+		return NewApiError(ApiCodeOk, "")
+	} else {
+		return NewApiError(ApiCodeFailed, err.Error())
+	}
+}
+
+func NewOkApiError() *ApiError {
+	return NewApiError(ApiCodeOk, "")
+}
+
+func NewFailedApiError(err string) *ApiError {
+	return NewApiError(ApiCodeFailed, err)
+}
+
+func (a *ApiError) SetErr(code ApiCode, err string) {
+	a.Code = code
+	a.Err = err
+}
+
+func (a *ApiError) Error() string {
+	return a.Err
+}
+
+func (a *ApiError) ErrCode() ApiCode {
+	return a.Code
+}

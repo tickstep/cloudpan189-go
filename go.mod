@@ -19,7 +19,9 @@ require (
 	github.com/olekukonko/tablewriter v0.0.2-0.20190618033246-cc27d85e17ce
 	github.com/peterh/liner v1.1.1-0.20190305032635-6f820f8f90ce
 	github.com/shiena/ansicolor v0.0.0-20151119151921-a422bbe96644 // indirect
+	github.com/stretchr/testify v1.6.1
 	github.com/urfave/cli v1.21.1-0.20190817182405-23c83030263f
 	golang.org/x/crypto v0.0.0-20190820162420-60c769a6c586
 	golang.org/x/sys v0.0.0-20191025090151-53bf42e6b339
+	golang.org/x/text v0.3.3
 )

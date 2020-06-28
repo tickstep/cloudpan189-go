@@ -1,0 +1,53 @@
+package apiutil
+
+import "strings"
+
+const (
+	RsaPublicKey = `-----BEGIN PUBLIC KEY-----
+MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDY7mpaUysvgQkbp0iIn2ezoUyh
+i1zPFn0HCXloLFWT7uoNkqtrphpQ/63LEcPz1VYzmDuDIf3iGxQKzeoHTiVMSmW6
+FlhDeqVOG094hFJvZeK4OzA6HVwzwnEW5vIZ7d+u61RV1bsFxmB68+8JXs3ycGcE
+4anY+YzZJcyOcEGKVQIDAQAB
+-----END PUBLIC KEY-----`
+
+	b64map = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+	bi_rm = "0123456789abcdefghijklmnopqrstuvwxyz"
+)
+
+func int2char(i int) (r byte) {
+	return bi_rm[i]
+}
+
+// B64toHex 将base64字符串转换成HEX十六进制字符串
+func B64toHex(b64str string) (hexstr string) {
+	sb := strings.Builder{}
+	e := 0
+	c := 0
+	for _,r := range b64str {
+		if r != '=' {
+			v := strings.Index(b64map, string(r))
+			if 0 == e {
+				e = 1
+				sb.WriteByte(int2char(v >> 2))
+				c = 3 & v
+			} else if 1 == e {
+				e = 2
+				sb.WriteByte(int2char(c << 2 | v >> 4))
+				c = 15 & v
+			} else if 2 == e {
+				e = 3
+				sb.WriteByte(int2char(c))
+				sb.WriteByte(int2char(v >> 2))
+				c = 3 & v
+			} else {
+				e = 0
+				sb.WriteByte(int2char(c << 2 | v >> 4))
+				sb.WriteByte(int2char(15 & v))
+			}
+		}
+	}
+	if e == 1 {
+		sb.WriteByte(int2char(c << 2))
+	}
+	return sb.String()
+}
