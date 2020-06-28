@@ -321,6 +321,24 @@ func main()  {
 				return nil
 			},
 		},
+		// 获取当前帐号空间配额 quota
+		{
+			Name:        "quota",
+			Usage:       "获取当前帐号空间配额",
+			Description: "获取网盘的总储存空间, 和已使用的储存空间",
+			Category:    "天翼云盘账号",
+			Before:      reloadFn,
+			Action: func(c *cli.Context) error {
+				q, err := command.RunGetQuotaInfo()
+				if err == nil {
+					fmt.Printf("账号: %s, 个人空间总额 uid: %s, 个人空间已使用: %s, 比率: %f%%\n",
+						config.Config.ActiveUser().Nickname,
+						converter.ConvertFileSize(q.Quota, 2), converter.ConvertFileSize(q.UsedSize, 2),
+						100*float64(q.UsedSize)/float64(q.Quota))
+				}
+				return nil
+			},
+		},
 		// 清空控制台 clear
 		{
 			Name:        "clear",
