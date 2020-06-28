@@ -9,6 +9,8 @@ import (
 )
 
 type (
+	UserVip int
+
 	UserInfo struct {
 		// 用户UID
 		UserId uint64 `json:"userId"`
@@ -34,7 +36,24 @@ type (
 		SuperVip UserVip `json:"superVip"`
 	}
 
-	UserVip int
+	UserDetailInfo struct {
+		// 性别 F-女 M-男
+		Gender string `json:"gender"`
+		// 省代码
+		ProvinceCode string `json:"provinceCode"`
+		// 城市代码
+		CityCode string `json:"cityCode"`
+		// 登录名
+		UserAccount string `json:"userAccount"`
+		// 手机号，模糊处理过的，没有设定则为空
+		SafeMobile string `json:"safeMobile"`
+		// 域名称
+		DomainName string `json:"domainName"`
+		// 昵称
+		Nickname string `json:"nickname"`
+		// 邮箱，没有设定则为空
+		Email string `json:"email"`
+	}
 )
 
 const (
@@ -61,9 +80,42 @@ func GetUserInfo(client apiutil.HttpClient) (userInfo *UserInfo, error *apierror
 		logger.Verboseln("get user info failed")
 		return nil, apierror.NewApiErrorWithError(err)
 	}
+
+	es := &apierror.ErrorResp{}
+	if err := json.Unmarshal(body, es); err == nil {
+		if es.ErrorCode == "InvalidSessionKey" {
+			logger.Verboseln("get user info failed")
+			return nil, apierror.NewApiError(apierror.ApiCodeTokenExpiredCode, "登录超时")
+		}
+	}
+
 	ui := &UserInfo{}
 	if err := json.Unmarshal(body, ui); err != nil {
 		logger.Verboseln("get user info failed")
+		return nil, apierror.NewApiErrorWithError(err)
+	}
+	return ui, nil
+}
+
+func GetUserDetailInfo(client apiutil.HttpClient) (userDetailInfo *UserDetailInfo, error *apierror.ApiError) {
+	url := cloudpan.WEB_URL + "/v2/getUserDetailInfo.action"
+	body, err := client.GetHttpClient().DoGet(url)
+	if err != nil {
+		logger.Verboseln("get user detail info failed")
+		return nil, apierror.NewApiErrorWithError(err)
+	}
+
+	es := &apierror.ErrorResp{}
+	if err := json.Unmarshal(body, es); err == nil {
+		if es.ErrorCode == "InvalidSessionKey" {
+			logger.Verboseln("get user detail info failed")
+			return nil, apierror.NewApiError(apierror.ApiCodeTokenExpiredCode, "登录超时")
+		}
+	}
+
+	ui := &UserDetailInfo{}
+	if err := json.Unmarshal(body, ui); err != nil {
+		logger.Verboseln("get user detail info failed")
 		return nil, apierror.NewApiErrorWithError(err)
 	}
 	return ui, nil

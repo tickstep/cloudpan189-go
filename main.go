@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/peterh/liner"
+	"github.com/tickstep/cloudpan189-go/cloudpan/apiweb"
 	"github.com/tickstep/cloudpan189-go/cmder/cmdliner"
 	"github.com/tickstep/cloudpan189-go/cmder/cmdliner/args"
 	"github.com/tickstep/cloudpan189-go/cmder/cmdutil"
@@ -217,10 +218,10 @@ func main()  {
 				activeUser = config.Config.ActiveUser()
 			)
 
-			if activeUser != nil && activeUser.Name != "" {
+			if activeUser != nil && activeUser.Nickname != "" {
 				// 格式: cloudpan189-go:<工作目录> <UserName>$
 				// 工作目录太长时, 会自动缩略
-				prompt = app.Name + ":" + converter.ShortDisplay(path.Base(activeUser.Workdir), NameShortDisplayNum) + " " + activeUser.Name + "$ "
+				prompt = app.Name + ":" + converter.ShortDisplay(path.Base(activeUser.Workdir), NameShortDisplayNum) + " " + activeUser.Nickname + "$ "
 			} else {
 				// cloudpan189-go >
 				prompt = app.Name + " > "
@@ -264,7 +265,7 @@ func main()  {
 			Description: `
 	示例:
 		cloudpan189-go login
-		cloudpan189-go login -username=liuhua
+		cloudpan189-go login -username=tickstep
 
 	常规登录:
 		按提示一步一步来即可.
@@ -280,9 +281,9 @@ func main()  {
 						fmt.Println(err)
 						return err
 					}
-					cloudUser := config.SetupUserByCookie(cookieOfToken)
+					cloudUser, _ := config.SetupUserByCookie(cookieOfToken)
 					config.Config.SetActiveUser(cloudUser)
-					fmt.Println("天翼帐号登录成功: ", cloudUser.Name)
+					fmt.Println("天翼帐号登录成功: ", cloudUser.Nickname)
 				} else {
 					cli.ShowCommandHelp(c, c.Command.Name)
 					return nil
@@ -299,6 +300,25 @@ func main()  {
 					Name:  "password",
 					Usage: "登录百度帐号的用户名的密码",
 				},
+			},
+		},
+		// 获取当前帐号 who
+		{
+			Name:        "who",
+			Usage:       "获取当前帐号",
+			Description: "获取当前帐号的信息",
+			Category:    "天翼云盘账号",
+			Before:      reloadFn,
+			Action: func(c *cli.Context) error {
+				activeUser := config.Config.ActiveUser()
+				gender := "未知"
+				if activeUser.Sex == "F" {
+					gender = "女"
+				} else if activeUser.Sex == "M" {
+					gender = "男"
+				}
+				fmt.Printf("当前帐号 uid: %d, 昵称: %s, 用户名: %s, 性别: %s\n", activeUser.UID, activeUser.Nickname, activeUser.AccountName, gender)
+				return nil
 			},
 		},
 		// 清空控制台 clear
@@ -326,6 +346,19 @@ func main()  {
 			},
 			Hidden:   true,
 			HideHelp: true,
+		},
+		// 调试用 debug
+		{
+			Name:        "debug",
+			Usage:       "开发调试用",
+			Description: "",
+			Category:    "debug",
+			Before:      reloadFn,
+			Action: func(c *cli.Context) error {
+				activeUser := config.Config.ActiveUser()
+				fmt.Println(apiweb.Heartbeat(activeUser.PanClient()))
+				return nil
+			},
 		},
 	}
 

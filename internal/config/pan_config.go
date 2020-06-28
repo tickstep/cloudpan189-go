@@ -216,6 +216,14 @@ func (c *PanConfig) ActiveUser() *PanUser {
 		for _, u := range c.UserList {
 			if u.UID == c.ActiveUID {
 				c.activeUser = u
+				if c.activeUser.PanClient() == nil {
+					// restore client
+					user, err := SetupUserByCookie(c.activeUser.CookieLoginUser)
+					if err != nil {
+						return nil
+					}
+					return c.SetActiveUser(user)
+				}
 				return u
 			}
 		}
