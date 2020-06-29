@@ -20,7 +20,7 @@ type (
 		Nickname string `json:"nickname"`
 		// 域名称，默认和UserId一样
 		DomainName string `json:"domainName"`
-		// 已使用家庭空间大小
+		// 189邮箱已使用空间大小
 		Used189Size uint64 `json:"used189Size"`
 		// 已使用个人空间大小
 		UsedSize uint64 `json:"usedSize"`
