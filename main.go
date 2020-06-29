@@ -265,6 +265,7 @@ func main()  {
 	示例:
 		cloudpan189-go login
 		cloudpan189-go login -username=tickstep
+        cloudpan189-go login -COOKIE_LOGIN_USER=8B12CBBCE89CA8DFC3445985B63B511B5E7EC7...
 
 	常规登录:
 		按提示一步一步来即可.
@@ -273,20 +274,23 @@ func main()  {
 			Before:   reloadFn, // 每次进行登录动作的时候需要调用刷新配置
 			After:    saveFunc, // 登录完成需要调用保存配置
 			Action: func(c *cli.Context) error {
-				if c.NArg() == 0 {
+				cookieOfToken := ""
+				if c.IsSet("COOKIE_LOGIN_USER") {
+					cookieOfToken = c.String("COOKIE_LOGIN_USER")
+				} else if c.NArg() == 0 {
 					var err error
-					cookieOfToken, err := command.RunLogin(c.String("username"), c.String("password"))
+					cookieOfToken, err = command.RunLogin(c.String("username"), c.String("password"))
 					if err != nil {
 						fmt.Println(err)
 						return err
 					}
-					cloudUser, _ := config.SetupUserByCookie(cookieOfToken)
-					config.Config.SetActiveUser(cloudUser)
-					fmt.Println("天翼帐号登录成功: ", cloudUser.Nickname)
 				} else {
 					cli.ShowCommandHelp(c, c.Command.Name)
 					return nil
 				}
+				cloudUser, _ := config.SetupUserByCookie(cookieOfToken)
+				config.Config.SetActiveUser(cloudUser)
+				fmt.Println("天翼帐号登录成功: ", cloudUser.Nickname)
 				return nil
 			},
 			// 命令的附加options参数说明，使用 help login 命令即可查看
@@ -298,6 +302,10 @@ func main()  {
 				cli.StringFlag{
 					Name:  "password",
 					Usage: "登录百度帐号的用户名的密码",
+				},
+				cli.StringFlag{
+					Name:  "COOKIE_LOGIN_USER",
+					Usage: "使用 COOKIE_LOGIN_USER cookie来登录帐号",
 				},
 			},
 		},
@@ -372,8 +380,6 @@ func main()  {
 			Category:    "debug",
 			Before:      reloadFn,
 			Action: func(c *cli.Context) error {
-				activeUser := config.Config.ActiveUser()
-				fmt.Println(activeUser.PanClient().Heartbeat())
 				return nil
 			},
 		},
