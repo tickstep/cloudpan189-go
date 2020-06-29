@@ -12,7 +12,7 @@ type PanUser struct {
 	Sex      string
 	Workdir  string
 
-	cookieLoginUserStr string
+	CookieLoginUser string
 	panClient *cloudpan.PanClient
 }
 
@@ -21,7 +21,7 @@ type PanUserList []*PanUser
 func SetupUserByCookie(cookieLoginUser string) (user *PanUser, err error) {
 	panClient := cloudpan.NewPanClient(cookieLoginUser)
 	u := &PanUser{
-		cookieLoginUserStr: cookieLoginUser,
+		CookieLoginUser: cookieLoginUser,
 		panClient: panClient,
 		Workdir: "/",
 	}
@@ -58,10 +58,6 @@ func SetupUserByCookie(cookieLoginUser string) (user *PanUser, err error) {
 	}
 
 	return u, nil
-}
-
-func (p *PanUser) CookieLoginUser() string {
-	return p.cookieLoginUserStr
 }
 
 func (p *PanUser) PanClient() *cloudpan.PanClient {
