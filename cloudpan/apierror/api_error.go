@@ -5,7 +5,7 @@ const (
 	ApiCodeOk ApiCode = 0
 	// 成功
 	ApiCodeNeedCaptchaCode ApiCode = 10
-	// 成功
+	// 会话/Token已过期
 	ApiCodeTokenExpiredCode ApiCode = 11
 	// 失败
 	ApiCodeFailed ApiCode = 999

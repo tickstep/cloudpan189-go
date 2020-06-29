@@ -2,7 +2,7 @@ package config
 
 import (
 	"fmt"
-	"github.com/tickstep/cloudpan189-go/cloudpan/apiweb"
+	"github.com/tickstep/cloudpan189-go/cloudpan"
 )
 
 type PanUser struct {
@@ -13,20 +13,20 @@ type PanUser struct {
 	Workdir  string
 
 	CookieLoginUser string
-	panClient *PanClient
+	panClient *cloudpan.PanClient
 }
 
 type PanUserList []*PanUser
 
 func SetupUserByCookie(CookieLoginUser string) (user *PanUser, err error) {
-	panClient := NewPanClient(CookieLoginUser)
+	panClient := cloudpan.NewPanClient(CookieLoginUser)
 	u := &PanUser{
 		CookieLoginUser: CookieLoginUser,
 		panClient: panClient,
 		Workdir: "/",
 	}
 
-	userInfo, err := apiweb.GetUserInfo(panClient)
+	userInfo, err := panClient.GetUserInfo()
 	name := "Unknown"
 	if userInfo != nil {
 		name = userInfo.Nickname
@@ -43,7 +43,7 @@ func SetupUserByCookie(CookieLoginUser string) (user *PanUser, err error) {
 	}
 	u.Nickname = name
 
-	userDetailInfo, err := apiweb.GetUserDetailInfo(panClient)
+	userDetailInfo, err := panClient.GetUserDetailInfo()
 	if userDetailInfo != nil {
 		if userDetailInfo.Gender == "F" {
 			u.Sex = "F"
@@ -60,6 +60,6 @@ func SetupUserByCookie(CookieLoginUser string) (user *PanUser, err error) {
 	return u, nil
 }
 
-func (p *PanUser) PanClient() *PanClient {
+func (p *PanUser) PanClient() *cloudpan.PanClient {
 	return p.panClient
 }

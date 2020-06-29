@@ -3,7 +3,7 @@ package command
 import (
 	"fmt"
 	"github.com/tickstep/cloudpan189-go/cloudpan/apierror"
-	"github.com/tickstep/cloudpan189-go/cloudpan/apiweb"
+	"github.com/tickstep/cloudpan189-go/cloudpan"
 	"github.com/tickstep/cloudpan189-go/cmder/cmdliner"
 	_ "github.com/tickstep/cloudpan189-go/library/requester"
 )
@@ -29,12 +29,12 @@ func RunLogin(username, password string) (cookieLoginUser string, error error) {
 	}
 
 	// try login directly
-	cookieLoginUser, apiErr := apiweb.Login(username, password)
+	cookieLoginUser, apiErr := cloudpan.Login(username, password)
 	if apiErr != nil {
 		if apiErr.Code == apierror.ApiCodeNeedCaptchaCode {
 			for i := 0; i < 10; i++ {
 				// 需要认证码
-				savePath, apiErr := apiweb.GetCaptchaImage()
+				savePath, apiErr := cloudpan.GetCaptchaImage()
 				if apiErr != nil {
 					fmt.Errorf("获取认证码错误")
 					return cookieLoginUser, apiErr
@@ -44,7 +44,7 @@ func RunLogin(username, password string) (cookieLoginUser string, error error) {
 				if err != nil {
 					return cookieLoginUser, err
 				}
-				cookieLoginUser, apiErr = apiweb.LoginWithCaptcha(username, password, vcode)
+				cookieLoginUser, apiErr = cloudpan.LoginWithCaptcha(username, password, vcode)
 				if apiErr != nil {
 					return "", apiErr
 				} else {

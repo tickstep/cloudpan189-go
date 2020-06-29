@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"github.com/peterh/liner"
-	"github.com/tickstep/cloudpan189-go/cloudpan/apiweb"
 	"github.com/tickstep/cloudpan189-go/cmder/cmdliner"
 	"github.com/tickstep/cloudpan189-go/cmder/cmdliner/args"
 	"github.com/tickstep/cloudpan189-go/cmder/cmdutil"
@@ -374,7 +373,7 @@ func main()  {
 			Before:      reloadFn,
 			Action: func(c *cli.Context) error {
 				activeUser := config.Config.ActiveUser()
-				fmt.Println(apiweb.Heartbeat(activeUser.PanClient()))
+				fmt.Println(activeUser.PanClient().Heartbeat())
 				return nil
 			},
 		},

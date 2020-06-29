@@ -1,10 +1,9 @@
-package apiweb
+package cloudpan
 
 import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/tickstep/cloudpan189-go/cloudpan"
 	"github.com/tickstep/cloudpan189-go/cloudpan/apierror"
 	"github.com/tickstep/cloudpan189-go/cloudpan/apiutil"
 	"github.com/tickstep/cloudpan189-go/library/crypto"
@@ -40,7 +39,7 @@ type (
 
 var (
 	latestLoginParams loginParams
-	client = requester.NewHTTPClient()
+	client            = requester.NewHTTPClient()
 )
 
 func Login(username, password string) (cookieLoginUser string, error *apierror.ApiError) {
@@ -77,9 +76,9 @@ func LoginWithCaptcha(username, password, captchaCode string) (cookieLoginUser s
 	}
 	// request toUrl to get COOKIE_LOGIN_USER cookie
 	header := map[string]string {
-		"lt": latestLoginParams.Lt,
+		"lt":           latestLoginParams.Lt,
 		"Content-Type": "application/x-www-form-urlencoded",
-		"Referer": "https://open.e.189.cn/",
+		"Referer":      "https://open.e.189.cn/",
 	}
 	client.Fetch("GET", r.ToUrl, nil, header)
 
@@ -105,7 +104,7 @@ func GetCaptchaImage() (savePath string, error *apierror.ApiError) {
 	}
 
 	removeCaptchaPath()
-	picUrl := cloudpan.AUTH_URL + "/picCaptcha.do?token=" + latestLoginParams.CaptchaToken
+	picUrl := AUTH_URL + "/picCaptcha.do?token=" + latestLoginParams.CaptchaToken
 	// save img to file
 	return saveCaptchaImg(picUrl)
 }
@@ -114,7 +113,7 @@ func getLoginParams() (params loginParams, error *apierror.ApiError) {
 	header := map[string]string {
 		"Content-Type": "application/x-www-form-urlencoded",
 	}
-	data, err := client.Fetch("GET", cloudpan.WEB_URL + "/udb/udb_login.jsp?pageId=1&redirectURL=/main.action",
+	data, err := client.Fetch("GET", WEB_URL+ "/udb/udb_login.jsp?pageId=1&redirectURL=/main.action",
 		nil, header)
 	if err != nil {
 		logger.Verboseln("login redirectURL occurs error: ", err.Error())
@@ -137,7 +136,7 @@ func getLoginParams() (params loginParams, error *apierror.ApiError) {
 }
 
 func checkNeedCaptchaCodeOrNot(username, lt string) (error *apierror.ApiError) {
-	url := cloudpan.AUTH_URL + "/needcaptcha.do"
+	url := AUTH_URL + "/needcaptcha.do"
 	rsa, err := crypto.RsaEncrypt([]byte(apiutil.RsaPublicKey), []byte(username))
 	if err != nil {
 		return apierror.NewApiErrorWithError(err)
@@ -190,7 +189,7 @@ func removeCaptchaPath() error {
 }
 
 func doLoginAct(username, password, validateCode, captchaToken, returnUrl, paramId, lt string) (result *loginResult, error *apierror.ApiError) {
-	url := cloudpan.AUTH_URL + "/loginSubmit.do"
+	url := AUTH_URL + "/loginSubmit.do"
 	rsaUserName, _ := crypto.RsaEncrypt([]byte(apiutil.RsaPublicKey), []byte(username))
 	rsaPassword, _ := crypto.RsaEncrypt([]byte(apiutil.RsaPublicKey), []byte(password))
 	data := map[string]string {

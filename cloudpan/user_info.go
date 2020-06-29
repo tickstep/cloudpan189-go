@@ -1,10 +1,8 @@
-package apiweb
+package cloudpan
 
 import (
 	"encoding/json"
-	"github.com/tickstep/cloudpan189-go/cloudpan"
 	"github.com/tickstep/cloudpan189-go/cloudpan/apierror"
-	"github.com/tickstep/cloudpan189-go/cloudpan/apiutil"
 	"github.com/tickstep/cloudpan189-go/library/logger"
 )
 
@@ -73,9 +71,9 @@ const (
 	VipUser UserVip = 0
 )
 
-func GetUserInfo(client apiutil.HttpClient) (userInfo *UserInfo, error *apierror.ApiError) {
-	url := cloudpan.WEB_URL + "/v2/getLoginedInfos.action"
-	body, err := client.GetHttpClient().DoGet(url)
+func (p *PanClient) GetUserInfo() (userInfo *UserInfo, error *apierror.ApiError) {
+	url := WEB_URL + "/v2/getLoginedInfos.action"
+	body, err := p.client.DoGet(url)
 	if err != nil {
 		logger.Verboseln("get user info failed")
 		return nil, apierror.NewApiErrorWithError(err)
@@ -97,9 +95,9 @@ func GetUserInfo(client apiutil.HttpClient) (userInfo *UserInfo, error *apierror
 	return ui, nil
 }
 
-func GetUserDetailInfo(client apiutil.HttpClient) (userDetailInfo *UserDetailInfo, error *apierror.ApiError) {
-	url := cloudpan.WEB_URL + "/v2/getUserDetailInfo.action"
-	body, err := client.GetHttpClient().DoGet(url)
+func (p *PanClient) GetUserDetailInfo() (userDetailInfo *UserDetailInfo, error *apierror.ApiError) {
+	url := WEB_URL + "/v2/getUserDetailInfo.action"
+	body, err := p.client.DoGet(url)
 	if err != nil {
 		logger.Verboseln("get user detail info failed")
 		return nil, apierror.NewApiErrorWithError(err)

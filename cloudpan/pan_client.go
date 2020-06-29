@@ -1,4 +1,4 @@
-package config
+package cloudpan
 
 import (
 	"github.com/tickstep/cloudpan189-go/library/requester"
@@ -35,8 +35,4 @@ func NewPanClient(cookieLoginUser string) *PanClient {
 	return &PanClient{
 		client: client,
 	}
-}
-
-func (p *PanClient) GetHttpClient() *requester.HTTPClient {
-	return p.client
 }

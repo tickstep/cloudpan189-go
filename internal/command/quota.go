@@ -1,10 +1,5 @@
 package command
 
-import (
-	"github.com/tickstep/cloudpan189-go/cloudpan/apiweb"
-	"github.com/tickstep/cloudpan189-go/internal/config"
-)
-
 type QuotaInfo struct {
 	// 已使用个人空间大小
 	UsedSize int64
@@ -13,7 +8,7 @@ type QuotaInfo struct {
 }
 
 func RunGetQuotaInfo() (quotaInfo *QuotaInfo, error error) {
-	user, err := apiweb.GetUserInfo(config.Config.ActiveUser().PanClient())
+	user, err := GetActivePanClient().GetUserInfo()
 	if err != nil {
 		return nil, err
 	}

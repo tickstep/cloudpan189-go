@@ -1,9 +1,7 @@
-package apiweb
+package cloudpan
 
 import (
 	"encoding/json"
-	"github.com/tickstep/cloudpan189-go/cloudpan"
-	"github.com/tickstep/cloudpan189-go/cloudpan/apiutil"
 	"github.com/tickstep/cloudpan189-go/library/logger"
 )
 
@@ -12,9 +10,9 @@ type heartBeatResp struct {
 }
 
 // Heartbeat WEB端心跳包，周期默认1分钟
-func Heartbeat(client apiutil.HttpClient) bool  {
-	url := cloudpan.WEB_URL + "/heartbeat.action"
-	body, err := client.GetHttpClient().DoGet(url)
+func (p *PanClient) Heartbeat() bool  {
+	url := WEB_URL + "/heartbeat.action"
+	body, err := p.client.DoGet(url)
 	if err != nil {
 		logger.Verboseln("heartbeat failed")
 		return false
