@@ -218,7 +218,7 @@ func (c *PanConfig) ActiveUser() *PanUser {
 				c.activeUser = u
 				if c.activeUser.PanClient() == nil {
 					// restore client
-					user, err := SetupUserByCookie(c.activeUser.CookieLoginUser)
+					user, err := SetupUserByCookie(c.activeUser.CookieLoginUser())
 					if err != nil {
 						return nil
 					}
