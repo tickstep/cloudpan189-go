@@ -33,16 +33,19 @@ type (
 		PageSize uint
 	}
 
+	FileList []*FileEntity
+	PathList []*PathEntity
+
 	// FileSearchResult 文件搜索返回结果
 	FileSearchResult struct {
 		// Data 数据
-		Data []*FileEntity `json:"data"`
+		Data FileList `json:"data"`
 		// 页数量，从1开始
 		PageNum uint `json:"pageNum"`
 		// 页大小，默认60
 		PageSize uint `json:"pageSize"`
 		// Path 路径
-		Path []*PathEntity `json:"path"`
+		Path PathList `json:"path"`
 		// RecordCount 文件总数量
 		RecordCount uint `json:"recordCount"`
 	}
