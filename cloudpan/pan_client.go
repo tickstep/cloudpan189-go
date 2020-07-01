@@ -6,6 +6,11 @@ import (
 	"net/url"
 )
 
+const (
+	// PathSeparator 路径分隔符
+	PathSeparator = "/"
+)
+
 var (
 	cloudpanDomainUrl = &url.URL{
 		Scheme: "http",
