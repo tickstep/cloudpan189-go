@@ -63,7 +63,7 @@ type (
 		FileName string `json:"fileName"`
 		// FileSize 文件大小，文件夹为0
 		FileSize uint64 `json:"fileSize"`
-		// FileType 文件类型，后缀名，例如:"dmg"
+		// FileType 文件类型，后缀名，例如:"dmg"，没有则为空
 		FileType string `json:"fileType"`
 		// IsFolder 是否是文件夹
 		IsFolder bool `json:"isFolder"`
@@ -127,7 +127,7 @@ const (
 
 func (p *PanClient) FileSearch(param *FileSearchParam) (result *FileSearchResult, error *apierror.ApiError) {
 	fullUrl := &strings.Builder{}
-	fmt.Fprintf(fullUrl, "%s/v2/listFiles.action?fileId=%s&mediaType=%s&keyword=%s&inGroupSpace=%b&orderBy=%d&order=%s&pageNum=%d&pageSize=%d",
+	fmt.Fprintf(fullUrl, "%s/v2/listFiles.action?fileId=%s&mediaType=%d&keyword=%s&inGroupSpace=%t&orderBy=%d&order=%s&pageNum=%d&pageSize=%d",
 		WEB_URL, param.FileId, param.MediaType, param.Keyword, param.InGroupSpace, param.OrderBy, param.OrderSort,
 		param.PageNum, param.PageSize)
 	logger.Verboseln("do reqeust url: " + fullUrl.String())
