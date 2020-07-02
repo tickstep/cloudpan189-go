@@ -15,21 +15,21 @@ type (
 
 	// FileSearchParam 文件搜索参数
 	FileSearchParam struct {
-		// 文件ID
+		// FileId 文件ID
 		FileId string
-		// 媒体文件过滤
+		// MediaType 媒体文件过滤
 		MediaType MediaType
-		// 搜索关键字
+		// Keyword 搜索关键字
 		Keyword string
-		// ???
+		// InGroupSpace ???
 		InGroupSpace bool
-		// 排序字段
+		// OrderBy 排序字段
 		OrderBy OrderBy
-		// 排序顺序
+		// OrderSort 排序顺序
 		OrderSort OrderSort
-		// 页数量，从1开始
+		// PageNum 页数量，从1开始
 		PageNum uint
-		// 页大小，默认60
+		// PageSize 页大小，默认60
 		PageSize uint
 	}
 
@@ -40,9 +40,9 @@ type (
 	FileSearchResult struct {
 		// Data 数据
 		Data FileList `json:"data"`
-		// 页数量，从1开始
+		// PageNum 页数量，从1开始
 		PageNum uint `json:"pageNum"`
-		// 页大小，默认60
+		// PageSize 页大小，默认60
 		PageSize uint `json:"pageSize"`
 		// Path 路径
 		Path PathList `json:"path"`
@@ -50,11 +50,9 @@ type (
 		RecordCount uint `json:"recordCount"`
 	}
 
-	FileEntity struct {
+	fileBasic struct {
 		// CreateTime 创建时间
 		CreateTime string `json:"createTime"`
-		// DownloadUrl 下载路径，只有文件才有
-		DownloadUrl string `json:"downloadUrl"`
 		// FileId 文件ID
 		FileId string `json:"fileId"`
 		// FileIdDigest 文件ID指纹
@@ -67,14 +65,23 @@ type (
 		FileType string `json:"fileType"`
 		// IsFolder 是否是文件夹
 		IsFolder bool `json:"isFolder"`
-		// IsStarred 是否是星标文件
-		IsStarred bool `json:"isStarred"`
 		// LastOpTime 最后修改时间
 		LastOpTime string `json:"lastOpTime"`
-		// MediaType 媒体类型
-		MediaType MediaType `json:"mediaType"`
 		// ParentId 父文件ID
 		ParentId string `json:"parentId"`
+	}
+
+	FileEntity struct {
+		fileBasic
+
+		// DownloadUrl 下载路径，只有文件才有
+		DownloadUrl string `json:"downloadUrl"`
+		// IsStarred 是否是星标文件
+		IsStarred bool `json:"isStarred"`
+		// MediaType 媒体类型
+		MediaType MediaType `json:"mediaType"`
+		// SubFileCount 文件夹子文件数量，对文件夹详情有效
+		SubFileCount uint `json:"subFileCount"`
 	}
 
 	PathEntity struct {
@@ -138,7 +145,24 @@ func (p *PanClient) FileSearch(param *FileSearchParam) (result *FileSearchResult
 	}
 	item := &FileSearchResult{}
 	if err := json.Unmarshal(body, item); err != nil {
-		logger.Verboseln("heartbeat response failed")
+		logger.Verboseln("search response failed")
+		return nil, apierror.NewApiErrorWithError(err)
+	}
+	return item, nil
+}
+
+func (p *PanClient) FileInfo(fileId string) (fileInfo *FileEntity, error *apierror.ApiError) {
+	fullUrl := &strings.Builder{}
+	fmt.Fprintf(fullUrl, "%s/v2/getFileInfo.action?fileId=%s", WEB_URL, fileId)
+	logger.Verboseln("do reqeust url: " + fullUrl.String())
+	body, err := p.client.DoGet(fullUrl.String())
+	if err != nil {
+		logger.Verboseln("get file info failed")
+		return nil, apierror.NewApiErrorWithError(err)
+	}
+	item := &FileEntity{}
+	if err := json.Unmarshal(body, item); err != nil {
+		logger.Verboseln("file info response failed")
 		return nil, apierror.NewApiErrorWithError(err)
 	}
 	return item, nil

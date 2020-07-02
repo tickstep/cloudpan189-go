@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"github.com/peterh/liner"
-	"github.com/tickstep/cloudpan189-go/cloudpan"
 	"github.com/tickstep/cloudpan189-go/cmder/cmdliner"
 	"github.com/tickstep/cloudpan189-go/cmder/cmdliner/args"
 	"github.com/tickstep/cloudpan189-go/cmder/cmdutil"
@@ -382,9 +381,15 @@ func main()  {
 			Category:    "debug",
 			Before:      reloadFn,
 			Action: func(c *cli.Context) error {
-				r, _ := config.Config.ActiveUser().PanClient().FileSearch(cloudpan.NewFileSearchParam())
+				r, _ := config.Config.ActiveUser().PanClient().FileInfo(c.Args().Get(0))
 				fmt.Printf("%+v", r)
 				return nil
+			},
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:  "param",
+					Usage: "参数",
+				},
 			},
 		},
 	}
