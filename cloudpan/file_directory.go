@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/tickstep/cloudpan189-go/cloudpan/apierror"
 	"github.com/tickstep/cloudpan189-go/library/logger"
+	"path"
 	"strings"
 )
 
@@ -166,4 +167,18 @@ func (p *PanClient) FileInfo(fileId string) (fileInfo *FileEntity, error *apierr
 		return nil, apierror.NewApiErrorWithError(err)
 	}
 	return item, nil
+}
+
+// FileInfoByPath 通过路径获取文件详情，pathStr是绝对路径
+func (p *PanClient) FileInfoByPath(pathStr string) (fileInfo *FileEntity, error *apierror.ApiError) {
+	if !path.IsAbs(pathStr) {
+		return nil, apierror.NewFailedApiError("pathStr必须是绝对路径")
+	}
+	patternSlice := strings.Split(pathStr, PathSeparator)
+	if patternSlice[0] != "" {
+		return nil, apierror.NewFailedApiError("pathStr必须是绝对路径")
+	}
+
+	//ps := make([]string, len(patternSlice))
+	return nil, nil
 }

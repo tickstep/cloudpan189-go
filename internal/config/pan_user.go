@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"github.com/tickstep/cloudpan189-go/cloudpan"
+	"path"
 )
 
 type PanUser struct {
@@ -62,4 +63,12 @@ func SetupUserByCookie(cookieLoginUser string) (user *PanUser, err error) {
 
 func (p *PanUser) PanClient() *cloudpan.PanClient {
 	return p.panClient
+}
+
+// PathJoin 合并工作目录和相对路径p, 若p为绝对路径则忽略
+func (pu *PanUser) PathJoin(p string) string {
+	if path.IsAbs(p) {
+		return p
+	}
+	return path.Join(pu.Workdir, p)
 }
