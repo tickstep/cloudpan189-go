@@ -62,7 +62,7 @@ type (
 		// FileName 文件名
 		FileName string `json:"fileName"`
 		// FileSize 文件大小，文件夹为0
-		FileSize uint64 `json:"fileSize"`
+		FileSize int64 `json:"fileSize"`
 		// FileType 文件类型，后缀名，例如:"dmg"，没有则为空
 		FileType string `json:"fileType"`
 		// IsFolder 是否是文件夹
@@ -80,6 +80,8 @@ type (
 		MediaType MediaType `json:"mediaType"`
 		// SubFileCount 文件夹子文件数量，对文件夹详情有效
 		SubFileCount uint `json:"subFileCount"`
+		// FilePath 文件的完整路径
+		Path string
 	}
 
 	PathEntity struct {
@@ -139,6 +141,36 @@ const (
 	// OrderDesc 降序
 	OrderDesc OrderSort = "DESC"
 )
+
+// TotalSize 获取目录下文件的总大小
+func (fl FileList) TotalSize() int64 {
+	var size int64
+	for k := range fl {
+		if fl[k] == nil {
+			continue
+		}
+
+		size += fl[k].FileSize
+	}
+	return size
+}
+
+
+// Count 获取文件总数和目录总数
+func (fl FileList) Count() (fileN, directoryN int64) {
+	for k := range fl {
+		if fl[k] == nil {
+			continue
+		}
+
+		if fl[k].IsFolder {
+			directoryN++
+		} else {
+			fileN++
+		}
+	}
+	return
+}
 
 func (p *PanClient) FileSearch(param *FileSearchParam) (result *FileSearchResult, error *apierror.ApiError) {
 	fullUrl := &strings.Builder{}

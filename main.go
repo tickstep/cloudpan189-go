@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/peterh/liner"
+	"github.com/tickstep/cloudpan189-go/cloudpan"
 	"github.com/tickstep/cloudpan189-go/cmder/cmdliner"
 	"github.com/tickstep/cloudpan189-go/cmder/cmdliner/args"
 	"github.com/tickstep/cloudpan189-go/cmder/cmdutil"
@@ -346,6 +347,7 @@ func main()  {
 				return nil
 			},
 		},
+		// 切换工作目录 cd
 		{
 			Name:     "cd",
 			Category: "天翼云盘",
@@ -377,6 +379,7 @@ func main()  {
 			Flags: []cli.Flag{
 			},
 		},
+		// 输出工作目录 pwd
 		{
 			Name:      "pwd",
 			Usage:     "输出工作目录",
@@ -386,6 +389,90 @@ func main()  {
 			Action: func(c *cli.Context) error {
 				fmt.Println(config.Config.ActiveUser().Workdir)
 				return nil
+			},
+		},
+		// 列出目录 ls
+		{
+			Name:      "ls",
+			Aliases:   []string{"l", "ll"},
+			Usage:     "列出目录",
+			UsageText: app.Name + " ls <目录>",
+			Description: `
+	列出当前工作目录内的文件和目录, 或指定目录内的文件和目录
+
+	示例:
+
+	列出 我的资源 内的文件和目录
+	cloudpan189-go ls 我的资源
+
+	绝对路径
+	cloudpan189-go ls /我的资源
+
+	降序排序
+	cloudpan189-go ls -desc 我的资源
+
+	按文件大小降序排序
+	cloudpan189-go ls -size -desc 我的资源
+`,
+			Category: "天翼云盘",
+			Before:   reloadFn,
+			Action: func(c *cli.Context) error {
+				var (
+					orderBy cloudpan.OrderBy = cloudpan.OrderByName
+					orderSort cloudpan.OrderSort = cloudpan.OrderAsc
+				)
+
+				switch {
+				case c.IsSet("asc"):
+					orderSort = cloudpan.OrderAsc
+				case c.IsSet("desc"):
+					orderSort = cloudpan.OrderDesc
+				default:
+					orderSort = cloudpan.OrderAsc
+				}
+
+				switch {
+				case c.IsSet("time"):
+					orderBy = cloudpan.OrderByTime
+				case c.IsSet("name"):
+					orderBy = cloudpan.OrderByName
+				case c.IsSet("size"):
+					orderBy = cloudpan.OrderBySize
+				default:
+					orderBy = cloudpan.OrderByTime
+				}
+
+				command.RunLs(c.Args().Get(0), &command.LsOptions{
+					Total: c.Bool("l") || c.Parent().Args().Get(0) == "ll",
+				}, orderBy, orderSort)
+
+				return nil
+			},
+			Flags: []cli.Flag{
+				cli.BoolFlag{
+					Name:  "l",
+					Usage: "详细显示",
+				},
+				cli.BoolFlag{
+					Name:  "asc",
+					Usage: "升序排序",
+				},
+				cli.BoolFlag{
+					Name:  "desc",
+					Usage: "降序排序",
+				},
+				cli.BoolFlag{
+					Name:  "time",
+					Usage: "根据时间排序",
+				},
+				cli.BoolFlag{
+					Name:  "name",
+					Usage: "根据文件名排序",
+				},
+				cli.BoolFlag{
+					Name:  "size",
+					Usage: "根据大小排序",
+				},
 			},
 		},
 		// 清空控制台 clear
