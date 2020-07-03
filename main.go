@@ -346,6 +346,37 @@ func main()  {
 				return nil
 			},
 		},
+		{
+			Name:     "cd",
+			Category: "天翼云盘",
+			Usage:    "切换工作目录",
+			Description: `
+	cloudpan189-go cd <目录, 绝对路径或相对路径>
+
+	示例:
+
+	切换 /我的资源 工作目录:
+	cloudpan189-go cd /我的资源
+
+	切换上级目录:
+	cloudpan189-go cd ..
+
+	切换根目录:
+	cloudpan189-go cd /
+`,
+			Before: reloadFn,
+			After:  saveFunc,
+			Action: func(c *cli.Context) error {
+				if c.NArg() == 0 {
+					cli.ShowCommandHelp(c, c.Command.Name)
+					return nil
+				}
+				command.RunChangeDirectory(c.Args().Get(0))
+				return nil
+			},
+			Flags: []cli.Flag{
+			},
+		},
 		// 清空控制台 clear
 		{
 			Name:        "clear",

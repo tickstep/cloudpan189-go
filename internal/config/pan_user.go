@@ -12,6 +12,7 @@ type PanUser struct {
 	AccountName string
 	Sex      string
 	Workdir  string
+	WorkdirFileEntity cloudpan.FileEntity
 
 	CookieLoginUser string
 	panClient *cloudpan.PanClient
@@ -25,6 +26,7 @@ func SetupUserByCookie(cookieLoginUser string) (user *PanUser, err error) {
 		CookieLoginUser: cookieLoginUser,
 		panClient: panClient,
 		Workdir: "/",
+		WorkdirFileEntity: *cloudpan.NewFileEntityForRootDir(),
 	}
 
 	userInfo, err := panClient.GetUserInfo()

@@ -107,6 +107,16 @@ func NewFileSearchParam() *FileSearchParam {
 	}
 }
 
+// NewFileEntityForRootDir 创建根目录"/"的默认文件信息
+func NewFileEntityForRootDir() *FileEntity {
+	return &FileEntity {
+		FileId: "-11",
+		IsFolder: true,
+		FileName: "/",
+		ParentId: "",
+	}
+}
+
 const (
 	// MediaTypeDefault 默认全部
 	MediaTypeDefault MediaType = 0
@@ -195,12 +205,7 @@ func (p *PanClient) FileInfoByPath(pathStr string) (fileInfo *FileEntity, error 
 func (p *PanClient) getFileInfoByPath(index int, pathSlice *[]string, parentFileInfo *FileEntity) (*FileEntity, *apierror.ApiError)  {
 	if parentFileInfo == nil {
 		// default root "/" entity
-		parentFileInfo = &FileEntity {
-			FileId: "-11",
-			IsFolder: true,
-			FileName: "/",
-			ParentId: "",
-		}
+		parentFileInfo = NewFileEntityForRootDir()
 		if index == 0 && len(*pathSlice) == 1 {
 			// root path "/"
 			return parentFileInfo, nil

@@ -2,6 +2,7 @@ package config
 
 import (
 	"github.com/json-iterator/go"
+	"github.com/tickstep/cloudpan189-go/cloudpan"
 	"github.com/tickstep/cloudpan189-go/cmder/cmdutil"
 	"github.com/tickstep/cloudpan189-go/cmder/cmdutil/jsonhelper"
 	"github.com/tickstep/cloudpan189-go/library/logger"
@@ -222,7 +223,18 @@ func (c *PanConfig) ActiveUser() *PanUser {
 					if err != nil {
 						return nil
 					}
-					return c.SetActiveUser(user)
+					u.panClient = user.panClient
+					u.Nickname = user.Nickname
+
+					// check workdir valid or not
+					fe, err1 := u.PanClient().FileInfoByPath(u.Workdir)
+					if err1 != nil {
+						// default to root
+						u.Workdir = "/"
+						u.WorkdirFileEntity = *cloudpan.NewFileEntityForRootDir()
+					} else {
+						u.WorkdirFileEntity = *fe
+					}
 				}
 				return u
 			}
