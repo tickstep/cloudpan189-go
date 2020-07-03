@@ -6,6 +6,7 @@ import (
 	"github.com/tickstep/cloudpan189-go/cloudpan/apierror"
 	"github.com/tickstep/cloudpan189-go/library/logger"
 	"path"
+	"strconv"
 	"strings"
 )
 
@@ -51,7 +52,7 @@ type (
 		RecordCount uint `json:"recordCount"`
 	}
 
-	fileBasic struct {
+	FileEntity struct {
 		// CreateTime 创建时间
 		CreateTime string `json:"createTime"`
 		// FileId 文件ID
@@ -70,10 +71,6 @@ type (
 		LastOpTime string `json:"lastOpTime"`
 		// ParentId 父文件ID
 		ParentId string `json:"parentId"`
-	}
-
-	FileEntity struct {
-		fileBasic
 
 		// DownloadUrl 下载路径，只有文件才有
 		DownloadUrl string `json:"downloadUrl"`
@@ -135,8 +132,12 @@ const (
 
 func (p *PanClient) FileSearch(param *FileSearchParam) (result *FileSearchResult, error *apierror.ApiError) {
 	fullUrl := &strings.Builder{}
-	fmt.Fprintf(fullUrl, "%s/v2/listFiles.action?fileId=%s&mediaType=%d&keyword=%s&inGroupSpace=%t&orderBy=%d&order=%s&pageNum=%d&pageSize=%d",
-		WEB_URL, param.FileId, param.MediaType, param.Keyword, param.InGroupSpace, param.OrderBy, param.OrderSort,
+	md := ""
+	if param.MediaType != 0 {
+		md = strconv.Itoa(int(param.MediaType))
+	}
+	fmt.Fprintf(fullUrl, "%s/v2/listFiles.action?fileId=%s&mediaType=%s&keyword=%s&inGroupSpace=%t&orderBy=%d&order=%s&pageNum=%d&pageSize=%d",
+		WEB_URL, param.FileId, md, param.Keyword, param.InGroupSpace, param.OrderBy, param.OrderSort,
 		param.PageNum, param.PageSize)
 	logger.Verboseln("do reqeust url: " + fullUrl.String())
 	body, err := p.client.DoGet(fullUrl.String())
@@ -171,14 +172,61 @@ func (p *PanClient) FileInfo(fileId string) (fileInfo *FileEntity, error *apierr
 
 // FileInfoByPath 通过路径获取文件详情，pathStr是绝对路径
 func (p *PanClient) FileInfoByPath(pathStr string) (fileInfo *FileEntity, error *apierror.ApiError) {
+	if pathStr == "" {
+		pathStr = "/"
+	}
+	//pathStr = path.Clean(pathStr)
 	if !path.IsAbs(pathStr) {
 		return nil, apierror.NewFailedApiError("pathStr必须是绝对路径")
 	}
-	patternSlice := strings.Split(pathStr, PathSeparator)
-	if patternSlice[0] != "" {
-		return nil, apierror.NewFailedApiError("pathStr必须是绝对路径")
+
+	var pathSlice []string
+	if pathStr == "/" {
+		pathSlice = []string{""}
+	} else {
+		pathSlice = strings.Split(pathStr, PathSeparator)
+		if pathSlice[0] != "" {
+			return nil, apierror.NewFailedApiError("pathStr必须是绝对路径")
+		}
+	}
+	return p.getFileInfoByPath(0, &pathSlice, nil)
+}
+
+func (p *PanClient) getFileInfoByPath(index int, pathSlice *[]string, parentFileInfo *FileEntity) (*FileEntity, *apierror.ApiError)  {
+	if parentFileInfo == nil {
+		// default root "/" entity
+		parentFileInfo = &FileEntity {
+			FileId: "-11",
+			IsFolder: true,
+			FileName: "/",
+			ParentId: "",
+		}
+		if index == 0 && len(*pathSlice) == 1 {
+			// root path "/"
+			return parentFileInfo, nil
+		}
+
+		return p.getFileInfoByPath(index + 1, pathSlice, parentFileInfo)
 	}
 
-	//ps := make([]string, len(patternSlice))
-	return nil, nil
+	if index >= len(*pathSlice) {
+		return parentFileInfo, nil
+	}
+
+	searchPath := NewFileSearchParam()
+	searchPath.FileId = parentFileInfo.FileId
+	fileResult, err := p.FileSearch(searchPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if fileResult == nil || fileResult.Data == nil || len(fileResult.Data) == 0 {
+		return nil, apierror.NewFailedApiError("文件不存在")
+	}
+	for _, fileEntity := range fileResult.Data {
+		if fileEntity.FileName == (*pathSlice)[index] {
+			return p.getFileInfoByPath(index + 1, pathSlice, fileEntity)
+		}
+	}
+	return nil, apierror.NewFailedApiError("文件不存在")
 }

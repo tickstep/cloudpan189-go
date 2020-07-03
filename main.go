@@ -381,7 +381,10 @@ func main()  {
 			Category:    "debug",
 			Before:      reloadFn,
 			Action: func(c *cli.Context) error {
-				r, _ := config.Config.ActiveUser().PanClient().FileInfo(c.Args().Get(0))
+				r, err := config.Config.ActiveUser().PanClient().FileInfoByPath(c.Args().Get(0))
+				if err != nil {
+					fmt.Println(err)
+				}
 				fmt.Printf("%+v", r)
 				return nil
 			},
