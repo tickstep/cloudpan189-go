@@ -377,6 +377,17 @@ func main()  {
 			Flags: []cli.Flag{
 			},
 		},
+		{
+			Name:      "pwd",
+			Usage:     "输出工作目录",
+			UsageText: app.Name + " pwd",
+			Category:  "天翼云盘",
+			Before:    reloadFn,
+			Action: func(c *cli.Context) error {
+				fmt.Println(config.Config.ActiveUser().Workdir)
+				return nil
+			},
+		},
 		// 清空控制台 clear
 		{
 			Name:        "clear",
