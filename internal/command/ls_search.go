@@ -43,6 +43,7 @@ func RunLs(targetPath string, lsOptions *LsOptions, orderBy cloudpan.OrderBy, or
 		return
 	}
 
+	fileList := cloudpan.FileList{}
 	searchParam := cloudpan.NewFileSearchParam()
 	searchParam.FileId = targetPathInfo.FileId
 	searchParam.OrderBy = orderBy
@@ -53,8 +54,11 @@ func RunLs(targetPath string, lsOptions *LsOptions, orderBy cloudpan.OrderBy, or
 			fmt.Println(err)
 			return
 		}
-		renderTable(opLs, lsOptions.Total, targetPath, fileResult.Data)
+		fileList = fileResult.Data
+	} else {
+		fileList = append(fileList, targetPathInfo)
 	}
+	renderTable(opLs, lsOptions.Total, targetPath, fileList)
 }
 
 
