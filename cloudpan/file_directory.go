@@ -192,6 +192,22 @@ func (p *PanClient) FileSearch(param *FileSearchParam) (result *FileSearchResult
 		logger.Verboseln("search response failed")
 		return nil, apierror.NewApiErrorWithError(err)
 	}
+
+	// combine the path for file
+	parentDirPath := strings.Builder{}
+	for _, p := range item.Path {
+		if p.FileName == "全部文件" {
+			parentDirPath.WriteString("/")
+			continue
+		}
+		parentDirPath.WriteString(p.FileName + "/")
+	}
+	pd := parentDirPath.String()
+
+	// add path to file
+	for _, f := range item.Data {
+		f.Path = pd + f.FileName
+	}
 	return item, nil
 }
 

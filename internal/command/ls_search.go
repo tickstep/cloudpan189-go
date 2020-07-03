@@ -53,7 +53,7 @@ func RunLs(targetPath string, lsOptions *LsOptions, orderBy cloudpan.OrderBy, or
 			fmt.Println(err)
 			return
 		}
-		renderTable(opSearch, lsOptions.Total, targetPath, fileResult.Data)
+		renderTable(opLs, lsOptions.Total, targetPath, fileResult.Data)
 	}
 }
 
@@ -85,7 +85,7 @@ func renderTable(op int, isTotal bool, path string, files cloudpan.FileList) {
 			case opLs:
 				tb.Append([]string{strconv.Itoa(k), file.FileId, converter.ConvertFileSize(file.FileSize, 2), file.CreateTime, file.LastOpTime, file.FileName})
 			case opSearch:
-				tb.Append([]string{strconv.Itoa(k), file.FileId, converter.ConvertFileSize(file.FileSize, 2), file.CreateTime, file.LastOpTime, file.FileName})
+				tb.Append([]string{strconv.Itoa(k), file.FileId, converter.ConvertFileSize(file.FileSize, 2), file.CreateTime, file.LastOpTime, file.Path})
 			}
 		}
 		fN, dN = files.Count()
@@ -103,7 +103,7 @@ func renderTable(op int, isTotal bool, path string, files cloudpan.FileList) {
 			case opLs:
 				tb.Append([]string{strconv.Itoa(k), converter.ConvertFileSize(file.FileSize, 2), file.LastOpTime, file.FileName})
 			case opSearch:
-				tb.Append([]string{strconv.Itoa(k), converter.ConvertFileSize(file.FileSize, 2), file.LastOpTime, file.FileName})
+				tb.Append([]string{strconv.Itoa(k), converter.ConvertFileSize(file.FileSize, 2), file.LastOpTime, file.Path})
 			}
 		}
 		fN, dN = files.Count()
