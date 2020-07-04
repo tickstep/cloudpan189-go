@@ -146,3 +146,10 @@ func (h *HTTPClient) Fetch(method string, urlStr string, post interface{}, heade
 func (h *HTTPClient) DoGet(urlStr string) (body []byte, err error) {
 	return h.Fetch("GET", urlStr, nil, nil)
 }
+
+func (h *HTTPClient) DoPost(urlStr string, post interface{}) (body []byte, err error) {
+	headers := map[string]string{
+		"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+	}
+	return h.Fetch("POST", urlStr, post, headers)
+}
