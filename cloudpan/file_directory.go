@@ -237,6 +237,9 @@ func (p *PanClient) FileInfoByPath(pathStr string) (fileInfo *FileEntity, error 
 	if !path.IsAbs(pathStr) {
 		return nil, apierror.NewFailedApiError("pathStr必须是绝对路径")
 	}
+	if len(pathStr) > 1 {
+		pathStr = path.Clean(pathStr)
+	}
 
 	var pathSlice []string
 	if pathStr == "/" {
