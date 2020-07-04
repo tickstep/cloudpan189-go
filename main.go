@@ -589,6 +589,10 @@ func main()  {
 
 	将文件 1.mp4 重命名为 2.mp4
 	cloudpan189-go rename 1.mp4 2.mp4
+
+    将文件 /test/1.mp4 重命名为 /test/2.mp4
+    要求必须是同一个文件目录内
+	cloudpan189-go rename /test/1.mp4 /test/2.mp4
 `,
 			Category: "天翼云盘",
 			Before:   reloadFn,
