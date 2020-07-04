@@ -8,6 +8,7 @@ import (
 	"github.com/tickstep/cloudpan189-go/cmder/cmdutil/converter"
 	"github.com/tickstep/cloudpan189-go/internal/config"
 	"github.com/tickstep/cloudpan189-go/library/text"
+	"math"
 	"os"
 	"strconv"
 )
@@ -55,6 +56,20 @@ func RunLs(targetPath string, lsOptions *LsOptions, orderBy cloudpan.OrderBy, or
 			return
 		}
 		fileList = fileResult.Data
+
+		// more page?
+		if fileResult.RecordCount > fileResult.PageNum {
+			pageCount := int(math.Ceil(float64(fileResult.RecordCount) / float64(fileResult.PageSize)))
+			for page := 2; page <= pageCount; page++ {
+				searchParam.PageNum = uint(page)
+				fileResult, err = activeUser.PanClient().FileSearch(searchParam)
+				if err != nil {
+					fmt.Println(err)
+					break
+				}
+				fileList = append(fileList, fileResult.Data...)
+			}
+		}
 	} else {
 		fileList = append(fileList, targetPathInfo)
 	}
