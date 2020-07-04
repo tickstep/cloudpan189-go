@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/tickstep/cloudpan189-go/cloudpan/apierror"
 	"github.com/tickstep/cloudpan189-go/library/logger"
+	"strconv"
 	"strings"
 )
 
@@ -27,8 +28,10 @@ type (
 	BatchTaskParam struct {
 		TypeFlag BatchTaskType `json:"type"`
 		TaskInfos BatchTaskInfoList `json:"taskInfos"`
+		TargetFolderId int `json:"targetFolderId"`
 	}
 
+    // CheckTaskResult 检查任务结果
 	CheckTaskResult struct {
 		FailedCount int `json:"failedCount"`
 		SkipCount int `json:"skipCount"`
@@ -50,6 +53,10 @@ const (
 
 	// BatchTaskTypeDelete 删除文件任务
 	BatchTaskTypeDelete BatchTaskType = "DELETE"
+	// BatchTaskTypeCopy 复制文件任务
+	BatchTaskTypeCopy BatchTaskType = "COPY"
+	// BatchTaskTypeMove 移动文件任务
+	BatchTaskTypeMove BatchTaskType = "MOVE"
 )
 
 func (p *PanClient) CreateBatchTask (param *BatchTaskParam) (taskId string, error *apierror.ApiError) {
@@ -57,10 +64,24 @@ func (p *PanClient) CreateBatchTask (param *BatchTaskParam) (taskId string, erro
 	fmt.Fprintf(fullUrl, "%s/createBatchTask.action", WEB_URL)
 	logger.Verboseln("do request url: " + fullUrl.String())
 	taskInfosStr, err := json.Marshal(param.TaskInfos)
-	postData := map[string]string {
-		"type": string(param.TypeFlag),
-		"taskInfos": string(taskInfosStr),
+	var postData map[string]string
+	switch param.TypeFlag {
+	case BatchTaskTypeDelete:
+		postData = map[string]string {
+			"type": string(param.TypeFlag),
+			"taskInfos": string(taskInfosStr),
+		}
+		break
+	case BatchTaskTypeCopy:
+	case BatchTaskTypeMove:
+		postData = map[string]string {
+			"type": string(param.TypeFlag),
+			"taskInfos": string(taskInfosStr),
+			"targetFolderId": strconv.Itoa(param.TargetFolderId),
+		}
+		break
 	}
+
 	body, err := p.client.DoPost(fullUrl.String(), postData)
 	if err != nil {
 		logger.Verboseln("CreateBatchTask failed")
