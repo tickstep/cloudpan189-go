@@ -13,7 +13,7 @@ func RunLogin(username, password string) (cookieLoginUser string, error error) {
 	defer line.Close()
 
 	if username == "" {
-		username, error = line.State.Prompt("请输入用户名(手机号/邮箱/用户名), 回车键提交 > ")
+		username, error = line.State.Prompt("请输入用户名(手机号/邮箱/别名), 回车键提交 > ")
 		if error != nil {
 			return
 		}
