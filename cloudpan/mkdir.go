@@ -27,7 +27,7 @@ func (p *PanClient) Mkdir(parentFileId, dirName string) (*MkdirResult, *apierror
 	fullUrl := &strings.Builder{}
 	fmt.Fprintf(fullUrl, "%s/v2/createFolder.action?parentId=%s&fileName=%s",
 		WEB_URL, parentFileId, url.QueryEscape(dirName))
-	logger.Verboseln("do reqeust url: " + fullUrl.String())
+	logger.Verboseln("do request url: " + fullUrl.String())
 	body, err := p.client.DoGet(fullUrl.String())
 	if err != nil {
 		logger.Verboseln("mkdir failed")

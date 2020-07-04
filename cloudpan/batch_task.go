@@ -25,7 +25,7 @@ type (
 
 	// BatchTaskParam 任务参数
 	BatchTaskParam struct {
-		TypeFlag string `json:"type"`
+		TypeFlag BatchTaskType `json:"type"`
 		TaskInfos BatchTaskInfoList `json:"taskInfos"`
 	}
 
@@ -41,20 +41,24 @@ type (
 	}
 
 	BatchTaskStatus int
+	BatchTaskType string
 )
 
 const (
 	// BatchTaskStatusOk 成功
-	BatchTaskStatusOk = 4
+	BatchTaskStatusOk BatchTaskStatus = 4
+
+	// BatchTaskTypeDelete 删除文件任务
+	BatchTaskTypeDelete BatchTaskType = "DELETE"
 )
 
 func (p *PanClient) CreateBatchTask (param *BatchTaskParam) (taskId string, error *apierror.ApiError) {
 	fullUrl := &strings.Builder{}
 	fmt.Fprintf(fullUrl, "%s/createBatchTask.action", WEB_URL)
-	logger.Verboseln("do reqeust url: " + fullUrl.String())
+	logger.Verboseln("do request url: " + fullUrl.String())
 	taskInfosStr, err := json.Marshal(param.TaskInfos)
 	postData := map[string]string {
-		"type": param.TypeFlag,
+		"type": string(param.TypeFlag),
 		"taskInfos": string(taskInfosStr),
 	}
 	body, err := p.client.DoPost(fullUrl.String(), postData)
@@ -65,12 +69,12 @@ func (p *PanClient) CreateBatchTask (param *BatchTaskParam) (taskId string, erro
 	return strings.ReplaceAll(string(body), "\"", ""), nil
 }
 
-func (p *PanClient) CheckBatchTask (typeFlag, taskId string) (result *CheckTaskResult, error *apierror.ApiError) {
+func (p *PanClient) CheckBatchTask (typeFlag BatchTaskType, taskId string) (result *CheckTaskResult, error *apierror.ApiError) {
 	fullUrl := &strings.Builder{}
 	fmt.Fprintf(fullUrl, "%s/checkBatchTask.action", WEB_URL)
-	logger.Verboseln("do reqeust url: " + fullUrl.String())
+	logger.Verboseln("do request url: " + fullUrl.String())
 	postData := map[string]string {
-		"type": typeFlag,
+		"type": string(typeFlag),
 		"taskId": taskId,
 	}
 	body, err := p.client.DoPost(fullUrl.String(), postData)

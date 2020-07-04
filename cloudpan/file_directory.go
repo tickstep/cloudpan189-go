@@ -181,7 +181,7 @@ func (p *PanClient) FileSearch(param *FileSearchParam) (result *FileSearchResult
 	fmt.Fprintf(fullUrl, "%s/v2/listFiles.action?fileId=%s&mediaType=%s&keyword=%s&inGroupSpace=%t&orderBy=%d&order=%s&pageNum=%d&pageSize=%d",
 		WEB_URL, param.FileId, md, param.Keyword, param.InGroupSpace, param.OrderBy, param.OrderSort,
 		param.PageNum, param.PageSize)
-	logger.Verboseln("do reqeust url: " + fullUrl.String())
+	logger.Verboseln("do request url: " + fullUrl.String())
 	body, err := p.client.DoGet(fullUrl.String())
 	if err != nil {
 		logger.Verboseln("search failed")
@@ -214,7 +214,7 @@ func (p *PanClient) FileSearch(param *FileSearchParam) (result *FileSearchResult
 func (p *PanClient) FileInfoById(fileId string) (fileInfo *FileEntity, error *apierror.ApiError) {
 	fullUrl := &strings.Builder{}
 	fmt.Fprintf(fullUrl, "%s/v2/getFileInfo.action?fileId=%s", WEB_URL, fileId)
-	logger.Verboseln("do reqeust url: " + fullUrl.String())
+	logger.Verboseln("do request url: " + fullUrl.String())
 	body, err := p.client.DoGet(fullUrl.String())
 	if err != nil {
 		logger.Verboseln("get file info failed")

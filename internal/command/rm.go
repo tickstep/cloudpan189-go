@@ -44,7 +44,7 @@ func RunRemove(paths ...string) {
 
 	// delete files
 	delParam := &cloudpan.BatchTaskParam{
-		TypeFlag: "DELETE",
+		TypeFlag: cloudpan.BatchTaskTypeDelete,
 		TaskInfos: infoList,
 	}
 
@@ -57,7 +57,7 @@ func RunRemove(paths ...string) {
 
 	// check
 	time.Sleep(time.Duration(200) * time.Millisecond)
-	taskRes, err := activeUser.PanClient().CheckBatchTask("DELETE", taskId)
+	taskRes, err := activeUser.PanClient().CheckBatchTask(cloudpan.BatchTaskTypeDelete, taskId)
 	if err != nil || taskRes.TaskStatus != cloudpan.BatchTaskStatusOk {
 		fmt.Println("无法删除文件，请稍后重试")
 		return
