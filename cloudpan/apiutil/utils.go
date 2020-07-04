@@ -1,6 +1,11 @@
 package apiutil
 
-import "strings"
+import (
+	"fmt"
+	"math/rand"
+	"strings"
+	"time"
+)
 
 const (
 	RsaPublicKey = `-----BEGIN PUBLIC KEY-----
@@ -13,6 +18,10 @@ FlhDeqVOG094hFJvZeK4OzA6HVwzwnEW5vIZ7d+u61RV1bsFxmB68+8JXs3ycGcE
 	b64map = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
 	bi_rm = "0123456789abcdefghijklmnopqrstuvwxyz"
 )
+
+func init() {
+	rand.Seed(time.Now().UnixNano())
+}
 
 func int2char(i int) (r byte) {
 	return bi_rm[i]
@@ -50,4 +59,10 @@ func B64toHex(b64str string) (hexstr string) {
 		sb.WriteByte(int2char(c << 2))
 	}
 	return sb.String()
+}
+
+func noCache() string {
+	noCache := &strings.Builder{}
+	fmt.Fprintf(noCache, "0.%d", rand.Int63n(1e17))
+	return noCache.String()
 }
