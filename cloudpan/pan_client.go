@@ -35,7 +35,7 @@ func NewPanClient(cookieLoginUser string) *PanClient {
 	})
 
 	// debug
-	client.SetProxy("http://127.0.0.1:8888")
+	//client.SetProxy("http://127.0.0.1:8888")
 
 	return &PanClient{
 		client: client,

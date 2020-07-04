@@ -6,6 +6,7 @@ import (
 	"github.com/tickstep/cloudpan189-go/cmder/cmdtable"
 	"github.com/tickstep/cloudpan189-go/library/logger"
 	"os"
+	"path"
 	"strconv"
 	"time"
 )
@@ -60,7 +61,7 @@ func getBatchTaskInfoList(paths ...string) (*cloudpan.BatchTaskInfoList, *[]stri
 	delFileInfos := make([]*cloudpan.FileEntity, 0, len(paths))
 	infoList := cloudpan.BatchTaskInfoList{}
 	for _, p := range paths {
-		absolutePath := activeUser.PathJoin(p)
+		absolutePath := path.Clean(activeUser.PathJoin(p))
 		fe, err := activeUser.PanClient().FileInfoByPath(absolutePath)
 		if err != nil {
 			failedRmPaths = append(failedRmPaths, absolutePath)

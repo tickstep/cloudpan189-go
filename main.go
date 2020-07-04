@@ -552,6 +552,32 @@ func main()  {
 				return nil
 			},
 		},
+		// 移动文件/目录 mv
+		{
+			Name:  "mv",
+			Usage: "移动文件/目录",
+			UsageText: `移动:
+	cloudpan189-go mv <文件/目录1> <文件/目录2> <文件/目录3> ... <目标目录>`,
+			Description: `
+	注意: 移动多个文件和目录时, 请确保每一个文件和目录都存在, 否则移动操作会失败.
+
+	示例:
+
+	将 /我的资源/1.mp4 移动到 根目录 /
+	cloudpan189-go mv /我的资源/1.mp4 /
+`,
+			Category: "天翼云盘",
+			Before:   reloadFn,
+			Action: func(c *cli.Context) error {
+				if c.NArg() <= 1 {
+					cli.ShowCommandHelp(c, c.Command.Name)
+					return nil
+				}
+
+				command.RunMove(c.Args()...)
+				return nil
+			},
+		},
 		// 清空控制台 clear
 		{
 			Name:        "clear",
