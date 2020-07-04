@@ -475,6 +475,22 @@ func main()  {
 				},
 			},
 		},
+		// 创建目录 mkdir
+		{
+			Name:      "mkdir",
+			Usage:     "创建目录",
+			UsageText: app.Name + " mkdir <目录>",
+			Category:  "天翼云盘",
+			Before:    reloadFn,
+			Action: func(c *cli.Context) error {
+				if c.NArg() == 0 {
+					cli.ShowCommandHelp(c, c.Command.Name)
+					return nil
+				}
+				command.RunMkdir(c.Args().Get(0))
+				return nil
+			},
+		},
 		// 清空控制台 clear
 		{
 			Name:        "clear",
@@ -510,7 +526,7 @@ func main()  {
 			Category:    "debug",
 			Before:      reloadFn,
 			Action: func(c *cli.Context) error {
-				r, err := config.Config.ActiveUser().PanClient().FileInfoByPath(c.Args().Get(0))
+				r, err := config.Config.ActiveUser().PanClient().Mkdir("", c.Args().Get(0))
 				if err != nil {
 					fmt.Println(err)
 				}

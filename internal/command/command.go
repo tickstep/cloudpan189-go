@@ -8,3 +8,7 @@ import (
 func GetActivePanClient() *cloudpan.PanClient {
 	return config.Config.ActiveUser().PanClient()
 }
+
+func GetActiveUser() *config.PanUser {
+	return config.Config.ActiveUser()
+}

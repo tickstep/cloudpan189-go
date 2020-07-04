@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"github.com/tickstep/cloudpan189-go/cloudpan"
+	"github.com/tickstep/cloudpan189-go/library/logger"
 	"path"
 )
 
@@ -63,8 +64,8 @@ func SetupUserByCookie(cookieLoginUser string) (user *PanUser, err error) {
 	return u, nil
 }
 
-func (p *PanUser) PanClient() *cloudpan.PanClient {
-	return p.panClient
+func (pu *PanUser) PanClient() *cloudpan.PanClient {
+	return pu.panClient
 }
 
 // PathJoin 合并工作目录和相对路径p, 若p为绝对路径则忽略
@@ -73,4 +74,13 @@ func (pu *PanUser) PathJoin(p string) string {
 		return p
 	}
 	return path.Join(pu.Workdir, p)
+}
+
+func (pu *PanUser) FreshWorkdirInfo() {
+	fe, err := pu.PanClient().FileInfoById(pu.WorkdirFileEntity.FileId)
+	if err != nil {
+		logger.Verboseln("刷新工作目录信息失败")
+		return
+	}
+	pu.WorkdirFileEntity = *fe
 }

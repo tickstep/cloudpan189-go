@@ -211,7 +211,7 @@ func (p *PanClient) FileSearch(param *FileSearchParam) (result *FileSearchResult
 	return item, nil
 }
 
-func (p *PanClient) FileInfo(fileId string) (fileInfo *FileEntity, error *apierror.ApiError) {
+func (p *PanClient) FileInfoById(fileId string) (fileInfo *FileEntity, error *apierror.ApiError) {
 	fullUrl := &strings.Builder{}
 	fmt.Fprintf(fullUrl, "%s/v2/getFileInfo.action?fileId=%s", WEB_URL, fileId)
 	logger.Verboseln("do reqeust url: " + fullUrl.String())
