@@ -578,6 +578,30 @@ func main()  {
 				return nil
 			},
 		},
+		// 重命名文件 rename
+		{
+			Name:  "rename",
+			Usage: "重命名文件",
+			UsageText: `重命名文件:
+	cloudpan189-go rename <旧文件/目录名> <新文件/目录名>`,
+			Description: `
+	示例:
+
+	将文件 1.mp4 重命名为 2.mp4
+	cloudpan189-go rename 1.mp4 2.mp4
+`,
+			Category: "天翼云盘",
+			Before:   reloadFn,
+			Action: func(c *cli.Context) error {
+				if c.NArg() != 2 {
+					cli.ShowCommandHelp(c, c.Command.Name)
+					return nil
+				}
+
+				command.RunRename(c.Args().Get(0), c.Args().Get(1))
+				return nil
+			},
+		},
 		// 清空控制台 clear
 		{
 			Name:        "clear",
