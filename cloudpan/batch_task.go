@@ -48,6 +48,8 @@ type (
 )
 
 const (
+	// BatchTaskStatusNotAction 无需任何操作
+	BatchTaskStatusNotAction BatchTaskStatus = 2
 	// BatchTaskStatusOk 成功
 	BatchTaskStatusOk BatchTaskStatus = 4
 
@@ -65,21 +67,19 @@ func (p *PanClient) CreateBatchTask (param *BatchTaskParam) (taskId string, erro
 	logger.Verboseln("do request url: " + fullUrl.String())
 	taskInfosStr, err := json.Marshal(param.TaskInfos)
 	var postData map[string]string
-	switch param.TypeFlag {
-	case BatchTaskTypeDelete:
+	if BatchTaskTypeDelete == param.TypeFlag {
 		postData = map[string]string {
 			"type": string(param.TypeFlag),
 			"taskInfos": string(taskInfosStr),
 		}
-		break
-	case BatchTaskTypeCopy:
-	case BatchTaskTypeMove:
+	} else if BatchTaskTypeCopy == param.TypeFlag || BatchTaskTypeMove == param.TypeFlag {
 		postData = map[string]string {
 			"type": string(param.TypeFlag),
 			"taskInfos": string(taskInfosStr),
 			"targetFolderId": strconv.Itoa(param.TargetFolderId),
 		}
-		break
+	} else {
+		return "", apierror.NewFailedApiError("不支持的操作")
 	}
 
 	body, err := p.client.DoPost(fullUrl.String(), postData)

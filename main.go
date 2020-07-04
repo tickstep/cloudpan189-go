@@ -523,6 +523,35 @@ func main()  {
 				return nil
 			},
 		},
+		// 拷贝文件/目录 cp
+		{
+			Name:  "cp",
+			Usage: "拷贝文件/目录",
+			UsageText: app.Name + ` cp <文件/目录> <目标文件/目录>
+	cloudpan189-go cp <文件/目录1> <文件/目录2> <文件/目录3> ... <目标目录>`,
+			Description: `
+	注意: 拷贝多个文件和目录时, 请确保每一个文件和目录都存在, 否则拷贝操作会失败.
+
+	示例:
+
+	将 /我的资源/1.mp4 复制到 根目录 /
+	cloudpan189-go cp /我的资源/1.mp4 /
+
+	将 /我的资源/1.mp4 和 /我的资源/2.mp4 复制到 根目录 /
+	cloudpan189-go cp /我的资源/1.mp4 /我的资源/2.mp4 /
+`,
+			Category: "天翼云盘",
+			Before:   reloadFn,
+			Action: func(c *cli.Context) error {
+				if c.NArg() <= 1 {
+					cli.ShowCommandHelp(c, c.Command.Name)
+					return nil
+				}
+
+				command.RunCopy(c.Args()...)
+				return nil
+			},
+		},
 		// 清空控制台 clear
 		{
 			Name:        "clear",
