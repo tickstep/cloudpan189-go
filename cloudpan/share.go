@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"github.com/tickstep/cloudpan189-go/cloudpan/apierror"
 	"github.com/tickstep/cloudpan189-go/library/logger"
+	"github.com/tickstep/cloudpan189-go/library/text"
+	"net/url"
+	"strconv"
 	"strings"
 )
 
@@ -159,4 +162,37 @@ func (p *PanClient) ListShare(param *ListShareItemParam) (*ListShareItemResult, 
 		return nil, apierror.NewApiErrorWithError(err)
 	}
 	return item, nil
+}
+
+func (p *PanClient) CancelShare(shareIdList []int) (bool, *apierror.ApiError) {
+	fullUrl := &strings.Builder{}
+	shareIds := ""
+	for _, id := range shareIdList {
+		shareIds += strconv.Itoa(id) + ","
+	}
+	if strings.LastIndex(shareIds, ",") == (len(shareIds) - 1) {
+		shareIds = text.Substr(shareIds, 0, len(shareIds) - 1)
+	}
+
+	fmt.Fprintf(fullUrl, "%s/v2/cancelShare.action?shareIdList=%s&ancelType=1",
+		WEB_URL, url.QueryEscape(shareIds))
+	logger.Verboseln("do request url: " + fullUrl.String())
+	body, err := p.client.DoGet(fullUrl.String())
+	if err != nil {
+		logger.Verboseln("CancelShare failed")
+		return false, apierror.NewApiErrorWithError(err)
+	}
+	comResp := &apierror.ErrorResp{}
+	if err := json.Unmarshal(body, comResp); err == nil {
+		if comResp.ErrorCode != "" {
+			logger.Verboseln("CancelShare response failed")
+			return false, apierror.NewFailedApiError("取消分享失败，请稍后重试")
+		}
+	}
+	item := &apierror.SuccessResp{}
+	if err := json.Unmarshal(body, item); err != nil {
+		logger.Verboseln("CancelShare response failed")
+		return false, apierror.NewApiErrorWithError(err)
+	}
+	return item.Success, nil
 }

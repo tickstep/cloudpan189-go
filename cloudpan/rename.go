@@ -9,13 +9,6 @@ import (
 	"strings"
 )
 
-type (
-	RenameResult struct {
-		// Success 是否成功。true为成功，false或者没有返回则为失败
-		Success bool `json:"success"`
-	}
-)
-
 func (p *PanClient) Rename(renameFileId, newName string) (bool, *apierror.ApiError) {
 	if renameFileId == "" {
 		return false, apierror.NewFailedApiError("请指定命名的文件")
@@ -38,7 +31,7 @@ func (p *PanClient) Rename(renameFileId, newName string) (bool, *apierror.ApiErr
 		}
 	}
 
-	result := &RenameResult{}
+	result := &apierror.SuccessResp{}
 	if err := json.Unmarshal(body, result); err != nil {
 		logger.Verboseln("Rename response failed")
 		return false, apierror.NewApiErrorWithError(err)
