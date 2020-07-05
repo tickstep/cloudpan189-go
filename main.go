@@ -129,7 +129,7 @@ func main()  {
 				numArgs                    = len(lineArgs)
 				acceptCompleteFileCommands = []string{
 					"cd", "cp", "download", "ls", "mkdir", "mv", "rm", "share", "upload", "login",
-					"clear", "quit", "exit", "quota", "who",
+					"clear", "quit", "exit", "quota", "who", "sign",
 				}
 				closed = strings.LastIndex(line, " ") == len(line)-1
 			)
@@ -477,6 +477,22 @@ func main()  {
 						converter.ConvertFileSize(q.Quota, 2), converter.ConvertFileSize(q.UsedSize, 2),
 						100*float64(q.UsedSize)/float64(q.Quota))
 				}
+				return nil
+			},
+		},
+		// 用户签到 sign
+		{
+			Name:        "sign",
+			Usage:       "用户签到",
+			Description: "当前帐号进行签到",
+			Category:    "天翼云盘账号",
+			Before:      reloadFn,
+			Action: func(c *cli.Context) error {
+				if config.Config.ActiveUser() == nil {
+					fmt.Println("未登录账号")
+					return nil
+				}
+				command.RunUserSign()
 				return nil
 			},
 		},

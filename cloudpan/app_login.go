@@ -63,7 +63,7 @@ var (
 )
 
 func AppLogin(username, password string) (result *AppLoginToken, error *apierror.ApiError) {
-	appClient.SetProxy("http://127.0.0.1:8888")
+	//appClient.SetProxy("http://127.0.0.1:8888")
 	result = &AppLoginToken{}
 
 	appClient.ResetCookiejar()
@@ -107,8 +107,8 @@ func AppLogin(username, password string) (result *AppLoginToken, error *apierror
 	logger.Verboseln("do request url: " + urlStr)
 	body, err1 := appClient.Fetch("POST", urlStr, formData, headers)
 	if err1 != nil {
-		logger.Verboseln("login redirectURL occurs error: ", err.Error())
-		return nil, apierror.NewApiErrorWithError(err)
+		logger.Verboseln("login redirectURL occurs error: ", err1.Error())
+		return nil, apierror.NewApiErrorWithError(err1)
 	}
 	logger.Verboseln("response: " + string(body))
 	r := &loginResult{}
@@ -129,8 +129,8 @@ func AppLogin(username, password string) (result *AppLoginToken, error *apierror
 	logger.Verboseln("do request url: " + fullUrl.String())
 	body, err1 = appClient.Fetch("GET", fullUrl.String(), nil, headers)
 	if err1 != nil {
-		logger.Verboseln("get session info occurs error: ", err.Error())
-		return nil, apierror.NewApiErrorWithError(err)
+		logger.Verboseln("get session info occurs error: ", err1.Error())
+		return nil, apierror.NewApiErrorWithError(err1)
 	}
 	logger.Verboseln("response: " + string(body))
 	rs := &appSessionResp{}
@@ -162,8 +162,8 @@ func AppLogin(username, password string) (result *AppLoginToken, error *apierror
 	}
 	body, err1 = appClient.Fetch("GET", fullUrl.String(), nil, headers)
 	if err1 != nil {
-		logger.Verboseln("get accessToken occurs error: ", err.Error())
-		return nil, apierror.NewApiErrorWithError(err)
+		logger.Verboseln("get accessToken occurs error: ", err1.Error())
+		return nil, apierror.NewApiErrorWithError(err1)
 	}
 	logger.Verboseln("response: " + string(body))
 	atr := &accessTokenResp{}
