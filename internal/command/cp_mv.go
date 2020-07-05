@@ -121,15 +121,7 @@ func getFileInfo(paths ...string) (opFileList []*cloudpan.FileEntity, targetFile
 		return nil, nil, nil, fmt.Errorf("指定目标文件夹不存在")
 	}
 
-	for idx := 0; idx < (len(paths)-1); idx++ {
-		absolutePath := path.Clean(activeUser.PathJoin(paths[idx]))
-		fe, err := activeUser.PanClient().FileInfoByPath(absolutePath)
-		if err != nil {
-			failedPaths = append(failedPaths, absolutePath)
-			continue
-		}
-		opFileList = append(opFileList, fe)
-	}
+	opFileList, failedPaths, error = GetFileInfoByPaths(paths[:len(paths)-1]...)
 	return
 }
 

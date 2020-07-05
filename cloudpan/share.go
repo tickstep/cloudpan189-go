@@ -13,6 +13,7 @@ import (
 
 type (
 	ShareExpiredTime int
+	ShareMode int
 
 	PrivateShareResult struct {
 		AccessCode string `json:"accessCode"`
@@ -67,7 +68,7 @@ type (
 		// ShareId 分享项目ID，唯一标识该分享项
 		ShareId int `json:"shareId"`
 		// ShareMode 分享模式，1-私密，2-公开
-		ShareMode int `json:"shareMode"`
+		ShareMode ShareMode `json:"shareMode"`
 		// ShareTime 分享时间
 		ShareTime string `json:"shareTime"`
 		// ShareType 分享类别，默认都是1
@@ -92,6 +93,10 @@ type (
 		PageSize int `json:"pageSize"`
 	}
 
+	errResp struct {
+		ErrorVO apierror.ErrorResp `json:"errorVO"`
+	}
+
 )
 
 const (
@@ -101,6 +106,11 @@ const (
 	ShareExpiredTime7Day ShareExpiredTime = 7
 	// 永久期限
 	ShareExpiredTimeForever ShareExpiredTime = 2099
+
+	// ShareModePrivate 私密分享
+	ShareModePrivate ShareMode = 1
+	// ShareModePublic 公开分享
+	ShareModePublic ShareMode = 2
 )
 
 func (p *PanClient) PrivateShare(fileId string, expiredTime ShareExpiredTime) (*PrivateShareResult, *apierror.ApiError) {
@@ -109,10 +119,22 @@ func (p *PanClient) PrivateShare(fileId string, expiredTime ShareExpiredTime) (*
 		WEB_URL, fileId, expiredTime)
 	logger.Verboseln("do request url: " + fullUrl.String())
 	body, err := p.client.DoGet(fullUrl.String())
+	logger.Verboseln("response body: " + string(body))
 	if err != nil {
 		logger.Verboseln("PrivateShare failed")
 		return nil, apierror.NewApiErrorWithError(err)
 	}
+	errResp := &errResp{}
+	if err := json.Unmarshal(body, errResp); err == nil {
+		if errResp.ErrorVO.ErrorCode != "" {
+			logger.Verboseln("PrivateShare response failed")
+			if errResp.ErrorVO.ErrorCode == "ShareCreateOverload" {
+				return nil, apierror.NewFailedApiError("你账号分享文件数量已到达限制")
+			}
+			return nil, apierror.NewApiErrorWithError(err)
+		}
+	}
+
 	item := &PrivateShareResult{}
 	if err := json.Unmarshal(body, item); err != nil {
 		logger.Verboseln("PrivateShare response failed")

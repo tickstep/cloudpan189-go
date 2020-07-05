@@ -606,6 +606,62 @@ func main()  {
 				return nil
 			},
 		},
+		// 分享文件/目录 share
+		{
+			Name:      "share",
+			Usage:     "分享文件/目录",
+			UsageText: app.Name + " share",
+			Category:  "天翼云盘",
+			Before:    reloadFn,
+			Action: func(c *cli.Context) error {
+				cli.ShowCommandHelp(c, c.Command.Name)
+				return nil
+			},
+			Subcommands: []cli.Command{
+				{
+					Name:        "set",
+					Aliases:     []string{"s"},
+					Usage:       "设置分享文件/目录",
+					UsageText:   app.Name + " share set <文件/目录1> <文件/目录2> ...",
+					Description: `
+目前只支持创建私密链接.
+示例:
+
+    创建文件 1.mp4 的分享链接 
+	cloudpan189-go share set 1.mp4
+
+    创建文件 1.mp4 的分享链接，并指定有效期为1天
+	cloudpan189-go share set -time 1 1.mp4
+`,
+					Action: func(c *cli.Context) error {
+						if c.NArg() < 1 {
+							cli.ShowCommandHelp(c, c.Command.Name)
+							return nil
+						}
+						et := cloudpan.ShareExpiredTimeForever
+						if c.IsSet("time") {
+							op := c.String("time")
+							if op == "1" {
+								et = cloudpan.ShareExpiredTime1Day
+							} else if op == "2" {
+								et = cloudpan.ShareExpiredTime7Day
+							} else {
+								et = cloudpan.ShareExpiredTimeForever
+							}
+						}
+						command.RunShareSet(c.Args(), et)
+						return nil
+					},
+					Flags: []cli.Flag{
+						cli.StringFlag{
+							Name:  "time",
+							Usage: "有效期，0-永久，1-1天，2-7天",
+						},
+					},
+				},
+			},
+
+		},
 		// 清空控制台 clear
 		{
 			Name:        "clear",
@@ -641,7 +697,7 @@ func main()  {
 			Category:    "debug",
 			Before:      reloadFn,
 			Action: func(c *cli.Context) error {
-				r, err := config.Config.ActiveUser().PanClient().Mkdir("", c.Args().Get(0))
+				r, err := config.Config.ActiveUser().PanClient().CancelShare([]int{169457822,169455759})
 				if err != nil {
 					fmt.Println(err)
 				}
