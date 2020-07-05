@@ -277,11 +277,12 @@ func main()  {
 			After:    saveFunc, // 登录完成需要调用保存配置
 			Action: func(c *cli.Context) error {
 				cookieOfToken := ""
+				appToken := cloudpan.AppLoginToken{}
 				if c.IsSet("COOKIE_LOGIN_USER") {
 					cookieOfToken = c.String("COOKIE_LOGIN_USER")
 				} else if c.NArg() == 0 {
 					var err error
-					cookieOfToken, err = command.RunLogin(c.String("username"), c.String("password"))
+					cookieOfToken, appToken, err = command.RunLogin(c.String("username"), c.String("password"))
 					if err != nil {
 						fmt.Println(err)
 						return err
@@ -291,6 +292,7 @@ func main()  {
 					return nil
 				}
 				cloudUser, _ := config.SetupUserByCookie(cookieOfToken)
+				cloudUser.AppToken = appToken
 				config.Config.SetActiveUser(cloudUser)
 				fmt.Println("天翼帐号登录成功: ", cloudUser.Nickname)
 				return nil

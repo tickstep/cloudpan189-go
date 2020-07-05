@@ -16,6 +16,7 @@ type PanUser struct {
 	WorkdirFileEntity cloudpan.FileEntity
 
 	CookieLoginUser string
+	AppToken cloudpan.AppLoginToken
 	panClient *cloudpan.PanClient
 }
 

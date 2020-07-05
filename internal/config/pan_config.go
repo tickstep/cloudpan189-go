@@ -253,6 +253,7 @@ func (c *PanConfig) SetActiveUser(user *PanUser) *PanUser {
 			u.Nickname = user.Nickname
 			u.Sex = user.Sex
 			u.CookieLoginUser = user.CookieLoginUser
+			u.AppToken = user.AppToken
 			needToInsert = false
 			break
 		}

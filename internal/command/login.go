@@ -8,7 +8,7 @@ import (
 	_ "github.com/tickstep/cloudpan189-go/library/requester"
 )
 
-func RunLogin(username, password string) (cookieLoginUser string, error error) {
+func RunLogin(username, password string) (cookieLoginUser string, appToken cloudpan.AppLoginToken, error error) {
 	line := cmdliner.NewLiner()
 	defer line.Close()
 
@@ -37,24 +37,32 @@ func RunLogin(username, password string) (cookieLoginUser string, error error) {
 				savePath, apiErr := cloudpan.GetCaptchaImage()
 				if apiErr != nil {
 					fmt.Errorf("获取认证码错误")
-					return cookieLoginUser, apiErr
+					return cookieLoginUser, appToken, apiErr
 				}
 				fmt.Printf("打开以下路径, 以查看验证码\n%s\n\n", savePath)
 				vcode, err := line.State.Prompt("请输入验证码 > ")
 				if err != nil {
-					return cookieLoginUser, err
+					return cookieLoginUser, appToken, err
 				}
 				cookieLoginUser, apiErr = cloudpan.LoginWithCaptcha(username, password, vcode)
 				if apiErr != nil {
-					return "", apiErr
+					return "", appToken, apiErr
 				} else {
 					return
 				}
 			}
 
 		} else {
-			return "", fmt.Errorf("登录失败")
+			return "", appToken, fmt.Errorf("登录失败")
 		}
 	}
+
+	// app login
+	token, apperr := cloudpan.AppLogin(username, password)
+	if apperr != nil {
+		fmt.Println("APP登录失败：", apperr)
+		return "", appToken, fmt.Errorf("登录失败")
+	}
+	appToken = *token
 	return
 }

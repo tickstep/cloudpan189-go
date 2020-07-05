@@ -25,7 +25,7 @@ type (
 		jRsaKey string
 	}
 
-	AppLoginResult struct {
+	AppLoginToken struct {
 		SessionKey string `json:"sessionKey"`
 		SessionSecret string `json:"sessionSecret"`
 		// 有效期的token
@@ -62,9 +62,9 @@ var (
 	appClient = requester.NewHTTPClient()
 )
 
-func AppLogin(username, password string) (result *AppLoginResult, error *apierror.ApiError) {
+func AppLogin(username, password string) (result *AppLoginToken, error *apierror.ApiError) {
 	appClient.SetProxy("http://127.0.0.1:8888")
-	result = &AppLoginResult{}
+	result = &AppLoginToken{}
 
 	appClient.ResetCookiejar()
 	loginParams, err := appGetLoginParams()
