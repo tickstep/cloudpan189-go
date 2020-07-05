@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"github.com/json-iterator/go"
 	"github.com/tickstep/cloudpan189-go/cloudpan"
 	"github.com/tickstep/cloudpan189-go/cmder/cmdutil"
@@ -271,4 +272,19 @@ func (c *PanConfig) SetActiveUser(user *PanUser) *PanUser {
 
 func (c *PanConfig) fix() {
 
+}
+
+// NumLogins 获取登录的用户数量
+func (c *PanConfig) NumLogins() int {
+	return len(c.UserList)
+}
+
+// 切换登录用户
+func (c *PanConfig) SwitchUser(uid uint64, username string) (*PanUser, error) {
+	for _, u := range c.UserList {
+		if u.UID == uid || u.AccountName == username {
+			return c.SetActiveUser(u), nil
+		}
+	}
+	return nil, fmt.Errorf("未找到指定的账号")
 }

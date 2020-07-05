@@ -18,6 +18,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"sort"
+	"strconv"
 	"strings"
 	"unicode"
 )
@@ -319,6 +320,74 @@ func main()  {
 			Before:      reloadFn,
 			Action: func(c *cli.Context) error {
 				fmt.Println(config.Config.UserList.String())
+				return nil
+			},
+		},
+		// 切换天翼帐号 su
+		{
+			Name:  "su",
+			Usage: "切换天翼帐号",
+			Description: `
+	切换已登录的天翼帐号:
+	如果运行该条命令没有提供参数, 程序将会列出所有的帐号, 供选择切换.
+
+	示例:
+	cloudpan189-go su
+	cloudpan189-go su <uid or name>
+`,
+			Category: "天翼云盘账号",
+			Before:   reloadFn,
+			After:    saveFunc,
+			Action: func(c *cli.Context) error {
+				if c.NArg() >= 2 {
+					cli.ShowCommandHelp(c, c.Command.Name)
+					return nil
+				}
+
+				numLogins := config.Config.NumLogins()
+
+				if numLogins == 0 {
+					fmt.Printf("未设置任何帐号, 不能切换\n")
+					return nil
+				}
+
+				var (
+					inputData = c.Args().Get(0)
+					uid       uint64
+				)
+
+				if c.NArg() == 1 {
+					// 直接切换
+					uid, _ = strconv.ParseUint(inputData, 10, 64)
+				} else if c.NArg() == 0 {
+					// 输出所有帐号供选择切换
+					cli.HandleAction(app.Command("loglist").Action, c)
+
+					// 提示输入 index
+					var index string
+					fmt.Printf("输入要切换帐号的 # 值 > ")
+					_, err := fmt.Scanln(&index)
+					if err != nil {
+						return nil
+					}
+
+					if n, err := strconv.Atoi(index); err == nil && n >= 0 && n < numLogins {
+						uid = config.Config.UserList[n].UID
+					} else {
+						fmt.Printf("切换用户失败, 请检查 # 值是否正确\n")
+						return nil
+					}
+				} else {
+					cli.ShowCommandHelp(c, c.Command.Name)
+				}
+
+				switchedUser, err := config.Config.SwitchUser(uid, inputData)
+				if err != nil {
+					fmt.Printf("切换用户失败, %s\n", err)
+					return nil
+				}
+
+				fmt.Printf("切换用户: %s\n", switchedUser.Nickname)
 				return nil
 			},
 		},
