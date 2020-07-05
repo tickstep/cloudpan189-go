@@ -399,6 +399,10 @@ func main()  {
 			Category:    "天翼云盘账号",
 			Before:      reloadFn,
 			Action: func(c *cli.Context) error {
+				if config.Config.ActiveUser() == nil {
+					fmt.Println("未登录账号")
+					return nil
+				}
 				activeUser := config.Config.ActiveUser()
 				gender := "未知"
 				if activeUser.Sex == "F" {
@@ -418,6 +422,10 @@ func main()  {
 			Category:    "天翼云盘账号",
 			Before:      reloadFn,
 			Action: func(c *cli.Context) error {
+				if config.Config.ActiveUser() == nil {
+					fmt.Println("未登录账号")
+					return nil
+				}
 				q, err := command.RunGetQuotaInfo()
 				if err == nil {
 					fmt.Printf("账号: %s, 个人空间总额 uid: %s, 个人空间已使用: %s, 比率: %f%%\n",
@@ -454,6 +462,10 @@ func main()  {
 					cli.ShowCommandHelp(c, c.Command.Name)
 					return nil
 				}
+				if config.Config.ActiveUser() == nil {
+					fmt.Println("未登录账号")
+					return nil
+				}
 				command.RunChangeDirectory(c.Args().Get(0))
 				return nil
 			},
@@ -468,6 +480,10 @@ func main()  {
 			Category:  "天翼云盘",
 			Before:    reloadFn,
 			Action: func(c *cli.Context) error {
+				if config.Config.ActiveUser() == nil {
+					fmt.Println("未登录账号")
+					return nil
+				}
 				fmt.Println(config.Config.ActiveUser().Workdir)
 				return nil
 			},
@@ -498,6 +514,10 @@ func main()  {
 			Category: "天翼云盘",
 			Before:   reloadFn,
 			Action: func(c *cli.Context) error {
+				if config.Config.ActiveUser() == nil {
+					fmt.Println("未登录账号")
+					return nil
+				}
 				var (
 					orderBy cloudpan.OrderBy = cloudpan.OrderByName
 					orderSort cloudpan.OrderSort = cloudpan.OrderAsc
@@ -568,6 +588,10 @@ func main()  {
 					cli.ShowCommandHelp(c, c.Command.Name)
 					return nil
 				}
+				if config.Config.ActiveUser() == nil {
+					fmt.Println("未登录账号")
+					return nil
+				}
 				command.RunMkdir(c.Args().Get(0))
 				return nil
 			},
@@ -599,7 +623,10 @@ func main()  {
 					cli.ShowCommandHelp(c, c.Command.Name)
 					return nil
 				}
-
+				if config.Config.ActiveUser() == nil {
+					fmt.Println("未登录账号")
+					return nil
+				}
 				command.RunRemove(c.Args()...)
 				return nil
 			},
@@ -628,7 +655,10 @@ func main()  {
 					cli.ShowCommandHelp(c, c.Command.Name)
 					return nil
 				}
-
+				if config.Config.ActiveUser() == nil {
+					fmt.Println("未登录账号")
+					return nil
+				}
 				command.RunCopy(c.Args()...)
 				return nil
 			},
@@ -654,6 +684,10 @@ func main()  {
 					cli.ShowCommandHelp(c, c.Command.Name)
 					return nil
 				}
+				if config.Config.ActiveUser() == nil {
+					fmt.Println("未登录账号")
+					return nil
+				}
 
 				command.RunMove(c.Args()...)
 				return nil
@@ -671,8 +705,8 @@ func main()  {
 	将文件 1.mp4 重命名为 2.mp4
 	cloudpan189-go rename 1.mp4 2.mp4
 
-    将文件 /test/1.mp4 重命名为 /test/2.mp4
-    要求必须是同一个文件目录内
+	将文件 /test/1.mp4 重命名为 /test/2.mp4
+	要求必须是同一个文件目录内
 	cloudpan189-go rename /test/1.mp4 /test/2.mp4
 `,
 			Category: "天翼云盘",
@@ -682,7 +716,10 @@ func main()  {
 					cli.ShowCommandHelp(c, c.Command.Name)
 					return nil
 				}
-
+				if config.Config.ActiveUser() == nil {
+					fmt.Println("未登录账号")
+					return nil
+				}
 				command.RunRename(c.Args().Get(0), c.Args().Get(1))
 				return nil
 			},
@@ -717,6 +754,10 @@ func main()  {
 					Action: func(c *cli.Context) error {
 						if c.NArg() < 1 {
 							cli.ShowCommandHelp(c, c.Command.Name)
+							return nil
+						}
+						if config.Config.ActiveUser() == nil {
+							fmt.Println("未登录账号")
 							return nil
 						}
 						et := cloudpan.ShareExpiredTimeForever
