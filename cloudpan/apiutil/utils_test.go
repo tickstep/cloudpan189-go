@@ -3,6 +3,7 @@ package apiutil
 import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
+	"strconv"
 	"testing"
 )
 
@@ -19,4 +20,21 @@ func TestNoCache(t *testing.T) {
 	noCache := noCache()
 	fmt.Println(noCache)
 	assert.Equal(t, len("0.") + 17, len(noCache))
+}
+
+func TestTimestampe(t *testing.T) {
+	r := Timestamp()
+	fmt.Println(r)
+	assert.Equal(t, 13, len(strconv.Itoa(r)))
+}
+
+func TestSignature(t *testing.T) {
+	params := map[string]string {
+		"Timestamp": "1593905856153",
+		"sessionKey": "c99af8b0-cee7-46b8-8fe8-f11ff69417f8",
+		"AppKey": "601102120",
+	}
+	r := Signature(params)
+	fmt.Println(r)
+	assert.Equal(t, "8f0c6eb9048c087b9f2b6e190afc1140", r)
 }

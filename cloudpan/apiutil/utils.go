@@ -1,8 +1,11 @@
 package apiutil
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"fmt"
 	"math/rand"
+	"sort"
 	"strings"
 	"time"
 )
@@ -65,4 +68,26 @@ func noCache() string {
 	noCache := &strings.Builder{}
 	fmt.Fprintf(noCache, "0.%d", rand.Int63n(1e17))
 	return noCache.String()
+}
+
+func Timestamp() int {
+	// millisecond
+	return int(time.Now().UTC().UnixNano() / 1e6)
+}
+
+// Signature MD5签名
+func Signature(params map[string]string) string {
+	keys := []string{}
+	for k, v := range params {
+		keys = append(keys, k + "=" + v)
+	}
+
+	// sort
+	sort.Strings(keys)
+
+	signStr := strings.Join(keys, "&")
+
+	h := md5.New()
+	h.Write([]byte(signStr))
+	return hex.EncodeToString(h.Sum(nil))
 }
