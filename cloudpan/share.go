@@ -79,15 +79,15 @@ type (
 
 	ShareItemList []*ShareItem
 
-	// ListShareItemResult 获取分享项目列表响应体
-	ListShareItemResult struct {
+	// ShareListResult 获取分享项目列表响应体
+	ShareListResult struct {
 		Data ShareItemList `json:"data"`
 		PageNum int `json:"pageNum"`
 		PageSize int `json:"pageSize"`
 		RecordCount int `json:"recordCount"`
 	}
 
-	ListShareItemParam struct {
+	ShareListParam struct {
 		ShareType int `json:"shareType"`
 		PageNum int `json:"pageNum"`
 		PageSize int `json:"pageSize"`
@@ -113,7 +113,7 @@ const (
 	ShareModePublic ShareMode = 2
 )
 
-func (p *PanClient) PrivateShare(fileId string, expiredTime ShareExpiredTime) (*PrivateShareResult, *apierror.ApiError) {
+func (p *PanClient) SharePrivate(fileId string, expiredTime ShareExpiredTime) (*PrivateShareResult, *apierror.ApiError) {
 	fullUrl := &strings.Builder{}
 	fmt.Fprintf(fullUrl, "%s/v2/privateLinkShare.action?fileId=%s&expireTime=%d&withAccessCode=1",
 		WEB_URL, fileId, expiredTime)
@@ -121,13 +121,13 @@ func (p *PanClient) PrivateShare(fileId string, expiredTime ShareExpiredTime) (*
 	body, err := p.client.DoGet(fullUrl.String())
 	logger.Verboseln("response body: " + string(body))
 	if err != nil {
-		logger.Verboseln("PrivateShare failed")
+		logger.Verboseln("SharePrivate failed")
 		return nil, apierror.NewApiErrorWithError(err)
 	}
 	errResp := &errResp{}
 	if err := json.Unmarshal(body, errResp); err == nil {
 		if errResp.ErrorVO.ErrorCode != "" {
-			logger.Verboseln("PrivateShare response failed")
+			logger.Verboseln("SharePrivate response failed")
 			if errResp.ErrorVO.ErrorCode == "ShareCreateOverload" {
 				return nil, apierror.NewFailedApiError("您分享的次数已达上限，请明天再来吧")
 			}
@@ -137,56 +137,61 @@ func (p *PanClient) PrivateShare(fileId string, expiredTime ShareExpiredTime) (*
 
 	item := &PrivateShareResult{}
 	if err := json.Unmarshal(body, item); err != nil {
-		logger.Verboseln("PrivateShare response failed")
+		logger.Verboseln("SharePrivate response failed")
 		return nil, apierror.NewApiErrorWithError(err)
 	}
 	return item, nil
 }
 
-func (p *PanClient) PublicShare(fileId string, expiredTime ShareExpiredTime) (*PublicShareResult, *apierror.ApiError) {
+func (p *PanClient) SharePublic(fileId string, expiredTime ShareExpiredTime) (*PublicShareResult, *apierror.ApiError) {
 	fullUrl := &strings.Builder{}
 	fmt.Fprintf(fullUrl, "%s/v2/createOutLinkShare.action?fileId=%s&expireTime=%d&withAccessCode=1",
 		WEB_URL, fileId, expiredTime)
 	logger.Verboseln("do request url: " + fullUrl.String())
 	body, err := p.client.DoGet(fullUrl.String())
 	if err != nil {
-		logger.Verboseln("PublicShare failed")
+		logger.Verboseln("SharePublic failed")
 		return nil, apierror.NewApiErrorWithError(err)
 	}
 	item := &PublicShareResult{}
 	if err := json.Unmarshal(body, item); err != nil {
-		logger.Verboseln("PublicShare response failed")
+		logger.Verboseln("SharePublic response failed")
 		return nil, apierror.NewApiErrorWithError(err)
 	}
 	return item, nil
 }
 
-func NewListShareItemParam() *ListShareItemParam {
-	return &ListShareItemParam{
+func NewShareListParam() *ShareListParam {
+	return &ShareListParam{
 		ShareType: 1,
 		PageNum: 1,
 		PageSize: 60,
 	}
 }
-func (p *PanClient) ListShare(param *ListShareItemParam) (*ListShareItemResult, *apierror.ApiError) {
+func (p *PanClient) ShareList(param *ShareListParam) (*ShareListResult, *apierror.ApiError) {
 	fullUrl := &strings.Builder{}
 	fmt.Fprintf(fullUrl, "%s/v2/listShares.action?shareType=%d&pageNum=%d&pageSize=%d",
 		WEB_URL, param.ShareType, param.PageNum, param.PageSize)
 	logger.Verboseln("do request url: " + fullUrl.String())
 	body, err := p.client.DoGet(fullUrl.String())
 	if err != nil {
-		logger.Verboseln("ListShare failed")
+		logger.Verboseln("ShareList failed")
 		return nil, apierror.NewApiErrorWithError(err)
 	}
-	item := &ListShareItemResult{}
+	item := &ShareListResult{}
 	if err := json.Unmarshal(body, item); err != nil {
-		logger.Verboseln("ListShare response failed")
+		logger.Verboseln("ShareList response failed")
 		return nil, apierror.NewApiErrorWithError(err)
+	}
+	// normalize
+	for _, s := range item.Data {
+		s.AccessURL = "https:" + s.AccessURL
+		s.ShortShareUrl = "https:" + s.ShortShareUrl
 	}
 	return item, nil
 }
 
-func (p *PanClient) CancelShare(shareIdList []int) (bool, *apierror.ApiError) {
+func (p *PanClient) ShareCancel(shareIdList []int) (bool, *apierror.ApiError) {
 	fullUrl := &strings.Builder{}
 	shareIds := ""
 	for _, id := range shareIdList {
@@ -201,19 +206,19 @@ func (p *PanClient) CancelShare(shareIdList []int) (bool, *apierror.ApiError) {
 	logger.Verboseln("do request url: " + fullUrl.String())
 	body, err := p.client.DoGet(fullUrl.String())
 	if err != nil {
-		logger.Verboseln("CancelShare failed")
+		logger.Verboseln("ShareCancel failed")
 		return false, apierror.NewApiErrorWithError(err)
 	}
 	comResp := &apierror.ErrorResp{}
 	if err := json.Unmarshal(body, comResp); err == nil {
 		if comResp.ErrorCode != "" {
-			logger.Verboseln("CancelShare response failed")
+			logger.Verboseln("ShareCancel response failed")
 			return false, apierror.NewFailedApiError("取消分享失败，请稍后重试")
 		}
 	}
 	item := &apierror.SuccessResp{}
 	if err := json.Unmarshal(body, item); err != nil {
-		logger.Verboseln("CancelShare response failed")
+		logger.Verboseln("ShareCancel response failed")
 		return false, apierror.NewApiErrorWithError(err)
 	}
 	return item.Success, nil

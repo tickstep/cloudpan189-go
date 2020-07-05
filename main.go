@@ -823,6 +823,23 @@ func main()  {
 						},
 					},
 				},
+				{
+					Name:      "list",
+					Aliases:   []string{"l"},
+					Usage:     "列出已分享文件/目录",
+					UsageText: app.Name + " share list",
+					Action: func(c *cli.Context) error {
+						command.RunShareList(c.Int("page"))
+						return nil
+					},
+					Flags: []cli.Flag{
+						cli.IntFlag{
+							Name:  "page",
+							Usage: "分享列表的页数",
+							Value: 1,
+						},
+					},
+				},
 			},
 
 		},
@@ -861,7 +878,7 @@ func main()  {
 			Category:    "debug",
 			Before:      reloadFn,
 			Action: func(c *cli.Context) error {
-				r, err := config.Config.ActiveUser().PanClient().CancelShare([]int{169457822,169455759})
+				r, err := config.Config.ActiveUser().PanClient().ShareCancel([]int{169457822,169455759})
 				if err != nil {
 					fmt.Println(err)
 				}
