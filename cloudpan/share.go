@@ -129,7 +129,7 @@ func (p *PanClient) PrivateShare(fileId string, expiredTime ShareExpiredTime) (*
 		if errResp.ErrorVO.ErrorCode != "" {
 			logger.Verboseln("PrivateShare response failed")
 			if errResp.ErrorVO.ErrorCode == "ShareCreateOverload" {
-				return nil, apierror.NewFailedApiError("你账号分享文件数量已到达限制")
+				return nil, apierror.NewFailedApiError("您分享的次数已达上限，请明天再来吧")
 			}
 			return nil, apierror.NewApiErrorWithError(err)
 		}
