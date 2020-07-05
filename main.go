@@ -310,6 +310,18 @@ func main()  {
 				},
 			},
 		},
+		// 列出帐号列表 loglist
+		{
+			Name:        "loglist",
+			Usage:       "列出帐号列表",
+			Description: "列出所有已登录的天翼帐号",
+			Category:    "天翼云盘账号",
+			Before:      reloadFn,
+			Action: func(c *cli.Context) error {
+				fmt.Println(config.Config.UserList.String())
+				return nil
+			},
+		},
 		// 获取当前帐号 who
 		{
 			Name:        "who",
