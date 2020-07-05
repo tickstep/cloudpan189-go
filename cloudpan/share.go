@@ -66,7 +66,7 @@ type (
 		// ShareDate 分享日期
 		ShareDate string `json:"shareDate"`
 		// ShareId 分享项目ID，唯一标识该分享项
-		ShareId int `json:"shareId"`
+		ShareId int64 `json:"shareId"`
 		// ShareMode 分享模式，1-私密，2-公开
 		ShareMode ShareMode `json:"shareMode"`
 		// ShareTime 分享时间
@@ -191,11 +191,11 @@ func (p *PanClient) ShareList(param *ShareListParam) (*ShareListResult, *apierro
 	return item, nil
 }
 
-func (p *PanClient) ShareCancel(shareIdList []int) (bool, *apierror.ApiError) {
+func (p *PanClient) ShareCancel(shareIdList []int64) (bool, *apierror.ApiError) {
 	fullUrl := &strings.Builder{}
 	shareIds := ""
 	for _, id := range shareIdList {
-		shareIds += strconv.Itoa(id) + ","
+		shareIds += strconv.Itoa(int(id)) + ","
 	}
 	if strings.LastIndex(shareIds, ",") == (len(shareIds) - 1) {
 		shareIds = text.Substr(shareIds, 0, len(shareIds) - 1)

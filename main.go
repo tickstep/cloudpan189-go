@@ -840,6 +840,21 @@ func main()  {
 						},
 					},
 				},
+				{
+					Name:        "cancel",
+					Aliases:     []string{"c"},
+					Usage:       "取消分享文件/目录",
+					UsageText:   app.Name + " share cancel <shareid_1> <shareid_2> ...",
+					Description: `目前只支持通过分享id (shareid) 来取消分享.`,
+					Action: func(c *cli.Context) error {
+						if c.NArg() < 1 {
+							cli.ShowCommandHelp(c, c.Command.Name)
+							return nil
+						}
+						command.RunShareCancel(converter.SliceStringToInt64(c.Args()))
+						return nil
+					},
+				},
 			},
 
 		},
@@ -878,7 +893,7 @@ func main()  {
 			Category:    "debug",
 			Before:      reloadFn,
 			Action: func(c *cli.Context) error {
-				r, err := config.Config.ActiveUser().PanClient().ShareCancel([]int{169457822,169455759})
+				r, err := config.Config.ActiveUser().PanClient().ShareCancel([]int64{169457822,169455759})
 				if err != nil {
 					fmt.Println(err)
 				}

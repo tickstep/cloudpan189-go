@@ -43,9 +43,30 @@ func RunShareList(page int) {
 	}
 
 	tb := cmdtable.NewTable(os.Stdout)
-	tb.SetHeader([]string{"#", "ShARE_ID", "分享链接", "访问码", "文件名", "FILE_ID"})
+	tb.SetHeader([]string{"#", "ShARE_ID", "分享链接", "访问码", "文件名", "FILE_ID", "分享时间"})
 	for k, record := range records.Data {
-		tb.Append([]string{strconv.Itoa(k), strconv.FormatInt(int64(record.ShareId), 10), record.AccessURL, record.AccessCode, record.FileName, record.FileId})
+		tb.Append([]string{strconv.Itoa(k), strconv.FormatInt(record.ShareId, 10), record.AccessURL, record.AccessCode, record.FileName, record.FileId, record.ShareTime})
 	}
 	tb.Render()
+}
+
+// RunShareCancel 执行取消分享
+func RunShareCancel(shareIDs []int64) {
+	if len(shareIDs) == 0 {
+		fmt.Printf("取消分享操作失败, 没有任何 shareid\n")
+		return
+	}
+
+	activeUser := GetActiveUser()
+	b, err := activeUser.PanClient().ShareCancel(shareIDs)
+	if err != nil {
+		fmt.Printf("取消分享操作失败: %s\n", err)
+		return
+	}
+
+	if b {
+		fmt.Printf("取消分享操作成功\n")
+	} else {
+		fmt.Printf("取消分享操作失败\n")
+	}
 }
