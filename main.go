@@ -311,6 +311,48 @@ func main()  {
 				},
 			},
 		},
+		// 退出登录帐号 logout
+		{
+			Name:        "logout",
+			Usage:       "退出天翼帐号",
+			Description: "退出当前登录的帐号",
+			Category:    "天翼云盘账号",
+			Before:      reloadFn,
+			After:       saveFunc,
+			Action: func(c *cli.Context) error {
+				if config.Config.NumLogins() == 0 {
+					fmt.Println("未设置任何帐号, 不能退出")
+					return nil
+				}
+
+				var (
+					confirm    string
+					activeUser = config.Config.ActiveUser()
+				)
+
+				if !c.Bool("y") {
+					fmt.Printf("确认退出当前帐号: %s ? (y/n) > ", activeUser.Nickname)
+					_, err := fmt.Scanln(&confirm)
+					if err != nil || (confirm != "y" && confirm != "Y") {
+						return err
+					}
+				}
+
+				deletedUser, err := config.Config.DeleteUser(activeUser.UID)
+				if err != nil {
+					fmt.Printf("退出用户 %s, 失败, 错误: %s\n", activeUser.Nickname, err)
+				}
+
+				fmt.Printf("退出用户成功: %s\n", deletedUser.Nickname)
+				return nil
+			},
+			Flags: []cli.Flag{
+				cli.BoolFlag{
+					Name:  "y",
+					Usage: "确认退出帐号",
+				},
+			},
+		},
 		// 列出帐号列表 loglist
 		{
 			Name:        "loglist",

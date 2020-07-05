@@ -279,11 +279,28 @@ func (c *PanConfig) NumLogins() int {
 	return len(c.UserList)
 }
 
-// 切换登录用户
+// SwitchUser 切换登录用户
 func (c *PanConfig) SwitchUser(uid uint64, username string) (*PanUser, error) {
 	for _, u := range c.UserList {
 		if u.UID == uid || u.AccountName == username {
 			return c.SetActiveUser(u), nil
+		}
+	}
+	return nil, fmt.Errorf("未找到指定的账号")
+}
+
+// DeleteUser 删除用户，并自动切换登录用户为用户列表第一个
+func (c *PanConfig) DeleteUser(uid uint64) (*PanUser, error) {
+	for idx, u := range c.UserList {
+		if u.UID == uid {
+			// delete user from user list
+			c.UserList = append(c.UserList[:idx], c.UserList[idx+1:]...)
+			c.ActiveUID = 0
+			c.activeUser = nil
+			if len(c.UserList) > 0 {
+				c.SwitchUser(c.UserList[0].UID, "")
+			}
+			return u, nil
 		}
 	}
 	return nil, fmt.Errorf("未找到指定的账号")
