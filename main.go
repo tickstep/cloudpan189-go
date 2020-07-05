@@ -298,11 +298,11 @@ func main()  {
 			Flags: []cli.Flag{
 				cli.StringFlag{
 					Name:  "username",
-					Usage: "登录百度帐号的用户名(手机号/邮箱/用户名)",
+					Usage: "登录天翼帐号的用户名(手机号/邮箱/别名)",
 				},
 				cli.StringFlag{
 					Name:  "password",
-					Usage: "登录百度帐号的用户名的密码",
+					Usage: "登录天翼帐号的用户名的密码",
 				},
 				cli.StringFlag{
 					Name:  "COOKIE_LOGIN_USER",

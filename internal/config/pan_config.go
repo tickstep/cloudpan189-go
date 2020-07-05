@@ -245,18 +245,28 @@ func (c *PanConfig) ActiveUser() *PanUser {
 }
 
 func (c *PanConfig) SetActiveUser(user *PanUser) *PanUser {
-	// remove old user
-	for i, u := range c.UserList {
+	needToInsert := true
+	for _, u := range c.UserList {
 		if u.UID == user.UID {
-			c.UserList = append(c.UserList[:i], c.UserList[i+1:]...)
+			// update user info
+			u.Nickname = user.Nickname
+			u.Sex = user.Sex
+			u.CookieLoginUser = user.CookieLoginUser
+			needToInsert = false
 			break
 		}
 	}
-	// insert new old
-	c.UserList = append(c.UserList, user)
-	c.activeUser = user
+	if needToInsert {
+		// insert
+		c.UserList = append(c.UserList, user)
+	}
+
+	// setup active user
 	c.ActiveUID = user.UID
-	return c.activeUser
+	// clear active user cache
+	c.activeUser = nil
+	// reload
+	return c.ActiveUser()
 }
 
 func (c *PanConfig) fix() {
