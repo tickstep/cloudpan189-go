@@ -38,3 +38,9 @@ func TestSignature(t *testing.T) {
 	fmt.Println(r)
 	assert.Equal(t, "8f0c6eb9048c087b9f2b6e190afc1140", r)
 }
+
+func TestRand(t *testing.T) {
+	r := Rand()
+	fmt.Println(r)
+	assert.Equal(t, 16, len(r))
+}

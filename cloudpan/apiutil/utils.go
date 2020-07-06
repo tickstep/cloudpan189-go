@@ -91,3 +91,9 @@ func Signature(params map[string]string) string {
 	h.Write([]byte(signStr))
 	return hex.EncodeToString(h.Sum(nil))
 }
+
+func Rand() string {
+	randStr := &strings.Builder{}
+	fmt.Fprintf(randStr, "%d_%d", rand.Int63n(1e5), rand.Int63n(1e10))
+	return randStr.String()
+}
