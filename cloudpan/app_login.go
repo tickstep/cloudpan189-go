@@ -155,7 +155,7 @@ func AppLogin(username, password string) (result *AppLoginToken, error *apierror
 	}
 	headers = map[string]string {
 		"AppKey": "601102120",
-		"Signature": apiutil.Signature(signParams),
+		"SignatureOfMd5": apiutil.SignatureOfMd5(signParams),
 		"Sign-Type": "1",
 		"Accept": "application/json",
 		"Timestamp": strconv.Itoa(timestamp),

@@ -28,13 +28,13 @@ func TestTimestampe(t *testing.T) {
 	assert.Equal(t, 13, len(strconv.Itoa(r)))
 }
 
-func TestSignature(t *testing.T) {
+func TestSignatureOfMd5(t *testing.T) {
 	params := map[string]string {
 		"Timestamp": "1593905856153",
 		"sessionKey": "c99af8b0-cee7-46b8-8fe8-f11ff69417f8",
 		"AppKey": "601102120",
 	}
-	r := Signature(params)
+	r := SignatureOfMd5(params)
 	fmt.Println(r)
 	assert.Equal(t, "8f0c6eb9048c087b9f2b6e190afc1140", r)
 }

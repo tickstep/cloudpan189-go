@@ -75,8 +75,8 @@ func Timestamp() int {
 	return int(time.Now().UTC().UnixNano() / 1e6)
 }
 
-// Signature MD5签名
-func Signature(params map[string]string) string {
+// SignatureOfMd5 MD5签名
+func SignatureOfMd5(params map[string]string) string {
 	keys := []string{}
 	for k, v := range params {
 		keys = append(keys, k + "=" + v)
