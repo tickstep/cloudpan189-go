@@ -1,7 +1,9 @@
 package apiutil
 
 import (
+	"crypto/hmac"
 	"crypto/md5"
+	"crypto/sha1"
 	"encoding/hex"
 	"fmt"
 	"math/rand"
@@ -90,6 +92,19 @@ func SignatureOfMd5(params map[string]string) string {
 	h := md5.New()
 	h.Write([]byte(signStr))
 	return hex.EncodeToString(h.Sum(nil))
+}
+
+// SignatureOfHmac HMAC签名
+func SignatureOfHmac(secretKey, sessionKey, operate, url, dateOfGmt string) string {
+	requestUri := strings.ReplaceAll(strings.Split(url, "?")[0], "https://api.cloud.189.cn", "")
+	plainStr := &strings.Builder{}
+	fmt.Fprintf(plainStr, "SessionKey=%s&Operate=%s&RequestURI=%s&Date=%s",
+		sessionKey, operate, requestUri, dateOfGmt)
+
+	key := []byte(secretKey)
+	mac := hmac.New(sha1.New, key)
+	mac.Write([]byte(plainStr.String()))
+	return hex.EncodeToString(mac.Sum(nil))
 }
 
 func Rand() string {

@@ -39,6 +39,17 @@ func TestSignatureOfMd5(t *testing.T) {
 	assert.Equal(t, "8f0c6eb9048c087b9f2b6e190afc1140", r)
 }
 
+func TestSignatureOfHmac(t *testing.T) {
+	r := SignatureOfHmac(
+		"01DB3448B69173020D01CCE8BD6EE641",
+		"a10c3904-b5d8-403e-ae50-aa55b0e1bfd1",
+		"GET",
+		"https://api.cloud.189.cn/getUserInfo.action?clientType=TELEPC&version=6.2.3.0&channelId=web_cloud.189.cn&rand=22722_1943588875",
+		"Mon, 06 Jul 2020 14:23:47 GMT")
+	fmt.Println(r)
+	assert.Equal(t, "c37b31af82eb77cc56a20a3d376da98de96b7749", r)
+}
+
 func TestRand(t *testing.T) {
 	r := Rand()
 	fmt.Println(r)
