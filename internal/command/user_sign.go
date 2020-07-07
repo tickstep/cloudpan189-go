@@ -7,7 +7,7 @@ import (
 
 func RunUserSign() {
 	activeUser := GetActiveUser()
-	result, err := activeUser.PanClient().AppUserSign(&activeUser.AppToken)
+	result, err := activeUser.PanClient().AppUserSign()
 	if err != nil {
 		fmt.Printf("签到失败: %s\n", err)
 		return

@@ -32,11 +32,11 @@ const (
 )
 
 // AppUserSign 用户签到
-func (p *PanClient) AppUserSign(appToken *AppLoginToken) (*AppUserSignResult, *apierror.ApiError) {
+func (p *PanClient) AppUserSign() (*AppUserSignResult, *apierror.ApiError) {
 	result := AppUserSignResult{}
 	fullUrl := API_URL + "//mkt/userSign.action"
 	headers := map[string]string {
-		"SessionKey": appToken.SessionKey,
+		"SessionKey": p.appToken.SessionKey,
 	}
 	logger.Verboseln("do request url: " + fullUrl)
 	body, err1 := p.client.Fetch("GET", fullUrl, nil, headers)
