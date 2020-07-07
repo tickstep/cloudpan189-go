@@ -11,8 +11,10 @@ import (
 	"github.com/tickstep/cloudpan189-go/cmder/cmdutil/escaper"
 	"github.com/tickstep/cloudpan189-go/internal/command"
 	"github.com/tickstep/cloudpan189-go/internal/config"
+	"github.com/tickstep/cloudpan189-go/library/hash"
 	"github.com/tickstep/cloudpan189-go/library/logger"
 	"github.com/urfave/cli"
+	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -910,19 +912,36 @@ func main()  {
 			Category:    "debug",
 			Before:      reloadFn,
 			Action: func(c *cli.Context) error {
+				uploadFile := "/Volumes/Downloads/tmp/pcs_config.json"
+				uploadFileData,_ := ioutil.ReadFile(uploadFile)
 				p := &cloudpan.AppCreateUploadFileParam{
 					ParentFolderId: "21491110455851923",
-					FileName: "contents001.txt",
-					Size: 1879,
-					Md5: "3C47270529BE66D2E4E780F699AB9A32",
+					FileName: "pcs_config.json",
+					Size: int64(len(uploadFileData)),
+					Md5: hash.Md5OfBytes(uploadFileData),
 					LastWrite: "2013-06-16 24:35:08",
-					LocalPath: "D:/dl/tup/Contents.txt",
+					LocalPath: uploadFile,
 				}
-				r, err := config.Config.ActiveUser().PanClient().AppCreateUploadFile(p)
+				fmt.Println("create upload file")
+				r1, err := config.Config.ActiveUser().PanClient().AppCreateUploadFile(p)
 				if err != nil {
 					fmt.Println(err)
+					return nil
 				}
-				fmt.Printf("%+v", r)
+				fmt.Println("upload file data")
+				err = config.Config.ActiveUser().PanClient().AppUploadFileData(r1.FileUploadUrl, r1.UploadFileId, r1.XRequestId,
+					&cloudpan.AppUploadFileRange{0, len(uploadFileData)}, uploadFileData)
+				if err != nil {
+					fmt.Println(err)
+					return nil
+				}
+				fmt.Println("commit")
+				r2, err := config.Config.ActiveUser().PanClient().AppUploadFileCommit(r1.FileCommitUrl, r1.UploadFileId, r1.XRequestId)
+				if err != nil {
+					fmt.Println(err)
+					return nil
+				}
+				fmt.Printf("%+v", r2)
 				return nil
 			},
 			Flags: []cli.Flag{

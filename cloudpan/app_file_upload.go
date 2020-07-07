@@ -38,9 +38,27 @@ type (
 		// 请求的X-Request-ID
 		XRequestId string
 	}
+
+	AppUploadFileRange struct {
+		Start int
+		End int
+	}
+
+	AppUploadFileCommitResult struct {
+		XMLName xml.Name `xml:"file"`
+		Id string `xml:"id"`
+		Name string `xml:"name"`
+		Size string `xml:"size"`
+		Md5 string `xml:"md5"`
+		CreateDate string `xml:"createDate"`
+		Rev string `xml:"rev"`
+		UserId string `xml:"userId"`
+		RequestId string `xml:"requestId"`
+		IsSafe string `xml:"isSafe"`
+	}
 )
 
-func (p *PanClient) AppCreateUploadFile(param *AppCreateUploadFileParam) (result *AppCreateUploadFileResult, error *apierror.ApiError) {
+func (p *PanClient) AppCreateUploadFile(param *AppCreateUploadFileParam) (*AppCreateUploadFileResult, *apierror.ApiError) {
 	fullUrl := API_URL + "/createUploadFile.action?" + apiutil.PcClientInfoSuffixParam()
 	httpMethod := "POST"
 	dateOfGmt := apiutil.DateOfGmtStr()
@@ -80,5 +98,63 @@ func (p *PanClient) AppCreateUploadFile(param *AppCreateUploadFileParam) (result
 		return nil, apierror.NewApiErrorWithError(err)
 	}
 	item.XRequestId = requestId
+	return item, nil
+}
+
+func (p *PanClient) AppUploadFileData(uploadUrl, uploadFileId, xRequestId string, fileRange *AppUploadFileRange, data []byte) *apierror.ApiError {
+	fullUrl := uploadUrl + "?" + apiutil.PcClientInfoSuffixParam()
+	httpMethod := "PUT"
+	dateOfGmt := apiutil.DateOfGmtStr()
+	requestId := xRequestId
+	appToken := p.appToken
+	headers := map[string]string {
+		"Content-Type": "application/octet-stream",
+		"Date": dateOfGmt,
+		"SessionKey": appToken.SessionKey,
+		"Signature": apiutil.SignatureOfHmac(appToken.SessionSecret, appToken.SessionKey, httpMethod, fullUrl, dateOfGmt),
+		"X-Request-ID": requestId,
+		"ResumePolicy": "1",
+		"Edrive-UploadFileId": uploadFileId,
+		"Edrive-UploadFileRange": "bytes=" + strconv.Itoa(fileRange.Start) + "-" + strconv.Itoa(fileRange.End),
+	}
+	logger.Verboseln("do request url: " + fullUrl)
+	_, err1 := p.client.Fetch(httpMethod, fullUrl, data, headers)
+	if err1 != nil {
+		logger.Verboseln("AppUploadFileData occurs error: ", err1.Error())
+		return apierror.NewApiErrorWithError(err1)
+	}
+	return nil
+}
+
+func (p *PanClient) AppUploadFileCommit(uploadUrl, uploadFileId, xRequestId string) (*AppUploadFileCommitResult, *apierror.ApiError) {
+	fullUrl := uploadUrl + "?" + apiutil.PcClientInfoSuffixParam()
+	httpMethod := "POST"
+	dateOfGmt := apiutil.DateOfGmtStr()
+	requestId := xRequestId
+	appToken := p.appToken
+	headers := map[string]string {
+		"Content-Type": "application/x-www-form-urlencoded",
+		"Date": dateOfGmt,
+		"SessionKey": appToken.SessionKey,
+		"Signature": apiutil.SignatureOfHmac(appToken.SessionSecret, appToken.SessionKey, httpMethod, fullUrl, dateOfGmt),
+		"X-Request-ID": requestId,
+	}
+	formData := map[string]string {
+		"uploadFileId": uploadFileId,
+		"opertype": "1",
+		"ResumePolicy": "1",
+		"isLog": "0",
+	}
+	logger.Verboseln("do request url: " + fullUrl)
+	respBody, err1 := p.client.Fetch(httpMethod, fullUrl, formData, headers)
+	if err1 != nil {
+		logger.Verboseln("AppUploadFileData occurs error: ", err1.Error())
+		return nil, apierror.NewApiErrorWithError(err1)
+	}
+	item := &AppUploadFileCommitResult{}
+	if err := xml.Unmarshal(respBody, item); err != nil {
+		logger.Verboseln("AppUploadFileData parse response failed")
+		return nil, apierror.NewApiErrorWithError(err)
+	}
 	return item, nil
 }
