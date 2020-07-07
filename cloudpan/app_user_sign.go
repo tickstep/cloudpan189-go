@@ -39,7 +39,7 @@ func (p *PanClient) AppUserSign(appToken *AppLoginToken) (*AppUserSignResult, *a
 		"SessionKey": appToken.SessionKey,
 	}
 	logger.Verboseln("do request url: " + fullUrl)
-	body, err1 := appClient.Fetch("GET", fullUrl, nil, headers)
+	body, err1 := p.client.Fetch("GET", fullUrl, nil, headers)
 	if err1 != nil {
 		logger.Verboseln("AppUserSign occurs error: ", err1.Error())
 		return nil, apierror.NewApiErrorWithError(err1)

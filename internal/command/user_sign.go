@@ -19,4 +19,29 @@ func RunUserSign() {
 	} else {
 		fmt.Printf("签到失败，%s", result.Tip)
 	}
+
+	// 抽奖
+	r, err := activeUser.PanClient().UserDrawPrize(cloudpan.ActivitySignin)
+	if err != nil {
+		fmt.Printf("抽奖失败: %s\n", err)
+		return
+	}
+	if r.Success {
+		fmt.Printf("抽奖成功: %s\n", r.Tip)
+	} else {
+		fmt.Printf("抽奖失败: %s\n", err)
+		return
+	}
+
+	r, err = activeUser.PanClient().UserDrawPrize(cloudpan.ActivitySignPhotos)
+	if err != nil {
+		fmt.Printf("抽奖失败: %s\n", err)
+		return
+	}
+	if r.Success {
+		fmt.Printf("抽奖成功: %s\n", r.Tip)
+	} else {
+		fmt.Printf("抽奖失败: %s\n", err)
+		return
+	}
 }
