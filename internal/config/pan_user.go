@@ -15,17 +15,18 @@ type PanUser struct {
 	Workdir  string
 	WorkdirFileEntity cloudpan.FileEntity
 
-	CookieLoginUser string
+	WebToken cloudpan.WebLoginToken
 	AppToken cloudpan.AppLoginToken
 	panClient *cloudpan.PanClient
 }
 
 type PanUserList []*PanUser
 
-func SetupUserByCookie(cookieLoginUser string) (user *PanUser, err error) {
-	panClient := cloudpan.NewPanClient(cookieLoginUser)
+func SetupUserByCookie(webToken cloudpan.WebLoginToken, appToken cloudpan.AppLoginToken) (user *PanUser, err error) {
+	panClient := cloudpan.NewPanClient(webToken, appToken)
 	u := &PanUser{
-		CookieLoginUser: cookieLoginUser,
+		WebToken: webToken,
+		AppToken: appToken,
 		panClient: panClient,
 		Workdir: "/",
 		WorkdirFileEntity: *cloudpan.NewFileEntityForRootDir(),

@@ -36,6 +36,10 @@ type (
 		Msg string `json:"msg"`
 		ToUrl string `json:"toUrl"`
 	}
+
+	WebLoginToken struct {
+		CookieLoginUser string
+	}
 )
 
 var (
@@ -43,28 +47,33 @@ var (
 	client            = requester.NewHTTPClient()
 )
 
-func Login(username, password string) (cookieLoginUser string, error *apierror.ApiError) {
+func Login(username, password string) (webToken *WebLoginToken, error *apierror.ApiError) {
 	client.ResetCookiejar()
 	params, err := getLoginParams()
 	if err != nil {
 		logger.Verboseln("get login params error")
-		return "", err
+		return nil, err
 	}
 
 	err = checkNeedCaptchaCodeOrNot(username, latestLoginParams.Lt)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	// save latest params
 	latestLoginParams = params
-	return LoginWithCaptcha(username, password, "")
+	token, err := LoginWithCaptcha(username, password, "")
+	if err != nil {
+		return nil, err
+	}
+	return token, nil
 }
 
-func LoginWithCaptcha(username, password, captchaCode string) (cookieLoginUser string, error *apierror.ApiError) {
+func LoginWithCaptcha(username, password, captchaCode string) (webToken *WebLoginToken, error *apierror.ApiError) {
 	//client.ResetCookiejar()
 	//latestLoginParams, _ = getLoginParams()
 
+	webToken = &WebLoginToken{}
 	if latestLoginParams.CaptchaToken == "" {
 		latestLoginParams, _ = getLoginParams()
 	}
@@ -73,7 +82,7 @@ func LoginWithCaptcha(username, password, captchaCode string) (cookieLoginUser s
 		latestLoginParams.ReturnUrl, latestLoginParams.ParamId, latestLoginParams.Lt)
 	if err != nil || r.Msg != "登录成功" {
 		logger.Verboseln("login failed ", err)
-		return "", apierror.NewFailedApiError("")
+		return webToken, apierror.NewFailedApiError(err.Error())
 	}
 	// request toUrl to get COOKIE_LOGIN_USER cookie
 	header := map[string]string {
@@ -91,7 +100,7 @@ func LoginWithCaptcha(username, password, captchaCode string) (cookieLoginUser s
 	cks := client.Jar.Cookies(cloudpanUrl)
 	for _, cookie := range cks {
 		if cookie.Name == "COOKIE_LOGIN_USER" {
-			cookieLoginUser = cookie.Value
+			webToken.CookieLoginUser = cookie.Value
 			break
 		}
 	}

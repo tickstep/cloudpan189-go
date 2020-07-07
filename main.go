@@ -276,13 +276,13 @@ func main()  {
 			Before:   reloadFn, // 每次进行登录动作的时候需要调用刷新配置
 			After:    saveFunc, // 登录完成需要调用保存配置
 			Action: func(c *cli.Context) error {
-				cookieOfToken := ""
 				appToken := cloudpan.AppLoginToken{}
+				webToken := cloudpan.WebLoginToken{}
 				if c.IsSet("COOKIE_LOGIN_USER") {
-					cookieOfToken = c.String("COOKIE_LOGIN_USER")
+					webToken.CookieLoginUser = c.String("COOKIE_LOGIN_USER")
 				} else if c.NArg() == 0 {
 					var err error
-					cookieOfToken, appToken, err = command.RunLogin(c.String("username"), c.String("password"))
+					webToken, appToken, err = command.RunLogin(c.String("username"), c.String("password"))
 					if err != nil {
 						fmt.Println(err)
 						return err
@@ -291,8 +291,7 @@ func main()  {
 					cli.ShowCommandHelp(c, c.Command.Name)
 					return nil
 				}
-				cloudUser, _ := config.SetupUserByCookie(cookieOfToken)
-				cloudUser.AppToken = appToken
+				cloudUser, _ := config.SetupUserByCookie(webToken, appToken)
 				config.Config.SetActiveUser(cloudUser)
 				fmt.Println("天翼帐号登录成功: ", cloudUser.Nickname)
 				return nil

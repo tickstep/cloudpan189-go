@@ -220,7 +220,7 @@ func (c *PanConfig) ActiveUser() *PanUser {
 				c.activeUser = u
 				if c.activeUser.PanClient() == nil {
 					// restore client
-					user, err := SetupUserByCookie(c.activeUser.CookieLoginUser)
+					user, err := SetupUserByCookie(c.activeUser.WebToken, c.activeUser.AppToken)
 					if err != nil {
 						return nil
 					}
@@ -252,7 +252,7 @@ func (c *PanConfig) SetActiveUser(user *PanUser) *PanUser {
 			// update user info
 			u.Nickname = user.Nickname
 			u.Sex = user.Sex
-			u.CookieLoginUser = user.CookieLoginUser
+			u.WebToken = user.WebToken
 			u.AppToken = user.AppToken
 			needToInsert = false
 			break

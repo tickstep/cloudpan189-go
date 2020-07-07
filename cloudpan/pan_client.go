@@ -18,17 +18,22 @@ var (
 	}
 )
 
-type PanClient struct {
-	client     *requester.HTTPClient // http 客户端
-}
+type (
+	PanClient struct {
+		client     *requester.HTTPClient // http 客户端
+		webToken WebLoginToken
+		appToken AppLoginToken
+	}
+)
 
-func NewPanClient(cookieLoginUser string) *PanClient {
+
+func NewPanClient(webToken WebLoginToken, appToken AppLoginToken) *PanClient {
 	client := requester.NewHTTPClient()
 	client.ResetCookiejar()
 	client.Jar.SetCookies(cloudpanDomainUrl, []*http.Cookie{
 		&http.Cookie{
 			Name:   "COOKIE_LOGIN_USER",
-			Value:  cookieLoginUser,
+			Value:  webToken.CookieLoginUser,
 			Domain: "cloud.189.cn",
 			Path: "/",
 		},
@@ -39,5 +44,7 @@ func NewPanClient(cookieLoginUser string) *PanClient {
 
 	return &PanClient{
 		client: client,
+		webToken: webToken,
+		appToken: appToken,
 	}
 }
