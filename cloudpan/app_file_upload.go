@@ -2,7 +2,6 @@ package cloudpan
 
 import (
 	"encoding/xml"
-	"github.com/satori/go.uuid"
 	"github.com/tickstep/cloudpan189-go/cloudpan/apierror"
 	"github.com/tickstep/cloudpan189-go/cloudpan/apiutil"
 	"github.com/tickstep/cloudpan189-go/library/logger"
@@ -45,8 +44,7 @@ func (p *PanClient) AppCreateUploadFile(param *AppCreateUploadFileParam) (result
 	fullUrl := API_URL + "/createUploadFile.action?" + apiutil.PcClientInfoSuffixParam()
 	httpMethod := "POST"
 	dateOfGmt := apiutil.DateOfGmtStr()
-	u4 := uuid.NewV4()
-	requestId := strings.ToUpper(u4.String())
+	requestId := apiutil.XRequestId()
 	appToken := p.appToken
 	headers := map[string]string {
 		"Content-Type": "application/x-www-form-urlencoded",

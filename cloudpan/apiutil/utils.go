@@ -6,6 +6,7 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"fmt"
+	uuid "github.com/satori/go.uuid"
 	"math/rand"
 	"net/http"
 	"sort"
@@ -105,7 +106,7 @@ func SignatureOfHmac(secretKey, sessionKey, operate, url, dateOfGmt string) stri
 	key := []byte(secretKey)
 	mac := hmac.New(sha1.New, key)
 	mac.Write([]byte(plainStr.String()))
-	return hex.EncodeToString(mac.Sum(nil))
+	return strings.ToUpper(hex.EncodeToString(mac.Sum(nil)))
 }
 
 func Rand() string {
@@ -121,4 +122,9 @@ func PcClientInfoSuffixParam() string {
 
 func DateOfGmtStr() string {
 	return time.Now().UTC().Format(http.TimeFormat)
+}
+
+func XRequestId() string {
+	u4 := uuid.NewV4()
+	return strings.ToUpper(u4.String())
 }
