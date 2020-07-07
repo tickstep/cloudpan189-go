@@ -55,3 +55,8 @@ func TestRand(t *testing.T) {
 	fmt.Println(r)
 	assert.Equal(t, 16, len(r))
 }
+
+func TestDateOfGmtStr(t *testing.T) {
+	r := DateOfGmtStr()
+	fmt.Println(r)
+}

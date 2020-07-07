@@ -910,7 +910,15 @@ func main()  {
 			Category:    "debug",
 			Before:      reloadFn,
 			Action: func(c *cli.Context) error {
-				r, err := config.Config.ActiveUser().PanClient().ShareCancel([]int64{169457822,169455759})
+				p := &cloudpan.AppCreateUploadFileParam{
+					ParentFolderId: "21491110455851923",
+					FileName: "contents001.txt",
+					Size: 1879,
+					Md5: "3C47270529BE66D2E4E780F699AB9A32",
+					LastWrite: "2013-06-16 24:35:08",
+					LocalPath: "D:/dl/tup/Contents.txt",
+				}
+				r, err := config.Config.ActiveUser().PanClient().AppCreateUploadFile(p)
 				if err != nil {
 					fmt.Println(err)
 				}

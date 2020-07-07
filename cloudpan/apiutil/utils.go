@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"math/rand"
+	"net/http"
 	"sort"
 	"strings"
 	"time"
@@ -111,4 +112,13 @@ func Rand() string {
 	randStr := &strings.Builder{}
 	fmt.Fprintf(randStr, "%d_%d", rand.Int63n(1e5), rand.Int63n(1e10))
 	return randStr.String()
+}
+
+// PcClientInfoSuffixParam PC客户端URL请求后缀信息
+func PcClientInfoSuffixParam() string {
+	return "clientType=TELEPC&version=6.2&channelId=web_cloud.189.cn&rand=" + Rand()
+}
+
+func DateOfGmtStr() string {
+	return time.Now().UTC().Format(http.TimeFormat)
 }
