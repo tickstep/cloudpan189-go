@@ -3,6 +3,7 @@ package cloudpan
 
 import (
 	"encoding/json"
+	"encoding/xml"
 	"fmt"
 	"github.com/tickstep/cloudpan189-go/cloudpan/apierror"
 	"github.com/tickstep/cloudpan189-go/cloudpan/apiutil"
@@ -55,6 +56,18 @@ type (
 		// token过期时间，默认30天
 		ExpiresIn int `json:"expiresIn"`
 		AccessToken string `json:"accessToken"`
+	}
+	
+	appRefreshUserSessionResp struct {
+		XMLName xml.Name `xml:"userSession"`
+		LoginName string `xml:"loginName"`
+		SessionKey string `xml:"sessionKey"`
+		SessionSecret string `xml:"sessionSecret"`
+		KeepAlive int `xml:"keepAlive"`
+		GetFileDiffSpan int `xml:"getFileDiffSpan"`
+		GetUserInfoSpan int `xml:"getUserInfoSpan"`
+		FamilySessionKey string `xml:"familySessionKey"`
+		FamilySessionSecret string `xml:"familySessionSecret"`
 	}
 )
 
@@ -210,4 +223,27 @@ func appGetLoginParams() (params appLoginParams, error *apierror.ApiError) {
 	re, _ = regexp.Compile("j_rsaKey\" value=\"(.+?)\"")
 	params.jRsaKey = re.FindStringSubmatch(content)[1]
 	return
+}
+
+// getSessionByAccessToken 通过appSessionResp.accessToken刷新session信息
+func getSessionByAccessToken(accessToken string) (*appRefreshUserSessionResp, *apierror.ApiError) {
+	fullUrl := &strings.Builder{}
+	fmt.Fprintf(fullUrl, "%s/getSessionForPC.action?appId=%s&accessToken=%s&clientSn=%s&%s",
+		API_URL, "8025431004", accessToken, "bcd5c2d57d94f931beda2be5d3769040", apiutil.PcClientInfoSuffixParam())
+	headers := map[string]string {
+		"X-Request-ID": apiutil.XRequestId(),
+	}
+	logger.Verboseln("do request url: " + fullUrl.String())
+	body, err1 := appClient.Fetch("GET", fullUrl.String(), nil, headers)
+	if err1 != nil {
+		logger.Verboseln("getSessionByAccessToken occurs error: ", err1.Error())
+		return nil, apierror.NewApiErrorWithError(err1)
+	}
+	logger.Verboseln("response: " + string(body))
+	item := &appRefreshUserSessionResp{}
+	if err := xml.Unmarshal(body, item); err != nil {
+		logger.Verboseln("getSessionByAccessToken parse response failed")
+		return nil, apierror.NewApiErrorWithError(err)
+	}
+	return item, nil
 }

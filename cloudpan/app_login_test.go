@@ -34,3 +34,12 @@ func TestXmlParse(t *testing.T) {
 	}
 	fmt.Printf("%+v", item)
 }
+
+func TestGetSessionByAccessToken(t *testing.T) {
+	r, e := getSessionByAccessToken("d17faf30472f470d92f226a0dbc25571")
+	if e != nil {
+		fmt.Println(e)
+		return
+	}
+	fmt.Printf("%+v", r)
+}
