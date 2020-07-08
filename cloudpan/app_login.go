@@ -229,7 +229,7 @@ func appGetLoginParams() (params appLoginParams, error *apierror.ApiError) {
 func getSessionByAccessToken(accessToken string) (*appRefreshUserSessionResp, *apierror.ApiError) {
 	fullUrl := &strings.Builder{}
 	fmt.Fprintf(fullUrl, "%s/getSessionForPC.action?appId=%s&accessToken=%s&clientSn=%s&%s",
-		API_URL, "8025431004", accessToken, "bcd5c2d57d94f931beda2be5d3769040", apiutil.PcClientInfoSuffixParam())
+		API_URL, "8025431004", accessToken, apiutil.Uuid(), apiutil.PcClientInfoSuffixParam())
 	headers := map[string]string {
 		"X-Request-ID": apiutil.XRequestId(),
 	}

@@ -128,3 +128,8 @@ func XRequestId() string {
 	u4 := uuid.NewV4()
 	return strings.ToUpper(u4.String())
 }
+
+func Uuid() string {
+	u4 := uuid.NewV4()
+	return u4.String()
+}
