@@ -39,7 +39,7 @@ type (
 		XRequestId string
 	}
 
-	AppUploadFileRange struct {
+	AppFileRange struct {
 		Start int
 		End int
 	}
@@ -101,7 +101,7 @@ func (p *PanClient) AppCreateUploadFile(param *AppCreateUploadFileParam) (*AppCr
 	return item, nil
 }
 
-func (p *PanClient) AppUploadFileData(uploadUrl, uploadFileId, xRequestId string, fileRange *AppUploadFileRange, data []byte) *apierror.ApiError {
+func (p *PanClient) AppUploadFileData(uploadUrl, uploadFileId, xRequestId string, fileRange *AppFileRange, data []byte) *apierror.ApiError {
 	fullUrl := uploadUrl + "?" + apiutil.PcClientInfoSuffixParam()
 	httpMethod := "PUT"
 	dateOfGmt := apiutil.DateOfGmtStr()
