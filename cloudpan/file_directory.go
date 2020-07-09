@@ -320,12 +320,12 @@ func (p *PanClient) getFileInfoByPath(index int, pathSlice *[]string, parentFile
 	}
 
 	if fileResult == nil || fileResult.Data == nil || len(fileResult.Data) == 0 {
-		return nil, apierror.NewFailedApiError("文件不存在")
+		return nil, apierror.NewApiError(apierror.ApiCodeFileNotFoundCode, "文件不存在")
 	}
 	for _, fileEntity := range fileResult.Data {
 		if fileEntity.FileName == (*pathSlice)[index] {
 			return p.getFileInfoByPath(index + 1, pathSlice, fileEntity)
 		}
 	}
-	return nil, apierror.NewFailedApiError("文件不存在")
+	return nil, apierror.NewApiError(apierror.ApiCodeFileNotFoundCode, "文件不存在")
 }
