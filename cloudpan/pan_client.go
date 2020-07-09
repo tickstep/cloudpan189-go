@@ -48,3 +48,7 @@ func NewPanClient(webToken WebLoginToken, appToken AppLoginToken) *PanClient {
 		appToken: appToken,
 	}
 }
+
+//func (p *PanClient) HttpClient() *requester.HTTPClient {
+//	return p.client
+//}
