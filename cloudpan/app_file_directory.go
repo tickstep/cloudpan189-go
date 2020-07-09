@@ -69,7 +69,7 @@ func (p *PanClient) AppGetFileInfo(param *AppGetFileInfoParam) (*AppGetFileInfoR
 	if err := xml.Unmarshal(respBody, er); err == nil {
 		if er.Code != "" {
 			if er.Code == "FileNotFound" {
-				return nil, apierror.NewFailedApiError("文件不存在")
+				return nil, apierror.NewApiError(apierror.ApiCodeFileNotFoundCode, "文件不存在")
 			}
 		}
 	}

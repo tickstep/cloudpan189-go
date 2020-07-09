@@ -7,6 +7,8 @@ const (
 	ApiCodeNeedCaptchaCode ApiCode = 10
 	// 会话/Token已过期
 	ApiCodeTokenExpiredCode ApiCode = 11
+	// 文件不存在
+	ApiCodeFileNotFoundCode ApiCode = 12
 	// 失败
 	ApiCodeFailed ApiCode = 999
 )
