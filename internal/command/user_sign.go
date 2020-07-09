@@ -13,11 +13,11 @@ func RunUserSign() {
 		return
 	}
 	if result.Status == cloudpan.AppUserSignStatusSuccess {
-		fmt.Printf("签到成功，%s", result.Tip)
+		fmt.Printf("签到成功，%s\n", result.Tip)
 	} else if result.Status == cloudpan.AppUserSignStatusHasSign {
-		fmt.Printf("今日已签到，%s", result.Tip)
+		fmt.Printf("今日已签到，%s\n", result.Tip)
 	} else {
-		fmt.Printf("签到失败，%s", result.Tip)
+		fmt.Printf("签到失败，%s\n", result.Tip)
 	}
 
 	// 抽奖
