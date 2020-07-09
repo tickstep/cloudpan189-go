@@ -45,12 +45,12 @@ func RunLs(targetPath string, lsOptions *LsOptions, orderBy cloudpan.OrderBy, or
 	}
 
 	fileList := cloudpan.FileList{}
-	searchParam := cloudpan.NewFileSearchParam()
-	searchParam.FileId = targetPathInfo.FileId
-	searchParam.OrderBy = orderBy
-	searchParam.OrderSort = orderSort
+	fileListParam := cloudpan.NewFileListParam()
+	fileListParam.FileId = targetPathInfo.FileId
+	fileListParam.OrderBy = orderBy
+	fileListParam.OrderSort = orderSort
 	if targetPathInfo.IsFolder {
-		fileResult, err := activeUser.PanClient().FileSearch(searchParam)
+		fileResult, err := activeUser.PanClient().FileList(fileListParam)
 		if err != nil {
 			fmt.Println(err)
 			return
@@ -61,8 +61,8 @@ func RunLs(targetPath string, lsOptions *LsOptions, orderBy cloudpan.OrderBy, or
 		if fileResult.RecordCount > fileResult.PageNum {
 			pageCount := int(math.Ceil(float64(fileResult.RecordCount) / float64(fileResult.PageSize)))
 			for page := 2; page <= pageCount; page++ {
-				searchParam.PageNum = uint(page)
-				fileResult, err = activeUser.PanClient().FileSearch(searchParam)
+				fileListParam.PageNum = uint(page)
+				fileResult, err = activeUser.PanClient().FileList(fileListParam)
 				if err != nil {
 					fmt.Println(err)
 					break

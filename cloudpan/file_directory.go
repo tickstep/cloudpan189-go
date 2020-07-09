@@ -15,14 +15,12 @@ type (
 	OrderBy uint
 	OrderSort string
 
-	// FileSearchParam 文件搜索参数
-	FileSearchParam struct {
+	// FileListParam 文件列表参数
+	FileListParam struct {
 		// FileId 文件ID
 		FileId string
 		// MediaType 媒体文件过滤
 		MediaType MediaType
-		// Keyword 搜索关键字
-		Keyword string
 		// InGroupSpace ???
 		InGroupSpace bool
 		// OrderBy 排序字段
@@ -33,6 +31,14 @@ type (
 		PageNum uint
 		// PageSize 页大小，默认60
 		PageSize uint
+	}
+
+	// FileSearchParam 文件搜索参数
+	FileSearchParam struct {
+		FileListParam
+		// FileId 文件ID
+		// Keyword 搜索关键字
+		Keyword string
 	}
 
 	FileList []*FileEntity
@@ -98,7 +104,23 @@ type (
 
 // NewFileSearchParam 创建默认搜索参数
 func NewFileSearchParam() *FileSearchParam {
-	return &FileSearchParam{
+	flp := NewFileListParam()
+	return &FileSearchParam {
+		FileListParam{
+			FileId: flp.FileId,
+			MediaType: flp.MediaType,
+			InGroupSpace: flp.InGroupSpace,
+			OrderBy: flp.OrderBy,
+			OrderSort: flp.OrderSort,
+			PageNum: flp.PageNum,
+			PageSize: flp.PageSize,
+		},
+		"",
+	}
+}
+
+func NewFileListParam() *FileListParam {
+	return &FileListParam {
 		FileId: "-11",
 		MediaType: MediaTypeDefault,
 		InGroupSpace: false,
@@ -172,6 +194,43 @@ func (fl FileList) Count() (fileN, directoryN int64) {
 	return
 }
 
+func (p *PanClient) FileList(param *FileListParam) (result *FileSearchResult, error *apierror.ApiError) {
+	fsp := NewFileSearchParam()
+	fsp.FileId = param.FileId
+	fsp.MediaType = param.MediaType
+	fsp.InGroupSpace = param.InGroupSpace
+	fsp.OrderBy = param.OrderBy
+	fsp.OrderSort = param.OrderSort
+	fsp.PageNum = param.PageNum
+	fsp.PageSize = param.PageSize
+
+	// 搜索中有keyword，那么FileSearchResult.path路径就不对了
+	fsp.Keyword = ""
+
+	item, er := p.FileSearch(fsp)
+	if er != nil {
+		return nil, er
+	}
+
+	// combine the path for file
+	parentDirPath := strings.Builder{}
+	for _, p := range item.Path {
+		if p.FileName == "全部文件" {
+			parentDirPath.WriteString("/")
+			continue
+		}
+		parentDirPath.WriteString(p.FileName + "/")
+	}
+	pd := parentDirPath.String()
+
+	// add path to file
+	for _, f := range item.Data {
+		f.Path = pd + f.FileName
+	}
+
+	return item, nil
+}
+
 func (p *PanClient) FileSearch(param *FileSearchParam) (result *FileSearchResult, error *apierror.ApiError) {
 	fullUrl := &strings.Builder{}
 	md := ""
@@ -191,22 +250,6 @@ func (p *PanClient) FileSearch(param *FileSearchParam) (result *FileSearchResult
 	if err := json.Unmarshal(body, item); err != nil {
 		logger.Verboseln("search response failed")
 		return nil, apierror.NewApiErrorWithError(err)
-	}
-
-	// combine the path for file
-	parentDirPath := strings.Builder{}
-	for _, p := range item.Path {
-		if p.FileName == "全部文件" {
-			parentDirPath.WriteString("/")
-			continue
-		}
-		parentDirPath.WriteString(p.FileName + "/")
-	}
-	pd := parentDirPath.String()
-
-	// add path to file
-	for _, f := range item.Data {
-		f.Path = pd + f.FileName
 	}
 	return item, nil
 }
@@ -269,9 +312,9 @@ func (p *PanClient) getFileInfoByPath(index int, pathSlice *[]string, parentFile
 		return parentFileInfo, nil
 	}
 
-	searchPath := NewFileSearchParam()
+	searchPath := NewFileListParam()
 	searchPath.FileId = parentFileInfo.FileId
-	fileResult, err := p.FileSearch(searchPath)
+	fileResult, err := p.FileList(searchPath)
 	if err != nil {
 		return nil, err
 	}
