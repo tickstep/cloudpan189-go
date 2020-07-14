@@ -3,10 +3,9 @@ package upload
 import (
 	"context"
 	"github.com/tickstep/cloudpan189-go/cloudpan"
-	"github.com/tickstep/cloudpan189-go/internal/config"
+	"github.com/tickstep/cloudpan189-go/internal/file/uploader"
 	"github.com/tickstep/cloudpan189-go/library/requester"
 	"github.com/tickstep/cloudpan189-go/library/requester/rio"
-	"github.com/tickstep/cloudpan189-go/internal/file/uploader"
 	"io"
 	"net/http"
 )
@@ -15,6 +14,13 @@ type (
 	PCSUpload struct {
 		panClient        *cloudpan.PanClient
 		targetPath string
+
+		// UploadFileId 上传文件请求ID
+		uploadFileId string
+		// FileUploadUrl 上传文件数据的URL路径
+		fileUploadUrl string
+		// 请求的X-Request-ID
+		xRequestId string
 	}
 
 	EmptyReaderLen64 struct {
@@ -29,10 +35,13 @@ func (e EmptyReaderLen64) Len() int64 {
 	return 0
 }
 
-func NewPCSUpload(pcs *cloudpan.PanClient, targetPath string) uploader.MultiUpload {
+func NewPCSUpload(pcs *cloudpan.PanClient, targetPath, uploadUrl, uploadFileId, xRequestId string) uploader.MultiUpload {
 	return &PCSUpload{
 		panClient:        pcs,
 		targetPath: targetPath,
+		uploadFileId: uploadFileId,
+		fileUploadUrl: uploadUrl,
+		xRequestId: xRequestId,
 	}
 }
 
@@ -46,11 +55,15 @@ func (pu *PCSUpload) Precreate() (err error) {
 	return nil
 }
 
-func (pu *PCSUpload) TmpFile(ctx context.Context, partseq int, partOffset int64, r rio.ReaderLen64) (uploadDone bool, uperr error) {
+func (pu *PCSUpload) TmpFile(ctx context.Context, partseq int, partOffset int64, partLen int64, r rio.ReaderLen64) (uploadDone bool, uperr error) {
 	pu.lazyInit()
 
 	var respErr *uploader.MultiError
-	pcsError := pu.panClient.AppUploadFileData(,
+	fileRange := &cloudpan.AppFileRange{
+		Start: int(partOffset),
+		End: int(partLen),
+	}
+	pcsError := pu.panClient.AppUploadFileData(pu.fileUploadUrl, pu.uploadFileId, pu.xRequestId, fileRange,
 		func(httpMethod, fullUrl string, headers map[string]string) (resp *http.Response, err error) {
 		client := requester.NewHTTPClient()
 		client.SetTimeout(0)
@@ -88,7 +101,7 @@ func (pu *PCSUpload) TmpFile(ctx context.Context, partseq int, partOffset int64,
 	return true, pcsError
 }
 
-func (pu *PCSUpload) CreateSuperFile(checksumList ...string) (err error) {
+func (pu *PCSUpload) CommitFile() (cerr error) {
 	pu.lazyInit()
 	return nil
 }

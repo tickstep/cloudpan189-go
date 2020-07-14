@@ -12,6 +12,7 @@ import (
 	"github.com/tickstep/cloudpan189-go/library/requester/rio"
 	"github.com/tickstep/cloudpan189-go/internal/file/uploader"
 	"path"
+	"strings"
 	"time"
 )
 
@@ -116,7 +117,9 @@ func (utu *UploadTaskUnit) upload() (result *taskframework.TaskUnitRunResult) {
 		blockSize = getBlockSize(utu.LocalFileChecksum.Length)
 	}
 
-	muer := uploader.NewMultiUploader(NewPCSUpload(utu.PanClient, utu.SavePath), rio.NewFileReaderAtLen64(utu.LocalFileChecksum.GetFile()), &uploader.MultiUploaderConfig{
+	muer := uploader.NewMultiUploader(utu.LocalFileChecksum.FileUploadUrl, utu.LocalFileChecksum.UploadFileId, utu.LocalFileChecksum.XRequestId,
+		NewPCSUpload(utu.PanClient, utu.SavePath, utu.LocalFileChecksum.FileUploadUrl, utu.LocalFileChecksum.UploadFileId, utu.LocalFileChecksum.XRequestId),
+		rio.NewFileReaderAtLen64(utu.LocalFileChecksum.GetFile()), &uploader.MultiUploaderConfig{
 		Parallel:  utu.Parallel,
 		BlockSize: blockSize,
 		MaxRate:   config.Config.MaxUploadRate,
@@ -223,6 +226,11 @@ func (utu *UploadTaskUnit) Run() (result *taskframework.TaskUnitRunResult) {
 	// 准备文件
 	utu.prepareFile()
 
+	var r *cloudpan.AppCreateUploadFileResult
+	var apierr *apierror.ApiError
+	var rs *cloudpan.MkdirResult
+	var appCreateUploadFileParam *cloudpan.AppCreateUploadFileParam
+
 	switch utu.Step {
 	case StepUploadPrepareUpload:
 		goto StepUploadPrepareUpload
@@ -235,19 +243,33 @@ func (utu *UploadTaskUnit) Run() (result *taskframework.TaskUnitRunResult) {
 StepUploadPrepareUpload:
 	// 创建上传任务
 	utu.LocalFileChecksum.Sum(localfile.CHECKSUM_MD5)
-	appCreateUploadFileParam := &cloudpan.AppCreateUploadFileParam{
-		ParentFolderId: "",
+
+	rs, apierr = utu.PanClient.MkdirRecursive("", "", 0, strings.Split(path.Clean(utu.LocalFileChecksum.Path), "/"))
+	if apierr != nil || rs.FileId == "" {
+		fmt.Println("创建云盘文件夹失败")
+		return nil
+	}
+
+	appCreateUploadFileParam = &cloudpan.AppCreateUploadFileParam{
+		ParentFolderId: rs.FileId,
 		FileName: path.Base(utu.LocalFileChecksum.Path),
 		Size: utu.LocalFileChecksum.Length,
 		Md5: utu.LocalFileChecksum.MD5,
-		LastWrite: time.Unix(utu.LocalFileChecksum.ModTime, 0).Format("2020-01-01 00:00:00"),
+		LastWrite: time.Unix(utu.LocalFileChecksum.ModTime, 0).Format("2006-01-02 15:04:05"),
 		LocalPath: utu.LocalFileChecksum.Path,
 	}
-	r, er := utu.PanClient.AppCreateUploadFile(appCreateUploadFileParam)
-	if er != nil {
+	r, apierr = utu.PanClient.AppCreateUploadFile(appCreateUploadFileParam)
+	if apierr != nil {
 		fmt.Println("创建上传任务失败")
+		return nil
 	}
 
+	utu.LocalFileChecksum.ParentFolderId = rs.FileId
+	utu.LocalFileChecksum.UploadFileId = r.UploadFileId
+	utu.LocalFileChecksum.FileUploadUrl = r.FileUploadUrl
+	utu.LocalFileChecksum.FileCommitUrl = r.FileCommitUrl
+	utu.LocalFileChecksum.FileDataExists = r.FileDataExists
+	utu.LocalFileChecksum.XRequestId = r.XRequestId
 
 stepUploadRapidUpload:
 	// 秒传

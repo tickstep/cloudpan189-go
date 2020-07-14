@@ -2,6 +2,7 @@ package command
 
 import (
 	"fmt"
+	"github.com/tickstep/cloudpan189-go/cloudpan/apiutil"
 	"path"
 	"strings"
 )
@@ -22,8 +23,8 @@ func RunRename(oldName string, newName string) {
 		fmt.Println("只能命名同一个目录的文件")
 		return
 	}
-	if !CheckFileNameValid(path.Base(newName)) {
-		fmt.Println("文件名不能包含特殊字符：" + FileNameSpecialChars)
+	if !apiutil.CheckFileNameValid(path.Base(newName)) {
+		fmt.Println("文件名不能包含特殊字符：" + apiutil.FileNameSpecialChars)
 		return
 	}
 

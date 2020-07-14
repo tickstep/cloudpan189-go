@@ -24,6 +24,8 @@ FlhDeqVOG094hFJvZeK4OzA6HVwzwnEW5vIZ7d+u61RV1bsFxmB68+8JXs3ycGcE
 
 	b64map = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
 	bi_rm = "0123456789abcdefghijklmnopqrstuvwxyz"
+
+	FileNameSpecialChars = "\\/:*?\"<>|"
 )
 
 func init() {
@@ -132,4 +134,12 @@ func XRequestId() string {
 func Uuid() string {
 	u4 := uuid.NewV4()
 	return u4.String()
+}
+
+// CheckFileNameValid 检测文件名是否有效，包含特殊字符则无效
+func CheckFileNameValid(name string) bool {
+	if name == "" {
+		return true
+	}
+	return !strings.ContainsAny(name, FileNameSpecialChars)
 }

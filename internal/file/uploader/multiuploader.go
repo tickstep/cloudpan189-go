@@ -15,8 +15,8 @@ type (
 	// MultiUpload 支持多线程的上传, 可用于断点续传
 	MultiUpload interface {
 		Precreate() (perr error)
-		TmpFile(ctx context.Context, partseq int, partOffset int64, readerlen64 rio.ReaderLen64) (uploadDone bool, terr error)
-		CreateSuperFile(checksumList ...string) (cerr error)
+		TmpFile(ctx context.Context, partseq int, partOffset int64, partLen int64, readerlen64 rio.ReaderLen64) (uploadDone bool, terr error)
+		CommitFile() (cerr error)
 	}
 
 	// MultiUploader 多线程上传
@@ -42,6 +42,13 @@ type (
 		canceled                chan struct{}
 		closeCanceledOnce       sync.Once
 		updateInstanceStateChan chan struct{}
+
+		// UploadFileId 上传文件请求ID
+		uploadFileId string
+		// FileUploadUrl 上传文件数据的URL路径
+		fileUploadUrl string
+		// 请求的X-Request-ID
+		xRequestId string
 	}
 
 	// MultiUploaderConfig 多线程上传配置
@@ -53,11 +60,14 @@ type (
 )
 
 // NewMultiUploader 初始化上传
-func NewMultiUploader(multiUpload MultiUpload, file rio.ReaderAtLen64, config *MultiUploaderConfig) *MultiUploader {
+func NewMultiUploader(uploadUrl, uploadFileId, xRequestId string, multiUpload MultiUpload, file rio.ReaderAtLen64, config *MultiUploaderConfig) *MultiUploader {
 	return &MultiUploader{
 		multiUpload: multiUpload,
 		file:        file,
 		config:      config,
+		uploadFileId: uploadFileId,
+		fileUploadUrl: uploadUrl,
+		xRequestId: xRequestId,
 	}
 }
 
@@ -96,6 +106,15 @@ func (muer *MultiUploader) check() {
 	}
 	if muer.multiUpload == nil {
 		panic("multiUpload is nil")
+	}
+	if muer.fileUploadUrl == "" {
+		panic("fileUploadUrl is nil")
+	}
+	if muer.uploadFileId == "" {
+		panic("uploadFileId is nil")
+	}
+	if muer.xRequestId == "" {
+		panic("xRequestId is nil")
 	}
 }
 
@@ -153,7 +172,7 @@ func (muer *MultiUploader) InstanceState() *InstanceState {
 		blockStates = append(blockStates, &BlockState{
 			ID:       wer.id,
 			Range:    wer.splitUnit.Range(),
-			CheckSum: wer.checksum,
+			UploadDone: wer.uploadDone,
 		})
 	}
 	return &InstanceState{

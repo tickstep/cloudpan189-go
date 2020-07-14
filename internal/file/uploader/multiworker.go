@@ -63,7 +63,7 @@ func (muer *MultiUploader) upload() (uperr error) {
 					terr        error
 				)
 				go func() {
-					uploadDone, terr = muer.multiUpload.TmpFile(ctx, int(wer.id), wer.partOffset, wer.splitUnit)
+					uploadDone, terr = muer.multiUpload.TmpFile(ctx, int(wer.id), wer.partOffset, wer.splitUnit.Range().End, wer.splitUnit)
 					close(doneChan)
 				}()
 				select {
@@ -116,10 +116,6 @@ func (muer *MultiUploader) upload() (uperr error) {
 	}
 
 	// upload file commit
-	cerr := muer.multiUpload.CreateSuperFile(muer.workers.CheckSumList()...)
-	if cerr != nil {
-		return cerr
-	}
 
 	return
 }

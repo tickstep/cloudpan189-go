@@ -875,6 +875,70 @@ func main()  {
 			},
 
 		},
+		// 上传文件/目录 upload
+		{
+			Name:      "upload",
+			Aliases:   []string{"u"},
+			Usage:     "上传文件/目录",
+			UsageText: app.Name + " upload <本地文件/目录的路径1> <文件/目录2> <文件/目录3> ... <目标目录>",
+			Description: `
+	上传默认采用分片上传的方式, 上传的文件将会保存到, <目标目录>.
+	遇到同名文件将会自动覆盖!!
+
+	禁用分片上传时只能使用单线程上传, 指定的单个文件上传最大线程数将会无效.
+
+	示例:
+
+	1. 将本地的 C:\Users\Administrator\Desktop\1.mp4 上传到网盘 /视频 目录
+	注意区别反斜杠 "\" 和 斜杠 "/" !!!
+	cloudpan189-go upload C:/Users/Administrator/Desktop/1.mp4 /视频
+
+	2. 将本地的 C:\Users\Administrator\Desktop\1.mp4 和 C:\Users\Administrator\Desktop\2.mp4 上传到网盘 /视频 目录
+	cloudpan189-go upload C:/Users/Administrator/Desktop/1.mp4 C:/Users/Administrator/Desktop/2.mp4 /视频
+
+	3. 将本地的 C:\Users\Administrator\Desktop 整个目录上传到网盘 /视频 目录
+	cloudpan189-go upload C:/Users/Administrator/Desktop /视频
+
+	4. 使用相对路径
+	cloudpan189-go upload 1.mp4 /视频
+`,
+			Category: "天翼云盘",
+			Before:   reloadFn,
+			Action: func(c *cli.Context) error {
+				if c.NArg() < 2 {
+					cli.ShowCommandHelp(c, c.Command.Name)
+					return nil
+				}
+
+				subArgs := c.Args()
+				command.RunUpload(subArgs[:c.NArg()-1], subArgs[c.NArg()-1], &command.UploadOptions{
+					Parallel:      c.Int("p"),
+					MaxRetry:      c.Int("retry"),
+					NoRapidUpload: c.Bool("norapid"),
+					NoSplitFile:   c.Bool("nosplit"),
+				})
+				return nil
+			},
+			Flags: []cli.Flag{
+				cli.IntFlag{
+					Name:  "p",
+					Usage: "指定单个文件上传的最大线程数",
+				},
+				cli.IntFlag{
+					Name:  "retry",
+					Usage: "上传失败最大重试次数",
+					Value: command.DefaultUploadMaxRetry,
+				},
+				cli.BoolFlag{
+					Name:  "norapid",
+					Usage: "不检测秒传",
+				},
+				cli.BoolFlag{
+					Name:  "nosplit",
+					Usage: "禁用分片上传",
+				},
+			},
+		},
 		// 清空控制台 clear
 		{
 			Name:        "clear",
