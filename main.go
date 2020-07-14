@@ -7,10 +7,10 @@ import (
 	"github.com/tickstep/cloudpan189-go/cmder/cmdliner"
 	"github.com/tickstep/cloudpan189-go/cmder/cmdliner/args"
 	"github.com/tickstep/cloudpan189-go/cmder/cmdutil"
-	"github.com/tickstep/cloudpan189-go/cmder/cmdutil/converter"
 	"github.com/tickstep/cloudpan189-go/cmder/cmdutil/escaper"
 	"github.com/tickstep/cloudpan189-go/internal/command"
 	"github.com/tickstep/cloudpan189-go/internal/config"
+	"github.com/tickstep/cloudpan189-go/library/converter"
 	"github.com/tickstep/cloudpan189-go/library/logger"
 	"github.com/urfave/cli"
 	"os"
@@ -941,25 +941,32 @@ func main()  {
 				//	return nil
 				//}
 				//fmt.Printf("%+v", r2)
-				durl, e := activeUser.PanClient().AppGetFileDownloadUrl("21301210456083931")
+				//durl, e := activeUser.PanClient().AppGetFileDownloadUrl("21301210456083931")
+				//if e != nil {
+				//	fmt.Println(e)
+				//	return nil
+				//}
+				//fmt.Println(durl)
+				//resp, e := activeUser.PanClient().AppDownloadFileData(durl, cloudpan.AppFileRange{4372546,14372545})
+				//if e != nil {
+				//	fmt.Println(e)
+				//	return nil
+				//}
+				//f, er := os.OpenFile("D:/dl/189test.pdf", os.O_APPEND | os.O_CREATE, 0777)
+				//if er != nil {
+				//	fmt.Println(e)
+				//	return nil
+				//}
+				//defer f.Close()
+				//resp.Write(f)
+				r,e := activeUser.PanClient().AppGetFileInfo(&cloudpan.AppGetFileInfoParam{
+					"", "/Cloud189-Go/tup/image_tool1.bat",
+				})
 				if e != nil {
 					fmt.Println(e)
 					return nil
 				}
-				fmt.Println(durl)
-				resp, e := activeUser.PanClient().AppDownloadFileData(durl, cloudpan.AppFileRange{4372546,14372545})
-				if e != nil {
-					fmt.Println(e)
-					return nil
-				}
-				f, er := os.OpenFile("D:/dl/189test.pdf", os.O_APPEND | os.O_CREATE, 0777)
-				if er != nil {
-					fmt.Println(e)
-					return nil
-				}
-				defer f.Close()
-
-				resp.Write(f)
+				fmt.Printf("%+v", r)
 
 				return nil
 			},

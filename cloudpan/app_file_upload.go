@@ -5,11 +5,15 @@ import (
 	"github.com/tickstep/cloudpan189-go/cloudpan/apierror"
 	"github.com/tickstep/cloudpan189-go/cloudpan/apiutil"
 	"github.com/tickstep/cloudpan189-go/library/logger"
+	"net/http"
 	"strconv"
 	"strings"
 )
 
 type (
+	// UploadFunc 上传文件处理函数
+	UploadFunc func(httpMethod, fullUrl string, headers map[string]string) (resp *http.Response, err error)
+
 	AppCreateUploadFileParam struct {
 		// ParentFolderId 存储云盘的目录ID
 		ParentFolderId string
@@ -101,7 +105,7 @@ func (p *PanClient) AppCreateUploadFile(param *AppCreateUploadFileParam) (*AppCr
 	return item, nil
 }
 
-func (p *PanClient) AppUploadFileData(uploadUrl, uploadFileId, xRequestId string, fileRange *AppFileRange, data []byte) *apierror.ApiError {
+func (p *PanClient) AppUploadFileData(uploadUrl, uploadFileId, xRequestId string, fileRange *AppFileRange, uploadFunc UploadFunc) *apierror.ApiError {
 	fullUrl := uploadUrl + "?" + apiutil.PcClientInfoSuffixParam()
 	httpMethod := "PUT"
 	dateOfGmt := apiutil.DateOfGmtStr()
@@ -118,7 +122,7 @@ func (p *PanClient) AppUploadFileData(uploadUrl, uploadFileId, xRequestId string
 		"Edrive-UploadFileRange": "bytes=" + strconv.Itoa(fileRange.Start) + "-" + strconv.Itoa(fileRange.End),
 	}
 	logger.Verboseln("do request url: " + fullUrl)
-	_, err1 := p.client.Fetch(httpMethod, fullUrl, data, headers)
+	_, err1 := uploadFunc(httpMethod, fullUrl, headers)
 	if err1 != nil {
 		logger.Verboseln("AppUploadFileData occurs error: ", err1.Error())
 		return apierror.NewApiErrorWithError(err1)

@@ -87,7 +87,7 @@ type (
 		// SubFileCount 文件夹子文件数量，对文件夹详情有效
 		SubFileCount uint `json:"subFileCount"`
 		// FilePath 文件的完整路径
-		Path string
+		Path string `json:"path"`
 	}
 
 	PathEntity struct {

@@ -85,7 +85,7 @@ func (te *TaskExecutor) Execute() {
 			}
 
 			// 获取任务
-			task, ok := e.(*TaskInfoItem) // 类型断言是在接口之间进行，本质也是类型转换，写法是a.(b),含义是把a转换成b
+			task, ok := e.(*TaskInfoItem)
 			if !ok {
 				// type cast failed
 			}

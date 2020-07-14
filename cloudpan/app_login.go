@@ -32,8 +32,8 @@ type (
 		// 有效期的token
 		AccessToken string `json:"accessToken"`
 		// token 过期时间点
-		AccessTokenExpiresIn int
-		RsaPublicKey string
+		AccessTokenExpiresIn int `json:"access_token_expires_in"`
+		RsaPublicKey string `json:"rsa_public_key"`
 	}
 
 	appSessionResp struct {
