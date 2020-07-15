@@ -15,7 +15,7 @@ type (
 	// MultiUpload 支持多线程的上传, 可用于断点续传
 	MultiUpload interface {
 		Precreate() (perr error)
-		TmpFile(ctx context.Context, partseq int, partOffset int64, partLen int64, readerlen64 rio.ReaderLen64) (uploadDone bool, terr error)
+		UploadFile(ctx context.Context, partseq int, partOffset int64, partEnd int64, readerlen64 rio.ReaderLen64) (uploadDone bool, terr error)
 		CommitFile() (cerr error)
 	}
 
@@ -47,6 +47,8 @@ type (
 		uploadFileId string
 		// FileUploadUrl 上传文件数据的URL路径
 		fileUploadUrl string
+		// FileCommitUrl 上传文件完成后确认路径
+		fileCommitUrl string
 		// 请求的X-Request-ID
 		xRequestId string
 	}
@@ -60,13 +62,14 @@ type (
 )
 
 // NewMultiUploader 初始化上传
-func NewMultiUploader(uploadUrl, uploadFileId, xRequestId string, multiUpload MultiUpload, file rio.ReaderAtLen64, config *MultiUploaderConfig) *MultiUploader {
+func NewMultiUploader(uploadUrl, commitUrl, uploadFileId, xRequestId string, multiUpload MultiUpload, file rio.ReaderAtLen64, config *MultiUploaderConfig) *MultiUploader {
 	return &MultiUploader{
 		multiUpload: multiUpload,
 		file:        file,
 		config:      config,
 		uploadFileId: uploadFileId,
 		fileUploadUrl: uploadUrl,
+		fileCommitUrl: commitUrl,
 		xRequestId: xRequestId,
 	}
 }

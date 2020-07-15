@@ -130,8 +130,8 @@ func (p *PanClient) AppUploadFileData(uploadUrl, uploadFileId, xRequestId string
 	return nil
 }
 
-func (p *PanClient) AppUploadFileCommit(uploadUrl, uploadFileId, xRequestId string) (*AppUploadFileCommitResult, *apierror.ApiError) {
-	fullUrl := uploadUrl + "?" + apiutil.PcClientInfoSuffixParam()
+func (p *PanClient) AppUploadFileCommit(uploadCommitUrl, uploadFileId, xRequestId string) (*AppUploadFileCommitResult, *apierror.ApiError) {
+	fullUrl := uploadCommitUrl + "?" + apiutil.PcClientInfoSuffixParam()
 	httpMethod := "POST"
 	dateOfGmt := apiutil.DateOfGmtStr()
 	requestId := xRequestId

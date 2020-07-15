@@ -3,14 +3,14 @@ package upload
 import (
 	"errors"
 	"github.com/tickstep/cloudpan189-go/internal/config"
+	"github.com/tickstep/cloudpan189-go/internal/file/uploader"
+	"github.com/tickstep/cloudpan189-go/internal/localfile"
 	"github.com/tickstep/cloudpan189-go/library/converter"
 	"github.com/tickstep/cloudpan189-go/library/jsonhelper"
-	"github.com/tickstep/cloudpan189-go/internal/file/uploader"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
-	"github.com/tickstep/cloudpan189-go/internal/localfile"
 )
 
 type (

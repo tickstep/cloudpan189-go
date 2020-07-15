@@ -19,6 +19,8 @@ type (
 		uploadFileId string
 		// FileUploadUrl 上传文件数据的URL路径
 		fileUploadUrl string
+		// FileCommitUrl 上传文件完成后确认路径
+		fileCommitUrl string
 		// 请求的X-Request-ID
 		xRequestId string
 	}
@@ -35,12 +37,13 @@ func (e EmptyReaderLen64) Len() int64 {
 	return 0
 }
 
-func NewPCSUpload(pcs *cloudpan.PanClient, targetPath, uploadUrl, uploadFileId, xRequestId string) uploader.MultiUpload {
+func NewPCSUpload(pcs *cloudpan.PanClient, targetPath, uploadUrl, commitUrl, uploadFileId, xRequestId string) uploader.MultiUpload {
 	return &PCSUpload{
 		panClient:        pcs,
 		targetPath: targetPath,
 		uploadFileId: uploadFileId,
 		fileUploadUrl: uploadUrl,
+		fileCommitUrl: commitUrl,
 		xRequestId: xRequestId,
 	}
 }
@@ -55,13 +58,13 @@ func (pu *PCSUpload) Precreate() (err error) {
 	return nil
 }
 
-func (pu *PCSUpload) TmpFile(ctx context.Context, partseq int, partOffset int64, partLen int64, r rio.ReaderLen64) (uploadDone bool, uperr error) {
+func (pu *PCSUpload) UploadFile(ctx context.Context, partseq int, partOffset int64, partEnd int64, r rio.ReaderLen64) (uploadDone bool, uperr error) {
 	pu.lazyInit()
 
 	var respErr *uploader.MultiError
 	fileRange := &cloudpan.AppFileRange{
 		Start: int(partOffset),
-		End: int(partLen),
+		End: int(partEnd),
 	}
 	pcsError := pu.panClient.AppUploadFileData(pu.fileUploadUrl, pu.uploadFileId, pu.xRequestId, fileRange,
 		func(httpMethod, fullUrl string, headers map[string]string) (resp *http.Response, err error) {
@@ -76,7 +79,7 @@ func (pu *PCSUpload) TmpFile(ctx context.Context, partseq int, partOffset int64,
 			if resp != nil {
 				// 不可恢复的错误
 				switch resp.StatusCode {
-				case 400, 401, 403, 413:
+				case 400, 401, 403, 413, 600:
 					respErr = &uploader.MultiError{
 						Terminated: true,
 					}
@@ -90,7 +93,7 @@ func (pu *PCSUpload) TmpFile(ctx context.Context, partseq int, partOffset int64,
 		case <-doneChan:
 			// return
 		}
-		return
+		return resp, nil
 	})
 
 	if respErr != nil {
@@ -103,5 +106,9 @@ func (pu *PCSUpload) TmpFile(ctx context.Context, partseq int, partOffset int64,
 
 func (pu *PCSUpload) CommitFile() (cerr error) {
 	pu.lazyInit()
+	_, er := pu.panClient.AppUploadFileCommit(pu.fileCommitUrl, pu.uploadFileId, pu.xRequestId)
+	if er != nil {
+		return er
+	}
 	return nil
 }
