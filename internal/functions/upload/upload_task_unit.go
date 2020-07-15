@@ -244,7 +244,7 @@ StepUploadPrepareUpload:
 	// 创建上传任务
 	utu.LocalFileChecksum.Sum(localfile.CHECKSUM_MD5)
 
-	rs, apierr = utu.PanClient.MkdirRecursive("", "", 0, strings.Split(path.Clean(utu.LocalFileChecksum.Path), "/"))
+	rs, apierr = utu.PanClient.MkdirRecursive("", "", 0, strings.Split(path.Clean(path.Dir(utu.SavePath)), "/"))
 	if apierr != nil || rs.FileId == "" {
 		fmt.Println("创建云盘文件夹失败")
 		return nil

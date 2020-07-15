@@ -96,12 +96,12 @@ func (pu *PCSUpload) UploadFile(ctx context.Context, partseq int, partOffset int
 		return resp, nil
 	})
 
-	if respErr != nil {
+	if pcsError != nil {
 		respErr.Err = pcsError
 		return false, respErr
 	}
 
-	return true, pcsError
+	return true, nil
 }
 
 func (pu *PCSUpload) CommitFile() (cerr error) {

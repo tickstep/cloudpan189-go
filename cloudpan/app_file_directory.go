@@ -37,12 +37,6 @@ type (
 		Fid string `xml:"fid"`
 		Fname string `xml:"fname"`
 	}
-
-	appErrorResp struct {
-		XMLName xml.Name `xml:"error"`
-		Code string `xml:"code"`
-		Message string `xml:"message"`
-	}
 )
 
 // AppGetFileInfo 根据文件ID或者文件绝对路径获取文件信息，支持文件和文件夹
@@ -65,7 +59,7 @@ func (p *PanClient) AppGetFileInfo(param *AppGetFileInfoParam) (*AppGetFileInfoR
 		logger.Verboseln("AppGetFileInfo occurs error: ", err1.Error())
 		return nil, apierror.NewApiErrorWithError(err1)
 	}
-	er := &appErrorResp{}
+	er := &apierror.AppErrorXmlResp{}
 	if err := xml.Unmarshal(respBody, er); err == nil {
 		if er.Code != "" {
 			if er.Code == "FileNotFound" {

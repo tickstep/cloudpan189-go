@@ -155,6 +155,14 @@ func (p *PanClient) AppUploadFileCommit(uploadCommitUrl, uploadFileId, xRequestI
 		logger.Verboseln("AppUploadFileData occurs error: ", err1.Error())
 		return nil, apierror.NewApiErrorWithError(err1)
 	}
+	er := &apierror.AppErrorXmlResp{}
+	if err := xml.Unmarshal(respBody, er); err == nil {
+		if er.Code != "" {
+			if er.Code == "UploadFileStatusVerifyFailed" {
+				return nil, apierror.NewApiError(apierror.ApiCodeUploadFileStatusVerifyFailed, "上传文件校验失败")
+			}
+		}
+	}
 	item := &AppUploadFileCommitResult{}
 	if err := xml.Unmarshal(respBody, item); err != nil {
 		logger.Verboseln("AppUploadFileData parse response failed")

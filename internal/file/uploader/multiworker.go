@@ -72,6 +72,7 @@ func (muer *MultiUploader) upload() (uperr error) {
 					return
 				case <-doneChan:
 					// continue
+					uploaderVerbose.Info("multiUpload worker upload file done")
 				}
 				cancel()
 				if terr != nil {

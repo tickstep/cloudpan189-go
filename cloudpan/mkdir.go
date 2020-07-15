@@ -80,7 +80,7 @@ func (p *PanClient) MkdirRecursive(parentFileId string, fullPath string, index i
 	// existed?
 	for _, fileEntity := range fileResult.Data {
 		if fileEntity.FileName == pathSlice[index] {
-			return p.MkdirRecursive(parentFileId, fullPath + "/" + pathSlice[index], index + 1, pathSlice)
+			return p.MkdirRecursive(fileEntity.FileId, fullPath + "/" + pathSlice[index], index + 1, pathSlice)
 		}
 	}
 

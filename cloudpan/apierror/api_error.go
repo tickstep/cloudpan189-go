@@ -9,6 +9,8 @@ const (
 	ApiCodeTokenExpiredCode ApiCode = 11
 	// 文件不存在
 	ApiCodeFileNotFoundCode ApiCode = 12
+	// 上传文件失败
+	ApiCodeUploadFileStatusVerifyFailed = 13
 	// 失败
 	ApiCodeFailed ApiCode = 999
 )
