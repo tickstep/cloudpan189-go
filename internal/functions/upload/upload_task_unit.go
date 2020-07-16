@@ -71,7 +71,7 @@ func (utu *UploadTaskUnit) prepareFile() {
 
 	// 检测断点续传
 	utu.state = utu.UploadingDatabase.Search(&utu.LocalFileChecksum.LocalFileMeta)
-	if utu.state != nil || utu.LocalFileChecksum.LocalFileMeta.UploadFileId != "" { // 读取到了md5
+	if utu.state != nil || utu.LocalFileChecksum.LocalFileMeta.UploadFileId != "" { // 读取到了上传task请求的fileId
 		utu.Step = StepUploadUpload
 		return
 	}

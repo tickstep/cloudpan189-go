@@ -5,6 +5,7 @@ import (
 	"github.com/tickstep/cloudpan189-go/internal/waitgroup"
 	"github.com/oleiade/lane"
 	"os"
+	"strconv"
 )
 
 type (
@@ -63,7 +64,12 @@ func (muer *MultiUploader) upload() (uperr error) {
 					terr        error
 				)
 				go func() {
-					uploadDone, terr = muer.multiUpload.UploadFile(ctx, int(wer.id), wer.partOffset, wer.splitUnit.Range().End, wer.splitUnit)
+					if !wer.uploadDone {
+						uploaderVerbose.Info("begin to upload part: " + strconv.Itoa(wer.id))
+						uploadDone, terr = muer.multiUpload.UploadFile(ctx, int(wer.id), wer.partOffset, wer.splitUnit.Range().End, wer.splitUnit)
+					} else {
+						uploadDone = true
+					}
 					close(doneChan)
 				}()
 				select {
@@ -117,9 +123,20 @@ func (muer *MultiUploader) upload() (uperr error) {
 	}
 
 	// upload file commit
-	e := muer.multiUpload.CommitFile()
-	if e != nil {
-		return e
+	// 检测是否全部分片上传成功
+	allSuccess := true
+	for _, wer := range muer.workers {
+		allSuccess = allSuccess && wer.uploadDone
 	}
+	if allSuccess {
+		e := muer.multiUpload.CommitFile()
+		if e != nil {
+			uploaderVerbose.Warn("upload file commit failed: " + e.Error())
+			return e
+		}
+	} else {
+		uploaderVerbose.Warn("upload file not all success: " + muer.uploadFileId)
+	}
+
 	return
 }

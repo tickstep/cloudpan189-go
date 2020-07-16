@@ -93,10 +93,13 @@ func (pu *PCSUpload) UploadFile(ctx context.Context, partseq int, partOffset int
 		case <-doneChan:
 			// return
 		}
-		return resp, nil
+		return resp, respErr
 	})
 
 	if pcsError != nil {
+		return false, pcsError
+	}
+	if respErr != nil {
 		respErr.Err = pcsError
 		return false, respErr
 	}
