@@ -38,7 +38,7 @@ type (
 		// FileCommitUrl 上传文件完成后确认路径
 		FileCommitUrl string `xml:"fileCommitUrl"`
 		// FileDataExists 文件是否已存在云盘中，0-未存在，1-已存在
-		FileDataExists string `xml:"fileDataExists"`
+		FileDataExists int `xml:"fileDataExists"`
 		// 请求的X-Request-ID
 		XRequestId string
 	}
@@ -59,6 +59,15 @@ type (
 		UserId string `xml:"userId"`
 		RequestId string `xml:"requestId"`
 		IsSafe string `xml:"isSafe"`
+	}
+
+	AppGetUploadFileStatusResult struct {
+		XMLName xml.Name `xml:"uploadFile"`
+		UploadFileId string `xml:"uploadFileId"`
+		Size int64 `xml:"size"`
+		FileUploadUrl string `xml:"fileUploadUrl"`
+		FileCommitUrl string `xml:"fileCommitUrl"`
+		FileDataExists int `xml:"fileDataExists"`
 	}
 )
 
@@ -166,6 +175,33 @@ func (p *PanClient) AppUploadFileCommit(uploadCommitUrl, uploadFileId, xRequestI
 	item := &AppUploadFileCommitResult{}
 	if err := xml.Unmarshal(respBody, item); err != nil {
 		logger.Verboseln("AppUploadFileData parse response failed")
+		return nil, apierror.NewApiErrorWithError(err)
+	}
+	return item, nil
+}
+
+// AppGetUploadFileStatus 查询上传的文件状态
+func (p *PanClient) AppGetUploadFileStatus(uploadFileId string) (*AppGetUploadFileStatusResult, *apierror.ApiError) {
+	fullUrl := API_URL + "/getUploadFileStatus.action?uploadFileId=" + uploadFileId + "&ResumePolicy=1&" + apiutil.PcClientInfoSuffixParam()
+	httpMethod := "GET"
+	dateOfGmt := apiutil.DateOfGmtStr()
+	requestId := apiutil.XRequestId()
+	appToken := p.appToken
+	headers := map[string]string {
+		"Date": dateOfGmt,
+		"SessionKey": appToken.SessionKey,
+		"Signature": apiutil.SignatureOfHmac(appToken.SessionSecret, appToken.SessionKey, httpMethod, fullUrl, dateOfGmt),
+		"X-Request-ID": requestId,
+	}
+	logger.Verboseln("do request url: " + fullUrl)
+	respBody, err1 := p.client.Fetch(httpMethod, fullUrl, nil, headers)
+	if err1 != nil {
+		logger.Verboseln("AppGetUploadFileStatus occurs error: ", err1.Error())
+		return nil, apierror.NewApiErrorWithError(err1)
+	}
+	item := &AppGetUploadFileStatusResult{}
+	if err := xml.Unmarshal(respBody, item); err != nil {
+		logger.Verboseln("AppGetUploadFileStatus parse response failed")
 		return nil, apierror.NewApiErrorWithError(err)
 	}
 	return item, nil

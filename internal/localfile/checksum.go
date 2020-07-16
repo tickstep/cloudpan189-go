@@ -41,7 +41,7 @@ type (
 		// FileCommitUrl 上传文件完成后确认路径
 		FileCommitUrl string `json:"file_commit_url"`
 		// FileDataExists 文件是否已存在云盘中，0-未存在，1-已存在
-		FileDataExists string `json:"file_data_exists"`
+		FileDataExists int `json:"file_data_exists"`
 		// 请求的X-Request-ID
 		XRequestId string `json:"x_request_id"`
 	}
