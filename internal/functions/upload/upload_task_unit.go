@@ -71,8 +71,20 @@ func (utu *UploadTaskUnit) prepareFile() {
 
 	// 检测断点续传
 	utu.state = utu.UploadingDatabase.Search(&utu.LocalFileChecksum.LocalFileMeta)
-	if utu.state != nil || utu.LocalFileChecksum.LocalFileMeta.UploadFileId != "" { // 读取到了上传task请求的fileId
+	if utu.state != nil || utu.LocalFileChecksum.LocalFileMeta.UploadFileId != "" { // 读取到了上一次上传task请求的fileId
 		utu.Step = StepUploadUpload
+
+		// 服务器上次上传的部分数据是否还存在
+		appGetUploadFileStatusResult, apierr := utu.PanClient.AppGetUploadFileStatus(utu.LocalFileChecksum.UploadFileId)
+		if apierr != nil {
+			if apierr.Code == apierror.ApiCodeUploadFileNotFound {
+				cmdUploadVerbose.Warn("断点续传失败，需要重新从0开始上传文件：" + apierr.Error())
+				utu.Step = StepUploadPrepareUpload
+			}
+		} else {
+			// 需要修正上一次上传值，断点续传
+			utu.state.BlockList[0].Range.Begin = appGetUploadFileStatusResult.Size
+		}
 		return
 	}
 
@@ -111,7 +123,7 @@ func (utu *UploadTaskUnit) upload() (result *taskframework.TaskUnitRunResult) {
 
 	var blockSize int64
 	if utu.NoSplitFile {
-		// 不分片上传
+		// 不分片上传，天翼网盘不支持分片，所以正常应该到这个分支
 		blockSize = utu.LocalFileChecksum.Length
 	} else {
 		blockSize = getBlockSize(utu.LocalFileChecksum.Length)

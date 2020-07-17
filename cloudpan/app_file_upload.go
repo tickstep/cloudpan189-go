@@ -5,6 +5,7 @@ import (
 	"github.com/tickstep/cloudpan189-go/cloudpan/apierror"
 	"github.com/tickstep/cloudpan189-go/cloudpan/apiutil"
 	"github.com/tickstep/cloudpan189-go/library/logger"
+	"io/ioutil"
 	"net/http"
 	"strconv"
 	"strings"
@@ -133,12 +134,24 @@ func (p *PanClient) AppUploadFileData(uploadUrl, uploadFileId, xRequestId string
 		"ResumePolicy": "1",
 		"Edrive-UploadFileId": uploadFileId,
 		"Edrive-UploadFileRange": "bytes=" + strconv.Itoa(fileRange.Offset) + "-" + strconv.Itoa(fileRange.Len),
+		"Expect": "100-continue",
 	}
 	logger.Verboseln("do request url: " + fullUrl)
-	_, err1 := uploadFunc(httpMethod, fullUrl, headers)
+	resp, err1 := uploadFunc(httpMethod, fullUrl, headers)
 	if err1 != nil {
 		logger.Verboseln("AppUploadFileData occurs error: ", err1.Error())
 		return apierror.NewApiErrorWithError(err1)
+	}
+	if resp != nil {
+		er := &apierror.AppErrorXmlResp{}
+		d, _ := ioutil.ReadAll(resp.Body)
+		if err := xml.Unmarshal(d, er); err == nil {
+			if er.Code != "" {
+				if er.Code == "UploadOffsetVerifyFailed" {
+					return apierror.NewApiError(apierror.ApiCodeUploadOffsetVerifyFailed, "上传文件数据偏移值校验失败")
+				}
+			}
+		}
 	}
 	return nil
 }
@@ -202,6 +215,14 @@ func (p *PanClient) AppGetUploadFileStatus(uploadFileId string) (*AppGetUploadFi
 	if err1 != nil {
 		logger.Verboseln("AppGetUploadFileStatus occurs error: ", err1.Error())
 		return nil, apierror.NewApiErrorWithError(err1)
+	}
+	er := &apierror.AppErrorXmlResp{}
+	if err := xml.Unmarshal(respBody, er); err == nil {
+		if er.Code != "" {
+			if er.Code == "UploadFileNotFound" {
+				return nil, apierror.NewApiError(apierror.ApiCodeUploadFileNotFound, "服务器上传文件不存在")
+			}
+		}
 	}
 	item := &AppGetUploadFileStatusResult{}
 	if err := xml.Unmarshal(respBody, item); err != nil {

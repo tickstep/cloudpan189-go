@@ -912,17 +912,19 @@ func main()  {
 
 				subArgs := c.Args()
 				command.RunUpload(subArgs[:c.NArg()-1], subArgs[c.NArg()-1], &command.UploadOptions{
-					Parallel:      c.Int("p"),
+					AllParallel:   c.Int("all_parallel"),
+					Parallel:      1, // 天翼云盘只支持单线程上传
 					MaxRetry:      c.Int("retry"),
 					NoRapidUpload: c.Bool("norapid"),
-					NoSplitFile:   c.Bool("nosplit"),
+					NoSplitFile:   true, // 天翼云盘不支持分片并发上传，只支持单线程上传，支持断点续传
 				})
 				return nil
 			},
 			Flags: []cli.Flag{
 				cli.IntFlag{
-					Name:  "p",
-					Usage: "指定单个文件上传的最大线程数",
+					Name:  "all_parallel",
+					Usage: "所有文件并发上传数量，即可以同时并发上传多少个文件",
+					Value: command.DefaultUploadMaxAllParallel,
 				},
 				cli.IntFlag{
 					Name:  "retry",
@@ -932,10 +934,6 @@ func main()  {
 				cli.BoolFlag{
 					Name:  "norapid",
 					Usage: "不检测秒传",
-				},
-				cli.BoolFlag{
-					Name:  "nosplit",
-					Usage: "禁用分片上传",
 				},
 			},
 		},
@@ -974,7 +972,7 @@ func main()  {
 			Category:    "debug",
 			Before:      reloadFn,
 			Action: func(c *cli.Context) error {
-				activeUser := config.Config.ActiveUser()
+				//activeUser := config.Config.ActiveUser()
 				//uploadFile := "/Volumes/Downloads/tmp/pcs_config.json"
 				//uploadFileData,_ := ioutil.ReadFile(uploadFile)
 				//p := &cloudpan.AppCreateUploadFileParam{
@@ -1023,15 +1021,14 @@ func main()  {
 				//}
 				//defer f.Close()
 				//resp.Write(f)
-				r,e := activeUser.PanClient().AppGetFileInfo(&cloudpan.AppGetFileInfoParam{
-					"", "/Cloud189-Go/tup/image_tool1.bat",
-				})
-				if e != nil {
-					fmt.Println(e)
-					return nil
-				}
-				fmt.Printf("%+v", r)
-
+				//r,e := activeUser.PanClient().AppGetFileInfo(&cloudpan.AppGetFileInfoParam{
+				//	"", "/Cloud189-Go/tup/image_tool1.bat",
+				//})
+				//if e != nil {
+				//	fmt.Println(e)
+				//	return nil
+				//}
+				//fmt.Printf("%+v", r)
 				return nil
 			},
 			Flags: []cli.Flag{

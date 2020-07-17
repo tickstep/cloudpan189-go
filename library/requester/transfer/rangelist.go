@@ -182,14 +182,14 @@ func (gen *RangeListGen) GenRange() (index int, r *Range) {
 		if gen.count >= gen.parallel {
 			end = gen.total
 		} else {
-			end = gen.begin + gen.blockSize - 1
+			end = gen.begin + gen.blockSize
 		}
 		r = &Range{
 			Begin: gen.begin,
 			End:   end,
 		}
 
-		gen.begin = end + 1
+		gen.begin = end
 		index = gen.count - 1
 		return
 	case RangeGenMode_BlockSize:
@@ -204,7 +204,7 @@ func (gen *RangeListGen) GenRange() (index int, r *Range) {
 		}
 
 		gen.count++
-		end = gen.begin + gen.blockSize - 1
+		end = gen.begin + gen.blockSize
 		if end >= gen.total {
 			end = gen.total
 		}
@@ -212,7 +212,7 @@ func (gen *RangeListGen) GenRange() (index int, r *Range) {
 			Begin: gen.begin,
 			End:   end,
 		}
-		gen.begin = end + 1
+		gen.begin = end
 		index = gen.count - 1
 		return
 	}

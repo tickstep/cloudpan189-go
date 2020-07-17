@@ -11,6 +11,10 @@ const (
 	ApiCodeFileNotFoundCode ApiCode = 12
 	// 上传文件失败
 	ApiCodeUploadFileStatusVerifyFailed = 13
+	// 上传文件数据偏移值校验失败
+	ApiCodeUploadOffsetVerifyFailed = 14
+	// 服务器上传文件不存在
+	ApiCodeUploadFileNotFound = 15
 	// 失败
 	ApiCodeFailed ApiCode = 999
 )

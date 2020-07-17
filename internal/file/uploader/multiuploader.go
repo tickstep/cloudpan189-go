@@ -148,6 +148,10 @@ func (muer *MultiUploader) Execute() {
 	muer.executeTime = time.Now()
 	utils.Trigger(muer.onExecuteEvent)
 
+	// 通知更新
+	if muer.updateInstanceStateChan != nil {
+		muer.updateInstanceStateChan <- struct{}{}
+	}
 	muer.uploadStatusEvent()
 
 	err := muer.upload()

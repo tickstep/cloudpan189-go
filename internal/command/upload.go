@@ -17,6 +17,8 @@ import (
 )
 
 const (
+	// DefaultUploadMaxAllParallel 默认所有文件并发上传数量，即可以同时并发上传多少个文件
+	DefaultUploadMaxAllParallel = 1
 	// DefaultUploadMaxRetry 默认上传失败最大重试次数
 	DefaultUploadMaxRetry = 3
 )
@@ -24,7 +26,8 @@ const (
 type (
 	// UploadOptions 上传可选项
 	UploadOptions struct {
-		Parallel      int
+		AllParallel   int // 所有文件并发上传数量，即可以同时并发上传多少个文件
+		Parallel      int // 单个文件并发上传数量
 		MaxRetry      int
 		NoRapidUpload bool
 		NoSplitFile   bool // 禁用分片上传
@@ -39,8 +42,11 @@ func RunUpload(localPaths []string, savePath string, opt *UploadOptions) {
 	}
 
 	// 检测opt
+	if opt.AllParallel <= 0 {
+		opt.AllParallel = config.Config.MaxUploadParallel
+	}
 	if opt.Parallel <= 0 {
-		opt.Parallel = config.Config.MaxUploadParallel
+		opt.Parallel = 1
 	}
 
 	if opt.MaxRetry < 0 {
@@ -76,6 +82,7 @@ func RunUpload(localPaths []string, savePath string, opt *UploadOptions) {
 		// 统计
 		statistic = &upload.UploadStatistic{}
 	)
+	executor.SetParallel(opt.AllParallel)
 
 	statistic.StartTimer() // 开始计时
 
