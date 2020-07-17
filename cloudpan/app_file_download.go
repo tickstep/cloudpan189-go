@@ -63,10 +63,10 @@ func (p *PanClient) AppDownloadFileData(downloadFileUrl string, fileRange AppFil
 		"X-Request-ID": apiutil.XRequestId(),
 	}
 	// 支持断点续传
-	if fileRange.Start != 0 || fileRange.End != 0 {
-		rangeStr := "bytes=" + strconv.Itoa(fileRange.Start) + "-"
-		if fileRange.End != 0 {
-			rangeStr += strconv.Itoa(fileRange.End)
+	if fileRange.Offset != 0 || fileRange.Len != 0 {
+		rangeStr := "bytes=" + strconv.Itoa(fileRange.Offset) + "-"
+		if fileRange.Len != 0 {
+			rangeStr += strconv.Itoa(fileRange.Len)
 		}
 		headers["range"] = rangeStr
 	}

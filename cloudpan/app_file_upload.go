@@ -44,8 +44,10 @@ type (
 	}
 
 	AppFileRange struct {
-		Start int
-		End int
+		// 起始值，包含
+		Offset int
+		// 总上传长度
+		Len int
 	}
 
 	AppUploadFileCommitResult struct {
@@ -63,7 +65,9 @@ type (
 
 	AppGetUploadFileStatusResult struct {
 		XMLName xml.Name `xml:"uploadFile"`
+		// 上传文件的ID
 		UploadFileId string `xml:"uploadFileId"`
+		// 已上传的大小
 		Size int64 `xml:"size"`
 		FileUploadUrl string `xml:"fileUploadUrl"`
 		FileCommitUrl string `xml:"fileCommitUrl"`
@@ -128,7 +132,7 @@ func (p *PanClient) AppUploadFileData(uploadUrl, uploadFileId, xRequestId string
 		"X-Request-ID": requestId,
 		"ResumePolicy": "1",
 		"Edrive-UploadFileId": uploadFileId,
-		"Edrive-UploadFileRange": "bytes=" + strconv.Itoa(fileRange.Start) + "-" + strconv.Itoa(fileRange.End),
+		"Edrive-UploadFileRange": "bytes=" + strconv.Itoa(fileRange.Offset) + "-" + strconv.Itoa(fileRange.Len),
 	}
 	logger.Verboseln("do request url: " + fullUrl)
 	_, err1 := uploadFunc(httpMethod, fullUrl, headers)
