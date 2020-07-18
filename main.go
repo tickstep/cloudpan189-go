@@ -885,8 +885,6 @@ func main()  {
 	上传默认采用分片上传的方式, 上传的文件将会保存到, <目标目录>.
 	遇到同名文件将会自动覆盖!!
 
-	禁用分片上传时只能使用单线程上传, 指定的单个文件上传最大线程数将会无效.
-
 	示例:
 
 	1. 将本地的 C:\Users\Administrator\Desktop\1.mp4 上传到网盘 /视频 目录
@@ -915,7 +913,7 @@ func main()  {
 					AllParallel:   c.Int("all_parallel"),
 					Parallel:      1, // 天翼云盘只支持单线程上传
 					MaxRetry:      c.Int("retry"),
-					NoRapidUpload: c.Bool("norapid"),
+					NoRapidUpload: true, // 不检测秒传，暂时不支持
 					NoSplitFile:   true, // 天翼云盘不支持分片并发上传，只支持单线程上传，支持断点续传
 				})
 				return nil
@@ -930,10 +928,6 @@ func main()  {
 					Name:  "retry",
 					Usage: "上传失败最大重试次数",
 					Value: command.DefaultUploadMaxRetry,
-				},
-				cli.BoolFlag{
-					Name:  "norapid",
-					Usage: "不检测秒传",
 				},
 			},
 		},
