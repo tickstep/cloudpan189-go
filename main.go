@@ -266,8 +266,7 @@ func main()  {
 			Description: `
 	示例:
 		cloudpan189-go login
-		cloudpan189-go login -username=tickstep
-        cloudpan189-go login -COOKIE_LOGIN_USER=8B12CBBCE89CA8DFC3445985B63B511B5E7EC7...
+		cloudpan189-go login -username=tickstep -password=123xxx
 
 	常规登录:
 		按提示一步一步来即可.
@@ -304,12 +303,14 @@ func main()  {
 				},
 				cli.StringFlag{
 					Name:  "password",
-					Usage: "登录天翼帐号的用户名的密码",
+					Usage: "登录天翼帐号的用户密码",
 				},
-				cli.StringFlag{
-					Name:  "COOKIE_LOGIN_USER",
-					Usage: "使用 COOKIE_LOGIN_USER cookie来登录帐号",
-				},
+				// 暂不支持
+				// cloudpan189-go login -COOKIE_LOGIN_USER=8B12CBBCE89CA8DFC3445985B63B511B5E7EC7...
+				//cli.StringFlag{
+				//	Name:  "COOKIE_LOGIN_USER",
+				//	Usage: "使用 COOKIE_LOGIN_USER cookie来登录帐号",
+				//},
 			},
 		},
 		// 退出登录帐号 logout
