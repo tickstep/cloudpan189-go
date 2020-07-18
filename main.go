@@ -922,8 +922,8 @@ func main()  {
 			Flags: []cli.Flag{
 				cli.IntFlag{
 					Name:  "all_parallel",
-					Usage: "所有文件并发上传数量，即可以同时并发上传多少个文件",
-					Value: command.DefaultUploadMaxAllParallel,
+					Usage: "本次操作文件上传并发数量，即可以同时并发上传多少个文件。0代表跟从配置文件设置",
+					Value: 0,
 				},
 				cli.IntFlag{
 					Name:  "retry",
