@@ -27,6 +27,7 @@ out/
 captcha.png
 cloud189_config.json
 cloud189_command_history.txt
+cloud189_uploading.json
 test/
 download/
 *-downloading
