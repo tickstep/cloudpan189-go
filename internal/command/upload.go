@@ -14,6 +14,7 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"sync"
 )
 
 const (
@@ -81,6 +82,8 @@ func RunUpload(localPaths []string, savePath string, opt *UploadOptions) {
 		subSavePath string
 		// 统计
 		statistic = &upload.UploadStatistic{}
+
+		folderCreateMutex = &sync.Mutex{}
 	)
 	executor.SetParallel(opt.AllParallel)
 
@@ -115,6 +118,7 @@ func RunUpload(localPaths []string, savePath string, opt *UploadOptions) {
 				SavePath:          path.Clean(savePath + cloudpan.PathSeparator + subSavePath),
 				PanClient:         activeUser.PanClient(),
 				UploadingDatabase: uploadDatabase,
+				FolderCreateMutex: folderCreateMutex,
 				Parallel:          opt.Parallel,
 				NoRapidUpload:     opt.NoRapidUpload,
 				NoSplitFile:       opt.NoSplitFile,

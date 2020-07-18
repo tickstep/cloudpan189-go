@@ -13,6 +13,7 @@ import (
 	"github.com/tickstep/cloudpan189-go/internal/file/uploader"
 	"path"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -25,6 +26,7 @@ type (
 		LocalFileChecksum *localfile.LocalFileChecksum // 要上传的本地文件详情
 		Step              StepUpload
 		SavePath          string // 保存路径
+		FolderCreateMutex *sync.Mutex
 
 		PanClient         *cloudpan.PanClient
 		UploadingDatabase *UploadingDatabase // 数据库
@@ -256,11 +258,14 @@ StepUploadPrepareUpload:
 	// 创建上传任务
 	utu.LocalFileChecksum.Sum(localfile.CHECKSUM_MD5)
 
+	utu.FolderCreateMutex.Lock()
 	rs, apierr = utu.PanClient.MkdirRecursive("", "", 0, strings.Split(path.Clean(path.Dir(utu.SavePath)), "/"))
 	if apierr != nil || rs.FileId == "" {
 		fmt.Println("创建云盘文件夹失败")
 		return nil
 	}
+	time.Sleep(time.Duration(2) * time.Second)
+	utu.FolderCreateMutex.Unlock()
 
 	appCreateUploadFileParam = &cloudpan.AppCreateUploadFileParam{
 		ParentFolderId: rs.FileId,
