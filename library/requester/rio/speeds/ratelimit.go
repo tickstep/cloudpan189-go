@@ -10,6 +10,7 @@ type (
 	RateLimit struct {
 		MaxRate int64
 
+		starTimestamp    int64
 		count           int64
 		interval        time.Duration
 		ticker          *time.Ticker
@@ -57,17 +58,19 @@ func (rl *RateLimit) resetChan() {
 
 func (rl *RateLimit) backService() {
 	if rl.interval <= 0 {
-		rl.interval = 1 * time.Second
+		rl.interval = 200 * time.Millisecond
 	}
 	rl.ticker = time.NewTicker(rl.interval)
 	rl.closeChan = make(chan struct{})
 	rl.resetChan()
+	rl.starTimestamp = time.Now().UnixNano()
 	go func() {
 		for {
 			select {
 			case <-rl.ticker.C:
-				rl.resetChan()
-				atomic.StoreInt64(&rl.count, 0)
+				if rl.rate() <= rl.MaxRate {
+					rl.resetChan()
+				}
 			case <-rl.closeChan:
 				return
 			}
@@ -78,12 +81,25 @@ func (rl *RateLimit) backService() {
 func (rl *RateLimit) Add(count int64) {
 	rl.backServiceOnce.Do(rl.backService)
 	for {
-		if atomic.LoadInt64(&rl.count) >= rl.MaxRate { // 超出最大限额
+		if rl.rate() >= rl.MaxRate { // 超出最大限额
 			// 阻塞
 			<-rl.muChan
 			continue
 		}
 		atomic.AddInt64(&rl.count, count)
+		if atomic.LoadInt64(&rl.count) < 0 {
+			// reach the max value
+			atomic.StoreInt64(&rl.count, 0)
+			rl.starTimestamp = time.Now().Unix()
+		}
 		break
 	}
+}
+
+func (rl *RateLimit) rate() int64 {
+	timeElapseSecond := (time.Now().UnixNano() - rl.starTimestamp) / 1e9
+	if timeElapseSecond <= 0 {
+		timeElapseSecond = 1
+	}
+	return atomic.LoadInt64(&rl.count) / (timeElapseSecond)
 }
