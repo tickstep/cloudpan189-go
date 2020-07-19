@@ -46,8 +46,8 @@ type (
 		XRequestId string `json:"x_request_id"`
 	}
 
-	// LocalFileChecksum 校验本地文件
-	LocalFileChecksum struct {
+	// LocalFileEntity 校验本地文件
+	LocalFileEntity struct {
 		LocalFileMeta
 		bufSize   int
 		buf       []byte
@@ -55,12 +55,12 @@ type (
 	}
 )
 
-func NewLocalFileChecksum(localPath string) *LocalFileChecksum {
-	return NewLocalFileChecksumWithBufSize(localPath, DefaultBufSize)
+func NewLocalFileEntity(localPath string) *LocalFileEntity {
+	return NewLocalFileEntityWithBufSize(localPath, DefaultBufSize)
 }
 
-func NewLocalFileChecksumWithBufSize(localPath string, bufSize int) *LocalFileChecksum {
-	return &LocalFileChecksum{
+func NewLocalFileEntityWithBufSize(localPath string, bufSize int) *LocalFileEntity {
+	return &LocalFileEntity{
 		LocalFileMeta: LocalFileMeta{
 			Path: localPath,
 		},
@@ -69,7 +69,7 @@ func NewLocalFileChecksumWithBufSize(localPath string, bufSize int) *LocalFileCh
 }
 
 // OpenPath 检查文件状态并获取文件的大小 (Length)
-func (lfc *LocalFileChecksum) OpenPath() error {
+func (lfc *LocalFileEntity) OpenPath() error {
 	if lfc.file != nil {
 		lfc.file.Close()
 	}
@@ -91,12 +91,12 @@ func (lfc *LocalFileChecksum) OpenPath() error {
 }
 
 // GetFile 获取文件
-func (lfc *LocalFileChecksum) GetFile() *os.File {
+func (lfc *LocalFileEntity) GetFile() *os.File {
 	return lfc.file
 }
 
 // Close 关闭文件
-func (lfc *LocalFileChecksum) Close() error {
+func (lfc *LocalFileEntity) Close() error {
 	if lfc.file == nil {
 		return ErrFileIsNil
 	}
@@ -104,13 +104,13 @@ func (lfc *LocalFileChecksum) Close() error {
 	return lfc.file.Close()
 }
 
-func (lfc *LocalFileChecksum) initBuf() {
+func (lfc *LocalFileEntity) initBuf() {
 	if lfc.buf == nil {
 		lfc.buf = cachepool.RawMallocByteSlice(lfc.bufSize)
 	}
 }
 
-func (lfc *LocalFileChecksum) writeChecksum(data []byte, wus ...*ChecksumWriteUnit) (err error) {
+func (lfc *LocalFileEntity) writeChecksum(data []byte, wus ...*ChecksumWriteUnit) (err error) {
 	doneCount := 0
 	for _, wu := range wus {
 		_, err := wu.Write(data)
@@ -129,7 +129,7 @@ func (lfc *LocalFileChecksum) writeChecksum(data []byte, wus ...*ChecksumWriteUn
 	return nil
 }
 
-func (lfc *LocalFileChecksum) repeatRead(wus ...*ChecksumWriteUnit) (err error) {
+func (lfc *LocalFileEntity) repeatRead(wus ...*ChecksumWriteUnit) (err error) {
 	if lfc.file == nil {
 		return ErrFileIsNil
 	}
@@ -167,7 +167,7 @@ read:
 	return
 }
 
-func (lfc *LocalFileChecksum) createChecksumWriteUnit(cw ChecksumWriter, isAll bool, getSumFunc func(sum interface{})) (wu *ChecksumWriteUnit, deferFunc func(err error)) {
+func (lfc *LocalFileEntity) createChecksumWriteUnit(cw ChecksumWriter, isAll bool, getSumFunc func(sum interface{})) (wu *ChecksumWriteUnit, deferFunc func(err error)) {
 	wu = &ChecksumWriteUnit{
 		ChecksumWriter: cw,
 		End:            lfc.LocalFileMeta.Length,
@@ -183,7 +183,7 @@ func (lfc *LocalFileChecksum) createChecksumWriteUnit(cw ChecksumWriter, isAll b
 }
 
 // Sum 计算文件摘要值
-func (lfc *LocalFileChecksum) Sum(checkSumFlag int) (err error) {
+func (lfc *LocalFileEntity) Sum(checkSumFlag int) (err error) {
 	lfc.fix()
 	wus := make([]*ChecksumWriteUnit, 0, 2)
 	if (checkSumFlag & (CHECKSUM_MD5)) != 0 {
@@ -221,7 +221,7 @@ func (lfc *LocalFileChecksum) Sum(checkSumFlag int) (err error) {
 	return
 }
 
-func (lfc *LocalFileChecksum) fix() {
+func (lfc *LocalFileEntity) fix() {
 	if lfc.bufSize < DefaultBufSize {
 		lfc.bufSize = DefaultBufSize
 	}

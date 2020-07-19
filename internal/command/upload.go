@@ -114,7 +114,7 @@ func RunUpload(localPaths []string, savePath string, opt *UploadOptions) {
 			subSavePath = strings.TrimPrefix(walkedFiles[k3], localPathDir)
 
 			info := executor.Append(&upload.UploadTaskUnit{
-				LocalFileChecksum: localfile.NewLocalFileChecksum(walkedFiles[k3]),
+				LocalFileChecksum: localfile.NewLocalFileEntity(walkedFiles[k3]),
 				SavePath:          path.Clean(savePath + cloudpan.PathSeparator + subSavePath),
 				PanClient:         activeUser.PanClient(),
 				UploadingDatabase: uploadDatabase,

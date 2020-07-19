@@ -23,7 +23,7 @@ type (
 
 	// UploadTaskUnit 上传的任务单元
 	UploadTaskUnit struct {
-		LocalFileChecksum *localfile.LocalFileChecksum // 要上传的本地文件详情
+		LocalFileChecksum *localfile.LocalFileEntity // 要上传的本地文件详情
 		Step              StepUpload
 		SavePath          string // 保存路径
 		FolderCreateMutex *sync.Mutex

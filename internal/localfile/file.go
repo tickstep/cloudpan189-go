@@ -30,8 +30,8 @@ func (lfm *LocalFileMeta) CompleteAbsPath() {
 }
 
 // GetFileSum 获取文件的大小, md5, crc32
-func GetFileSum(localPath string, flag int) (lfc *LocalFileChecksum, err error) {
-	lfc = NewLocalFileChecksum(localPath)
+func GetFileSum(localPath string, flag int) (lfc *LocalFileEntity, err error) {
+	lfc = NewLocalFileEntity(localPath)
 	defer lfc.Close()
 
 	err = lfc.OpenPath()
