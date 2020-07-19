@@ -11,7 +11,7 @@ import (
 )
 
 type (
-	PCSUpload struct {
+	PanUpload struct {
 		panClient        *cloudpan.PanClient
 		targetPath string
 
@@ -37,8 +37,8 @@ func (e EmptyReaderLen64) Len() int64 {
 	return 0
 }
 
-func NewPCSUpload(pcs *cloudpan.PanClient, targetPath, uploadUrl, commitUrl, uploadFileId, xRequestId string) uploader.MultiUpload {
-	return &PCSUpload{
+func NewPanUpload(pcs *cloudpan.PanClient, targetPath, uploadUrl, commitUrl, uploadFileId, xRequestId string) uploader.MultiUpload {
+	return &PanUpload{
 		panClient:        pcs,
 		targetPath: targetPath,
 		uploadFileId: uploadFileId,
@@ -48,17 +48,17 @@ func NewPCSUpload(pcs *cloudpan.PanClient, targetPath, uploadUrl, commitUrl, upl
 	}
 }
 
-func (pu *PCSUpload) lazyInit() {
+func (pu *PanUpload) lazyInit() {
 	if pu.panClient == nil {
 		pu.panClient = &cloudpan.PanClient{}
 	}
 }
 
-func (pu *PCSUpload) Precreate() (err error) {
+func (pu *PanUpload) Precreate() (err error) {
 	return nil
 }
 
-func (pu *PCSUpload) UploadFile(ctx context.Context, partseq int, partOffset int64, partEnd int64, r rio.ReaderLen64) (uploadDone bool, uperr error) {
+func (pu *PanUpload) UploadFile(ctx context.Context, partseq int, partOffset int64, partEnd int64, r rio.ReaderLen64) (uploadDone bool, uperr error) {
 	pu.lazyInit()
 
 	var respErr *uploader.MultiError
@@ -107,7 +107,7 @@ func (pu *PCSUpload) UploadFile(ctx context.Context, partseq int, partOffset int
 	return true, nil
 }
 
-func (pu *PCSUpload) CommitFile() (cerr error) {
+func (pu *PanUpload) CommitFile() (cerr error) {
 	pu.lazyInit()
 	_, er := pu.panClient.AppUploadFileCommit(pu.fileCommitUrl, pu.uploadFileId, pu.xRequestId)
 	if er != nil {
