@@ -472,8 +472,8 @@ func main()  {
 				}
 				q, err := command.RunGetQuotaInfo()
 				if err == nil {
-					fmt.Printf("账号: %s, 个人空间总额 uid: %s, 个人空间已使用: %s, 比率: %f%%\n",
-						config.Config.ActiveUser().Nickname,
+					fmt.Printf("账号: %s, uid: %d, 个人空间总额: %s, 个人空间已使用: %s, 比率: %f%%\n",
+						config.Config.ActiveUser().Nickname, config.Config.ActiveUser().UID,
 						converter.ConvertFileSize(q.Quota, 2), converter.ConvertFileSize(q.UsedSize, 2),
 						100*float64(q.UsedSize)/float64(q.Quota))
 				}
