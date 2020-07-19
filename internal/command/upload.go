@@ -3,13 +3,13 @@ package command
 import (
 	"fmt"
 	"github.com/tickstep/cloudpan189-go/cloudpan"
-	"github.com/tickstep/cloudpan189-go/internal/config"
-	"github.com/tickstep/cloudpan189-go/internal/functions/upload"
 	"github.com/tickstep/cloudpan189-go/cmder/cmdtable"
 	"github.com/tickstep/cloudpan189-go/cmder/cmdutil"
+	"github.com/tickstep/cloudpan189-go/internal/config"
+	"github.com/tickstep/cloudpan189-go/internal/functions/panupload"
 	"github.com/tickstep/cloudpan189-go/internal/localfile"
-	"github.com/tickstep/cloudpan189-go/library/converter"
 	"github.com/tickstep/cloudpan189-go/internal/taskframework"
+	"github.com/tickstep/cloudpan189-go/library/converter"
 	"os"
 	"path"
 	"path/filepath"
@@ -67,7 +67,7 @@ func RunUpload(localPaths []string, savePath string, opt *UploadOptions) {
 	}
 
 	// 打开上传状态
-	uploadDatabase, err := upload.NewUploadingDatabase()
+	uploadDatabase, err := panupload.NewUploadingDatabase()
 	if err != nil {
 		fmt.Printf("打开上传未完成数据库错误: %s\n", err)
 		return
@@ -81,7 +81,7 @@ func RunUpload(localPaths []string, savePath string, opt *UploadOptions) {
 		}
 		subSavePath string
 		// 统计
-		statistic = &upload.UploadStatistic{}
+		statistic = &panupload.UploadStatistic{}
 
 		folderCreateMutex = &sync.Mutex{}
 	)
@@ -113,7 +113,7 @@ func RunUpload(localPaths []string, savePath string, opt *UploadOptions) {
 
 			subSavePath = strings.TrimPrefix(walkedFiles[k3], localPathDir)
 
-			info := executor.Append(&upload.UploadTaskUnit{
+			info := executor.Append(&panupload.UploadTaskUnit{
 				LocalFileChecksum: localfile.NewLocalFileEntity(walkedFiles[k3]),
 				SavePath:          path.Clean(savePath + cloudpan.PathSeparator + subSavePath),
 				PanClient:         activeUser.PanClient(),
@@ -147,7 +147,7 @@ func RunUpload(localPaths []string, savePath string, opt *UploadOptions) {
 		tb := cmdtable.NewTable(os.Stdout)
 		for e := failedList.Shift(); e != nil; e = failedList.Shift() {
 			item := e.(*taskframework.TaskInfoItem)
-			tb.Append([]string{item.Info.Id(), item.Unit.(*upload.UploadTaskUnit).LocalFileChecksum.Path})
+			tb.Append([]string{item.Info.Id(), item.Unit.(*panupload.UploadTaskUnit).LocalFileChecksum.Path})
 		}
 		tb.Render()
 	}

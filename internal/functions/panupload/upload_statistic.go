@@ -1,4 +1,4 @@
-package upload
+package panupload
 
 import (
 	"github.com/tickstep/cloudpan189-go/internal/functions"
