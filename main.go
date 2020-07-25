@@ -885,7 +885,6 @@ func main()  {
 			UsageText: app.Name + " upload <本地文件/目录的路径1> <文件/目录2> <文件/目录3> ... <目标目录>",
 			Description: `
 	上传默认采用分片上传的方式, 上传的文件将会保存到, <目标目录>.
-	遇到同名文件将会自动覆盖!!
 
 	示例:
 
@@ -912,8 +911,8 @@ func main()  {
 
 				subArgs := c.Args()
 				command.RunUpload(subArgs[:c.NArg()-1], subArgs[c.NArg()-1], &command.UploadOptions{
-					AllParallel:   c.Int("all_parallel"),
-					Parallel:      1, // 天翼云盘只支持单线程上传
+					AllParallel:   c.Int("p"),
+					Parallel:      1, // 天翼云盘一个文件只支持单线程上传
 					MaxRetry:      c.Int("retry"),
 					NoRapidUpload: true, // 不检测秒传，暂时不支持
 					NoSplitFile:   true, // 天翼云盘不支持分片并发上传，只支持单线程上传，支持断点续传
@@ -922,7 +921,7 @@ func main()  {
 			},
 			Flags: []cli.Flag{
 				cli.IntFlag{
-					Name:  "all_parallel",
+					Name:  "p",
 					Usage: "本次操作文件上传并发数量，即可以同时并发上传多少个文件。0代表跟从配置文件设置",
 					Value: 0,
 				},
