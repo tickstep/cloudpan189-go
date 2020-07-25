@@ -12,13 +12,13 @@ import (
 type PanUser struct {
 	UID      uint64 `json:"uid"`
 	Nickname string `json:"nickname"`
-	AccountName string `json:"account_name"`
+	AccountName string `json:"accountName"`
 	Sex      string `json:"sex"`
 	Workdir  string `json:"workdir"`
-	WorkdirFileEntity cloudpan.FileEntity `json:"workdir_file_entity"`
+	WorkdirFileEntity cloudpan.FileEntity `json:"workdirFileEntity"`
 
-	WebToken cloudpan.WebLoginToken `json:"web_token"`
-	AppToken cloudpan.AppLoginToken `json:"app_token"`
+	WebToken cloudpan.WebLoginToken `json:"webToken"`
+	AppToken cloudpan.AppLoginToken `json:"appToken"`
 	panClient *cloudpan.PanClient
 }
 

@@ -32,8 +32,8 @@ type (
 		// 有效期的token
 		AccessToken string `json:"accessToken"`
 		// token 过期时间点
-		AccessTokenExpiresIn int `json:"access_token_expires_in"`
-		RsaPublicKey string `json:"rsa_public_key"`
+		AccessTokenExpiresIn int `json:"accessTokenExpiresIn"`
+		RsaPublicKey string `json:"rsaPublicKey"`
 	}
 
 	appSessionResp struct {
@@ -76,7 +76,6 @@ var (
 )
 
 func AppLogin(username, password string) (result *AppLoginToken, error *apierror.ApiError) {
-	//appClient.SetProxy("http://127.0.0.1:8888")
 	result = &AppLoginToken{}
 
 	appClient.ResetCookiejar()

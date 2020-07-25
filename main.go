@@ -1033,6 +1033,131 @@ func main()  {
 				},
 			},
 		},
+		// 显示和修改程序配置项 config
+		{
+			Name:        "config",
+			Usage:       "显示和修改程序配置项",
+			Description: "显示和修改程序配置项",
+			Category:    "配置",
+			Before:      reloadFn,
+			After:       saveFunc,
+			Action: func(c *cli.Context) error {
+				fmt.Printf("----\n运行 %s config set 可进行设置配置\n\n当前配置:\n", app.Name)
+				config.Config.PrintTable()
+				return nil
+			},
+			Subcommands: []cli.Command{
+				{
+					Name:      "set",
+					Usage:     "修改程序配置项",
+					UsageText: app.Name + " config set [arguments...]",
+					Description: `
+	注意:
+		可通过设置环境变量 CLOUD189_CONFIG_DIR, 指定配置文件存放的目录.
+
+		cache_size 的值支持可选设置单位, 单位不区分大小写, b 和 B 均表示字节的意思, 如 64KB, 1MB, 32kb, 65536b, 65536
+		max_download_rate, max_upload_rate 的值支持可选设置单位, 单位为每秒的传输速率, 后缀'/s' 可省略, 如 2MB/s, 2MB, 2m, 2mb 均为一个意思
+
+	例子:
+		cloudpan189-go config set -cache_size 64KB
+		cloudpan189-go config set -cache_size 16384 -max_download_parallel 200 -savedir D:/download`,
+					Action: func(c *cli.Context) error {
+						if c.NumFlags() <= 0 || c.NArg() > 0 {
+							cli.ShowCommandHelp(c, c.Command.Name)
+							return nil
+						}
+						if c.IsSet("cache_size") {
+							err := config.Config.SetCacheSizeByStr(c.String("cache_size"))
+							if err != nil {
+								fmt.Printf("设置 cache_size 错误: %s\n", err)
+								return nil
+							}
+						}
+						if c.IsSet("max_download_parallel") {
+							config.Config.MaxDownloadParallel = c.Int("max_download_parallel")
+						}
+						if c.IsSet("max_upload_parallel") {
+							config.Config.MaxUploadParallel = c.Int("max_upload_parallel")
+						}
+						if c.IsSet("max_download_load") {
+							config.Config.MaxDownloadLoad = c.Int("max_download_load")
+						}
+						if c.IsSet("max_download_rate") {
+							err := config.Config.SetMaxDownloadRateByStr(c.String("max_download_rate"))
+							if err != nil {
+								fmt.Printf("设置 max_download_rate 错误: %s\n", err)
+								return nil
+							}
+						}
+						if c.IsSet("max_upload_rate") {
+							err := config.Config.SetMaxUploadRateByStr(c.String("max_upload_rate"))
+							if err != nil {
+								fmt.Printf("设置 max_upload_rate 错误: %s\n", err)
+								return nil
+							}
+						}
+						if c.IsSet("savedir") {
+							config.Config.SaveDir = c.String("savedir")
+						}
+						if c.IsSet("proxy") {
+							config.Config.SetProxy(c.String("proxy"))
+						}
+						if c.IsSet("local_addrs") {
+							config.Config.SetLocalAddrs(c.String("local_addrs"))
+						}
+
+						err := config.Config.Save()
+						if err != nil {
+							fmt.Println(err)
+							return err
+						}
+
+						config.Config.PrintTable()
+						fmt.Printf("\n保存配置成功!\n\n")
+
+						return nil
+					},
+					Flags: []cli.Flag{
+						cli.StringFlag{
+							Name:  "cache_size",
+							Usage: "下载缓存",
+						},
+						cli.IntFlag{
+							Name:  "max_download_parallel",
+							Usage: "下载网络连接的最大并发量",
+						},
+						cli.IntFlag{
+							Name:  "max_upload_parallel",
+							Usage: "上传网络连接的最大并发量",
+						},
+						cli.IntFlag{
+							Name:  "max_download_load",
+							Usage: "同时进行下载文件的最大数量",
+						},
+						cli.StringFlag{
+							Name:  "max_download_rate",
+							Usage: "限制最大下载速度, 0代表不限制",
+						},
+						cli.StringFlag{
+							Name:  "max_upload_rate",
+							Usage: "限制最大上传速度, 0代表不限制",
+						},
+						cli.StringFlag{
+							Name:  "savedir",
+							Usage: "下载文件的储存目录",
+						},
+						cli.StringFlag{
+							Name:  "proxy",
+							Usage: "设置代理, 支持 http/socks5 代理",
+						},
+						cli.StringFlag{
+							Name:  "local_addrs",
+							Usage: "设置本地网卡地址, 多个地址用逗号隔开",
+						},
+					},
+				},
+			},
+		},
 		// 清空控制台 clear
 		{
 			Name:        "clear",

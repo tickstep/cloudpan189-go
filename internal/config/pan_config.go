@@ -7,9 +7,11 @@ import (
 	"github.com/tickstep/cloudpan189-go/cmder/cmdutil"
 	"github.com/tickstep/cloudpan189-go/cmder/cmdutil/jsonhelper"
 	"github.com/tickstep/cloudpan189-go/library/logger"
+	"github.com/tickstep/cloudpan189-go/library/requester"
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"sync"
 )
 
@@ -30,18 +32,21 @@ var (
 
 // PanConfig 配置详情
 type PanConfig struct {
-	ActiveUID uint64 `json:"active_uid"`
-	UserList  PanUserList `json:"user_list"`
+	ActiveUID uint64 `json:"activeUID"`
+	UserList  PanUserList `json:"userList"`
 
-	CacheSize           int `json:"cache_size"`          // 下载缓存
-	MaxDownloadParallel int `json:"max_download_parallel"`        // 最大下载并发量
-	MaxUploadParallel   int `json:"max_upload_parallel"` // 最大上传并发量，即同时上传文件最大数量
-	MaxDownloadLoad     int `json:"max_download_load"`   // 同时进行下载文件的最大数量
+	CacheSize           int `json:"cacheSize"`          // 下载缓存
+	MaxDownloadParallel int `json:"maxDownloadParallel"`        // 最大下载并发量
+	MaxUploadParallel   int `json:"maxUploadParallel"` // 最大上传并发量，即同时上传文件最大数量
+	MaxDownloadLoad     int `json:"maxDownloadLoad"`   // 同时进行下载文件的最大数量
 
-	MaxDownloadRate int64 `json:"max_download_rate"` // 限制最大下载速度，单位 B/s, 即字节/每秒
-	MaxUploadRate   int64 `json:"max_upload_rate"`   // 限制最大上传速度，单位 B/s, 即字节/每秒
+	MaxDownloadRate int64 `json:"maxDownloadRate"` // 限制最大下载速度，单位 B/s, 即字节/每秒
+	MaxUploadRate   int64 `json:"maxUploadRate"`   // 限制最大上传速度，单位 B/s, 即字节/每秒
 
-	SaveDir        string `json:"save_dir"` // 下载储存路径
+	SaveDir        string `json:"saveDir"` // 下载储存路径
+
+	Proxy       string `json:"proxy"`        // 代理
+	LocalAddrs  string `json:"localAddrs"`  // 本地网卡地址
 
 	configFilePath string
 	configFile     *os.File
@@ -124,6 +129,15 @@ func (c *PanConfig) init() error {
 	err := c.loadConfigFromFile()
 	if err != nil {
 		return err
+	}
+
+	// 设置全局代理
+	if c.Proxy != "" {
+		requester.SetGlobalProxy(c.Proxy)
+	}
+	// 设置本地网卡地址
+	if c.LocalAddrs != "" {
+		requester.SetLocalTCPAddrList(strings.Split(c.LocalAddrs, ",")...)
 	}
 
 	return nil

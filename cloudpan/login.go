@@ -38,7 +38,7 @@ type (
 	}
 
 	WebLoginToken struct {
-		CookieLoginUser string `json:"cookie_login_user"`
+		CookieLoginUser string `json:"cookieLoginUser"`
 	}
 )
 

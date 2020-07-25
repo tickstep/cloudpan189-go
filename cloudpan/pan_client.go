@@ -39,9 +39,6 @@ func NewPanClient(webToken WebLoginToken, appToken AppLoginToken) *PanClient {
 		},
 	})
 
-	// debug
-	//client.SetProxy("http://127.0.0.1:8888")
-
 	return &PanClient{
 		client: client,
 		webToken: webToken,
