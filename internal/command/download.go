@@ -40,7 +40,7 @@ var (
 	MaxDownloadRangeSize = 55 * converter.MB
 
 	// DownloadCacheSize 默认每个线程下载缓存大小
-	DownloadCacheSize = 4 * converter.MB
+	DownloadCacheSize = 64 * converter.KB
 )
 
 func downloadPrintFormat(load int) string {
