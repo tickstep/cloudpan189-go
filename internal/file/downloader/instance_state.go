@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/json-iterator/go"
 	"github.com/tickstep/cloudpan189-go/library/cachepool"
+	"github.com/tickstep/cloudpan189-go/library/crypto"
 	"github.com/tickstep/cloudpan189-go/library/logger"
 	"github.com/tickstep/cloudpan189-go/library/requester/transfer"
 	"os"
@@ -61,7 +62,7 @@ func (is *InstanceState) getSaveFileContents() []byte {
 	buf := cachepool.RawMallocByteSlice(intSize)
 
 	n, _ := is.saveFile.ReadAt(buf, 0)
-	return buf[:n]
+	return crypto.Base64Decode(buf[:n])
 }
 
 //Get 获取断点续传信息
@@ -118,7 +119,7 @@ func (is *InstanceState) Put(eii *transfer.DownloadInstanceInfo) {
 		logger.Verbosef("DEBUG: truncate file error: %s\n", err)
 	}
 
-	_, err = is.saveFile.WriteAt(data, 0)
+	_, err = is.saveFile.WriteAt(crypto.Base64Encode(data), 0)
 	if err != nil {
 		logger.Verbosef("DEBUG: write instance state error: %s\n", err)
 	}
