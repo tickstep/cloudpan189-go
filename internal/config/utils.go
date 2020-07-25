@@ -3,6 +3,7 @@ package config
 import (
 	"github.com/olekukonko/tablewriter"
 	"github.com/tickstep/cloudpan189-go/cmder/cmdtable"
+	"github.com/tickstep/cloudpan189-go/library/converter"
 	"strconv"
 	"strings"
 )
@@ -29,3 +30,30 @@ func (pl *PanUserList) String() string {
 	return builder.String()
 }
 
+// AverageParallel 返回平均的下载最大并发量
+func AverageParallel(parallel, downloadLoad int) int {
+	if downloadLoad < 1 {
+		return 1
+	}
+
+	p := parallel / downloadLoad
+	if p < 1 {
+		return 1
+	}
+	return p
+}
+
+func stripPerSecond(sizeStr string) string {
+	i := strings.LastIndex(sizeStr, "/")
+	if i < 0 {
+		return sizeStr
+	}
+	return sizeStr[:i]
+}
+
+func showMaxRate(size int64) string {
+	if size <= 0 {
+		return "不限制"
+	}
+	return converter.ConvertFileSize(size, 2) + "/s"
+}

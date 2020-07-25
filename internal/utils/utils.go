@@ -1,4 +1,4 @@
-// Package pcsutil 工具包
+// Package utils 工具包
 package utils
 
 import (

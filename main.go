@@ -10,6 +10,7 @@ import (
 	"github.com/tickstep/cloudpan189-go/cmder/cmdutil/escaper"
 	"github.com/tickstep/cloudpan189-go/internal/command"
 	"github.com/tickstep/cloudpan189-go/internal/config"
+	"github.com/tickstep/cloudpan189-go/internal/functions/pandownload"
 	"github.com/tickstep/cloudpan189-go/library/converter"
 	"github.com/tickstep/cloudpan189-go/library/logger"
 	"github.com/urfave/cli"
@@ -932,6 +933,107 @@ func main()  {
 				},
 			},
 		},
+		// 下载文件/目录 download
+		{
+			Name:      "download",
+			Aliases:   []string{"d"},
+			Usage:     "下载文件/目录",
+			UsageText: app.Name + " download <文件/目录路径1> <文件/目录2> <文件/目录3> ...",
+			Description: `
+	下载的文件默认保存到, 程序所在目录的 download/ 目录.
+	通过 cloudpan189-go config set -savedir <savedir>, 自定义保存的目录.
+	支持多个文件或目录下载.
+	自动跳过下载重名的文件!
+
+	示例:
+
+	设置保存目录, 保存到 D:\Downloads
+	注意区别反斜杠 "\" 和 斜杠 "/" !!!
+	cloudpan189-go config set -savedir D:\\Downloads
+	或者
+	cloudpan189-go config set -savedir D:/Downloads
+
+	下载 /我的资源/1.mp4
+	cloudpan189-go d /我的资源/1.mp4
+
+	下载 /我的资源 整个目录!!
+	cloudpan189-go d /我的资源
+
+    下载 /我的资源/1.mp4 并保存下载的文件到本地的 d:/panfile
+	cloudpan189-go d --saveto d:/panfile /我的资源/1.mp4
+`,
+			Category: "天翼云盘",
+			Before:   reloadFn,
+			Action: func(c *cli.Context) error {
+				if c.NArg() == 0 {
+					cli.ShowCommandHelp(c, c.Command.Name)
+					return nil
+				}
+
+				// 处理saveTo
+				var (
+					saveTo string
+				)
+				if c.Bool("save") {
+					saveTo = "."
+				} else if c.String("saveto") != "" {
+					saveTo = filepath.Clean(c.String("saveto"))
+				}
+
+				do := &command.DownloadOptions{
+					IsPrintStatus:        c.Bool("status"),
+					IsExecutedPermission: c.Bool("x"),
+					IsOverwrite:          c.Bool("ow"),
+					SaveTo:               saveTo,
+					Parallel:             c.Int("p"),
+					Load:                 c.Int("l"),
+					MaxRetry:             c.Int("retry"),
+					NoCheck:              c.Bool("nocheck"),
+				}
+
+				command.RunDownload(c.Args(), do)
+				return nil
+			},
+			Flags: []cli.Flag{
+				cli.BoolFlag{
+					Name:  "ow",
+					Usage: "overwrite, 覆盖已存在的文件",
+				},
+				cli.BoolFlag{
+					Name:  "status",
+					Usage: "输出所有线程的工作状态",
+				},
+				cli.BoolFlag{
+					Name:  "save",
+					Usage: "将下载的文件直接保存到当前工作目录",
+				},
+				cli.StringFlag{
+					Name:  "saveto",
+					Usage: "将下载的文件直接保存到指定的目录",
+				},
+				cli.BoolFlag{
+					Name:  "x",
+					Usage: "为文件加上执行权限, (windows系统无效)",
+				},
+				cli.IntFlag{
+					Name:  "p",
+					Usage: "指定下载线程数",
+				},
+				cli.IntFlag{
+					Name:  "l",
+					Usage: "指定同时进行下载文件的数量",
+				},
+				cli.IntFlag{
+					Name:  "retry",
+					Usage: "下载失败最大重试次数",
+					Value: pandownload.DefaultDownloadMaxRetry,
+				},
+				cli.BoolFlag{
+					Name:  "nocheck",
+					Usage: "下载文件完成后不校验文件",
+				},
+			},
+		},
 		// 清空控制台 clear
 		{
 			Name:        "clear",
@@ -967,63 +1069,6 @@ func main()  {
 			Category:    "debug",
 			Before:      reloadFn,
 			Action: func(c *cli.Context) error {
-				//activeUser := config.Config.ActiveUser()
-				//uploadFile := "/Volumes/Downloads/tmp/pcs_config.json"
-				//uploadFileData,_ := ioutil.ReadFile(uploadFile)
-				//p := &cloudpan.AppCreateUploadFileParam{
-				//	ParentFolderId: "21491110455851923",
-				//	FileName: "pcs_config.json",
-				//	Size: int64(len(uploadFileData)),
-				//	Md5: hash.Md5OfBytes(uploadFileData),
-				//	LastWrite: "2013-06-16 24:35:08",
-				//	LocalPath: uploadFile,
-				//}
-				//fmt.Println("create upload file")
-				//r1, err := config.Config.ActiveUser().PanClient().AppCreateUploadFile(p)
-				//if err != nil {
-				//	fmt.Println(err)
-				//	return nil
-				//}
-				//fmt.Println("upload file data")
-				//err = config.Config.ActiveUser().PanClient().AppUploadFileData(r1.FileUploadUrl, r1.UploadFileId, r1.XRequestId,
-				//	&cloudpan.AppFileRange{0, len(uploadFileData)}, uploadFileData)
-				//if err != nil {
-				//	fmt.Println(err)
-				//	return nil
-				//}
-				//fmt.Println("commit")
-				//r2, err := config.Config.ActiveUser().PanClient().AppUploadFileCommit(r1.FileCommitUrl, r1.UploadFileId, r1.XRequestId)
-				//if err != nil {
-				//	fmt.Println(err)
-				//	return nil
-				//}
-				//fmt.Printf("%+v", r2)
-				//durl, e := activeUser.PanClient().AppGetFileDownloadUrl("21301210456083931")
-				//if e != nil {
-				//	fmt.Println(e)
-				//	return nil
-				//}
-				//fmt.Println(durl)
-				//resp, e := activeUser.PanClient().AppDownloadFileData(durl, cloudpan.AppFileRange{4372546,14372545})
-				//if e != nil {
-				//	fmt.Println(e)
-				//	return nil
-				//}
-				//f, er := os.OpenFile("D:/dl/189test.pdf", os.O_APPEND | os.O_CREATE, 0777)
-				//if er != nil {
-				//	fmt.Println(e)
-				//	return nil
-				//}
-				//defer f.Close()
-				//resp.Write(f)
-				//r,e := activeUser.PanClient().AppGetFileInfo(&cloudpan.AppGetFileInfoParam{
-				//	"", "/Cloud189-Go/tup/image_tool1.bat",
-				//})
-				//if e != nil {
-				//	fmt.Println(e)
-				//	return nil
-				//}
-				//fmt.Printf("%+v", r)
 				return nil
 			},
 			Flags: []cli.Flag{

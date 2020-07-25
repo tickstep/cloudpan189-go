@@ -12,7 +12,14 @@ import (
 )
 
 type (
+	DownloadFuncCallback func(httpMethod, fullUrl string, headers map[string]string) (resp *http.Response, err error)
 
+	AppFileDownloadRange struct {
+		// 起始值，包含
+		Offset int
+		// 结束值，包含
+		End int
+	}
 )
 
 func (p *PanClient) AppGetFileDownloadUrl(fileId string) (string, *apierror.ApiError) {
@@ -49,7 +56,7 @@ func (p *PanClient) AppGetFileDownloadUrl(fileId string) (string, *apierror.ApiE
 	return strings.ReplaceAll(item.FileDownloadUrl, "&amp;", "&"), nil
 }
 
-func (p *PanClient) AppDownloadFileData(downloadFileUrl string, fileRange AppFileRange) (resp *http.Response, error *apierror.ApiError) {
+func (p *PanClient) AppDownloadFileData(downloadFileUrl string, fileRange AppFileDownloadRange, downloadFunc DownloadFuncCallback) *apierror.ApiError {
 	fullUrl := &strings.Builder{}
 	appToken := p.appToken
 	httpMethod := "GET"
@@ -63,18 +70,19 @@ func (p *PanClient) AppDownloadFileData(downloadFileUrl string, fileRange AppFil
 		"X-Request-ID": apiutil.XRequestId(),
 	}
 	// 支持断点续传
-	if fileRange.Offset != 0 || fileRange.Len != 0 {
+	if fileRange.Offset != 0 || fileRange.End != 0 {
 		rangeStr := "bytes=" + strconv.Itoa(fileRange.Offset) + "-"
-		if fileRange.Len != 0 {
-			rangeStr += strconv.Itoa(fileRange.Len)
+		if fileRange.End != 0 {
+			rangeStr += strconv.Itoa(fileRange.End)
 		}
 		headers["range"] = rangeStr
 	}
 	logger.Verboseln("do request url: " + fullUrl.String())
-	resp, err := p.client.Req(httpMethod, fullUrl.String(), nil, headers)
+	_, err := downloadFunc(httpMethod, fullUrl.String(), headers)
+	//resp, err := p.client.Req(httpMethod, fullUrl.String(), nil, headers)
 	if err != nil {
 		logger.Verboseln("AppDownloadFileData response failed")
-		return nil, apierror.NewApiErrorWithError(err)
+		return apierror.NewApiErrorWithError(err)
 	}
-	return resp, nil
+	return nil
 }

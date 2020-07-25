@@ -172,7 +172,7 @@ func (utu *UploadTaskUnit) upload() (result *taskframework.TaskUnitRunResult) {
 		result.Succeed = true
 	})
 	muer.OnError(func(err error) {
-		pcsError, ok := err.(*apierror.ApiError)
+		apiError, ok := err.(*apierror.ApiError)
 		if !ok {
 			// 未知错误类型 (非预期的)
 			// 不重试
@@ -184,11 +184,11 @@ func (utu *UploadTaskUnit) upload() (result *taskframework.TaskUnitRunResult) {
 		// 默认需要重试
 		result.NeedRetry = true
 
-		switch pcsError.ErrCode() {
+		switch apiError.ErrCode() {
 		default:
 			result.ResultMessage = StrUploadFailed
 			result.NeedRetry = false
-			result.Err = pcsError
+			result.Err = apiError
 		}
 		return
 	})

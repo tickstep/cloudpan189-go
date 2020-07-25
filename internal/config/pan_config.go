@@ -33,10 +33,10 @@ type PanConfig struct {
 	ActiveUID uint64 `json:"active_uid"`
 	UserList  PanUserList `json:"user_list"`
 
-	CacheSize         int `json:"cache_size"`          // 下载缓存
-	MaxParallel       int `json:"max_parallel"`        // 最大下载并发量
-	MaxUploadParallel int `json:"max_upload_parallel"` // 最大上传并发量，即同时上传文件最大数量
-	MaxDownloadLoad   int `json:"max_download_load"`   // 同时进行下载文件的最大数量
+	CacheSize           int `json:"cache_size"`          // 下载缓存
+	MaxDownloadParallel int `json:"max_download_parallel"`        // 最大下载并发量
+	MaxUploadParallel   int `json:"max_upload_parallel"` // 最大上传并发量，即同时上传文件最大数量
+	MaxDownloadLoad     int `json:"max_download_load"`   // 同时进行下载文件的最大数量
 
 	MaxDownloadRate int64 `json:"max_download_rate"` // 限制最大下载速度，单位 B/s, 即字节/每秒
 	MaxUploadRate   int64 `json:"max_upload_rate"`   // 限制最大上传速度，单位 B/s, 即字节/每秒

@@ -3,10 +3,13 @@ package command
 import (
 	"fmt"
 	"github.com/tickstep/cloudpan189-go/cloudpan"
+	"github.com/tickstep/cloudpan189-go/library/logger"
 	"path"
 )
 
-
+var (
+	panCommandVerbose = logger.New("PANCOMMAND")
+)
 
 // GetFileInfoByPaths 获取指定文件路径的文件详情信息
 func GetFileInfoByPaths(paths ...string) (fileInfoList []*cloudpan.FileEntity, failedPaths []string, error error) {
@@ -25,4 +28,13 @@ func GetFileInfoByPaths(paths ...string) (fileInfoList []*cloudpan.FileEntity, f
 		fileInfoList = append(fileInfoList, fe)
 	}
 	return
+}
+
+func matchPathByShellPattern(patterns ...string) (panpaths []string, err error) {
+	acUser := GetActiveUser()
+	for k := range patterns {
+		ps := acUser.PathJoin(patterns[k])
+		panpaths = append(panpaths, ps)
+	}
+	return panpaths, nil
 }

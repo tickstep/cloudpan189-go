@@ -11,6 +11,9 @@ import (
 )
 
 type (
+	// HandleFileDirectoryFunc 处理文件或目录的元信息, 返回值控制是否退出递归
+	HandleFileDirectoryFunc func(depth int, fdPath string, fd *FileEntity, apierr *apierror.ApiError) bool
+
 	MediaType uint
 	OrderBy uint
 	OrderSort string
@@ -164,6 +167,8 @@ const (
 	OrderDesc OrderSort = "DESC"
 )
 
+
+
 // TotalSize 获取目录下文件的总大小
 func (fl FileList) TotalSize() int64 {
 	var size int64
@@ -192,6 +197,18 @@ func (fl FileList) Count() (fileN, directoryN int64) {
 		}
 	}
 	return
+}
+func (f *FileEntity) String() string {
+	builder := &strings.Builder{}
+	builder.WriteString("文件ID: " + f.FileId + "\n")
+	builder.WriteString("文件名: " + f.FileName + "\n")
+	if f.IsFolder {
+		builder.WriteString("文件类型: 目录\n")
+	} else {
+		builder.WriteString("文件类型: 文件\n")
+	}
+	builder.WriteString("文件路径: " + f.Path + "\n")
+	return builder.String()
 }
 
 func (p *PanClient) FileList(param *FileListParam) (result *FileSearchResult, error *apierror.ApiError) {
@@ -328,4 +345,55 @@ func (p *PanClient) getFileInfoByPath(index int, pathSlice *[]string, parentFile
 		}
 	}
 	return nil, apierror.NewApiError(apierror.ApiCodeFileNotFoundCode, "文件不存在")
+}
+
+// FilesDirectoriesRecurseList 递归获取目录下的文件和目录列表
+func (p *PanClient) FilesDirectoriesRecurseList(path string, handleFileDirectoryFunc HandleFileDirectoryFunc) FileList {
+	targetFileInfo, er := p.FileInfoByPath(path)
+	if er != nil {
+		if handleFileDirectoryFunc != nil {
+			handleFileDirectoryFunc(0, path, nil, er)
+		}
+		return nil
+	}
+	if !targetFileInfo.IsFolder {
+		if handleFileDirectoryFunc != nil {
+			handleFileDirectoryFunc(0, path, targetFileInfo, nil)
+		}
+		return FileList{targetFileInfo}
+	}
+
+	fld := &FileList{}
+	ok := p.recurseList(targetFileInfo, 1, handleFileDirectoryFunc, fld)
+	if !ok {
+		return nil
+	}
+	return *fld
+}
+
+func (p *PanClient) recurseList(folderInfo *FileEntity, depth int, handleFileDirectoryFunc HandleFileDirectoryFunc, fld *FileList) bool {
+	flp := NewFileListParam()
+	flp.FileId = folderInfo.FileId
+	r, apiError := p.FileList(flp)
+	if apiError != nil {
+		if handleFileDirectoryFunc != nil {
+			handleFileDirectoryFunc(depth, folderInfo.Path, nil, apiError) // 传递错误
+		}
+		return false
+	}
+	ok := true
+	for _, fi := range r.Data {
+		*fld = append(*fld, fi)
+		if fi.IsFolder {
+			ok = p.recurseList(fi, depth+1, handleFileDirectoryFunc, fld)
+		} else {
+			if handleFileDirectoryFunc != nil {
+				ok = handleFileDirectoryFunc(depth, fi.Path, fi, nil)
+			}
+		}
+		if !ok {
+			return false
+		}
+	}
+	return true
 }

@@ -44,7 +44,7 @@ type (
 		XRequestId string
 	}
 
-	AppFileRange struct {
+	AppFileUploadRange struct {
 		// 起始值，包含
 		Offset int
 		// 总上传长度
@@ -119,7 +119,7 @@ func (p *PanClient) AppCreateUploadFile(param *AppCreateUploadFileParam) (*AppCr
 	return item, nil
 }
 
-func (p *PanClient) AppUploadFileData(uploadUrl, uploadFileId, xRequestId string, fileRange *AppFileRange, uploadFunc UploadFunc) *apierror.ApiError {
+func (p *PanClient) AppUploadFileData(uploadUrl, uploadFileId, xRequestId string, fileRange *AppFileUploadRange, uploadFunc UploadFunc) *apierror.ApiError {
 	fullUrl := uploadUrl + "?" + apiutil.PcClientInfoSuffixParam()
 	httpMethod := "PUT"
 	dateOfGmt := apiutil.DateOfGmtStr()

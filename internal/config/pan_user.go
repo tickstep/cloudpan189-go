@@ -3,8 +3,10 @@ package config
 import (
 	"fmt"
 	"github.com/tickstep/cloudpan189-go/cloudpan"
+	"github.com/tickstep/cloudpan189-go/library/converter"
 	"github.com/tickstep/cloudpan189-go/library/logger"
 	"path"
+	"path/filepath"
 )
 
 type PanUser struct {
@@ -85,4 +87,15 @@ func (pu *PanUser) FreshWorkdirInfo() {
 		return
 	}
 	pu.WorkdirFileEntity = *fe
+}
+
+// GetSavePath 根据提供的网盘文件路径 panpath, 返回本地储存路径,
+// 返回绝对路径, 获取绝对路径出错时才返回相对路径...
+func (pu *PanUser) GetSavePath(filePanPath string) string {
+	dirStr := filepath.Join(Config.SaveDir, fmt.Sprintf("%d_%s", pu.UID, converter.TrimPathInvalidChars(pu.Nickname)), filePanPath)
+	dir, err := filepath.Abs(dirStr)
+	if err != nil {
+		dir = filepath.Clean(dirStr)
+	}
+	return dir
 }

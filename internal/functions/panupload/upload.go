@@ -37,14 +37,14 @@ func (e EmptyReaderLen64) Len() int64 {
 	return 0
 }
 
-func NewPanUpload(pcs *cloudpan.PanClient, targetPath, uploadUrl, commitUrl, uploadFileId, xRequestId string) uploader.MultiUpload {
+func NewPanUpload(panClient *cloudpan.PanClient, targetPath, uploadUrl, commitUrl, uploadFileId, xRequestId string) uploader.MultiUpload {
 	return &PanUpload{
-		panClient:        pcs,
-		targetPath: targetPath,
-		uploadFileId: uploadFileId,
+		panClient:     panClient,
+		targetPath:    targetPath,
+		uploadFileId:  uploadFileId,
 		fileUploadUrl: uploadUrl,
 		fileCommitUrl: commitUrl,
-		xRequestId: xRequestId,
+		xRequestId:    xRequestId,
 	}
 }
 
@@ -62,11 +62,11 @@ func (pu *PanUpload) UploadFile(ctx context.Context, partseq int, partOffset int
 	pu.lazyInit()
 
 	var respErr *uploader.MultiError
-	fileRange := &cloudpan.AppFileRange{
+	fileRange := &cloudpan.AppFileUploadRange{
 		Offset: int(partOffset),
 		Len: int(partEnd) - int(partOffset),
 	}
-	pcsError := pu.panClient.AppUploadFileData(pu.fileUploadUrl, pu.uploadFileId, pu.xRequestId, fileRange,
+	apiError := pu.panClient.AppUploadFileData(pu.fileUploadUrl, pu.uploadFileId, pu.xRequestId, fileRange,
 		func(httpMethod, fullUrl string, headers map[string]string) (resp *http.Response, err error) {
 		client := requester.NewHTTPClient()
 		client.SetTimeout(0)
@@ -100,8 +100,8 @@ func (pu *PanUpload) UploadFile(ctx context.Context, partseq int, partOffset int
 		return false, respErr
 	}
 
-	if pcsError != nil {
-		return false, pcsError
+	if apiError != nil {
+		return false, apiError
 	}
 
 	return true, nil
