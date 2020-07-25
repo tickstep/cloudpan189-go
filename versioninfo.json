@@ -1,15 +1,15 @@
 {
     "FixedFileInfo": {
         "FileVersion": {
-            "Major": 1,
+            "Major": 0,
             "Minor": 0,
-            "Patch": 0,
+            "Patch": 1,
             "Build": 0
         },
         "ProductVersion": {
-            "Major": 1,
+            "Major": 0,
             "Minor": 0,
-            "Patch": 0,
+            "Patch": 1,
             "Build": 0
         },
         "FileFlagsMask": "3f",
@@ -22,14 +22,14 @@
         "Comments": "",
         "CompanyName": "tickstep",
         "FileDescription": "天翼云盘客户端",
-        "FileVersion": "v1.0.0",
+        "FileVersion": "v0.0.1",
         "InternalName": "",
         "LegalCopyright": "© 2020 tickstep.",
         "LegalTrademarks": "",
         "OriginalFilename": "",
         "PrivateBuild": "",
         "ProductName": "cloudpan189-go",
-        "ProductVersion": "v1.0.0",
+        "ProductVersion": "v0.0.1",
         "SpecialBuild": ""
     },
     "VarFileInfo": {

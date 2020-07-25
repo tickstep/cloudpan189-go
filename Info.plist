@@ -11,7 +11,7 @@
 		<key>CFBundleExecutable</key>
 		<string>cloudpan189-go</string>
 		<key>CFBundleVersion</key>
-		<string>1.0</string>
+		<string>0.0.1</string>
 		<key>CFBundleIdentifier</key>
 		<string>com.tickstep.cloudpan189go</string>
 		<key>LSRequiresIPhoneOS</key>
