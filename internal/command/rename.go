@@ -29,16 +29,12 @@ func RunRename(oldName string, newName string) {
 	}
 
 	fileId := ""
-	if path.Dir(oldName) == activeUser.Workdir {
-		fileId = activeUser.WorkdirFileEntity.FileId
-	} else {
-		r, err := GetActivePanClient().FileInfoByPath(activeUser.PathJoin(oldName))
-		if err != nil {
-			fmt.Printf("原文件不存在： %s, %s\n", oldName, err)
-			return
-		}
-		fileId = r.FileId
+	r, err := GetActivePanClient().FileInfoByPath(activeUser.PathJoin(oldName))
+	if err != nil {
+		fmt.Printf("原文件不存在： %s, %s\n", oldName, err)
+		return
 	}
+	fileId = r.FileId
 
 	b, e := activeUser.PanClient().Rename(fileId, path.Base(newName))
 	if e != nil {
