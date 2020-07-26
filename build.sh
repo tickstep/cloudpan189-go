@@ -41,6 +41,16 @@ Build() {
   Pack $1
 }
 
+AndroidBuild() {
+  new_golang
+  echo "Building $1..."
+  export GOOS=$2 GOARCH=$3 GOARM=$4 CGO_ENABLED=1
+  go build -ldflags "-X main.Version=$version -s -w -linkmode=external -extldflags=-pie" -o "$output/$1/$name"
+
+  RicePack $1 $name
+  Pack $1
+}
+
 # zip 打包
 Pack() {
   cp README.md "$output/$1"
@@ -61,9 +71,16 @@ RicePack() {
 
 touch ./vendor/golang.org/x/sys/windows/windows.s
 
+# Android
+#export NDK_INSTALL=$ANDROID_NDK_ROOT
+#CC=$NDK_INSTALL/arm-linux-androideabi-4.9/bin/arm-linux-androideabi-gcc AndroidBuild $name-$version"-android-16-armv7" android arm 7
+#CC=$NDK_INSTALL/aarch64-linux-android-4.9/bin/aarch64-linux-android-gcc AndroidBuild $name-$version"-android-21-arm64" android arm64 7
+#CC=$NDK_INSTALL/i686-linux-android-4.9/bin/i686-linux-android-gcc AndroidBuild $name-$version"-android-16-386" android 386 7
+#CC=$NDK_INSTALL/x86_64-linux-android-4.9/bin/x86_64-linux-android-gcc AndroidBuild $name-$version"-android-21-amd64" android amd64 7
+
 # OS X / macOS
-Build $name-$version"-darwin-osx-amd64" darwin amd64
-# Build $name-$version"-darwin-osx-386" darwin 386
+Build $name-$version"-darwin-macos-amd64" darwin amd64
+# Build $name-$version"-darwin-macos-386" darwin 386
 
 # Windows
 Build $name-$version"-windows-x86" windows 386
