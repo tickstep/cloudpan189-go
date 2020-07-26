@@ -8,6 +8,7 @@ require (
 	github.com/astaxie/beego v1.10.1 // indirect
 	github.com/bitly/go-simplejson v0.5.0 // indirect
 	github.com/daaku/go.zipexe v0.0.0-20150329023125-a5fe2436ffcb // indirect
+	github.com/denisbrodbeck/machineid v1.0.1
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/fatih/color v0.0.0-20150510220652-1b35f289c47d
 	github.com/golang/protobuf v1.3.2
