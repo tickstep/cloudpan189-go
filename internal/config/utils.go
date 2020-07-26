@@ -1,9 +1,12 @@
 package config
 
 import (
+	"encoding/hex"
 	"github.com/olekukonko/tablewriter"
 	"github.com/tickstep/cloudpan189-go/cmder/cmdtable"
 	"github.com/tickstep/cloudpan189-go/library/converter"
+	"github.com/tickstep/cloudpan189-go/library/crypto"
+	"github.com/tickstep/cloudpan189-go/library/ids"
 	"strconv"
 	"strings"
 )
@@ -56,4 +59,32 @@ func showMaxRate(size int64) string {
 		return "不限制"
 	}
 	return converter.ConvertFileSize(size, 2) + "/s"
+}
+
+// EncryptString 加密
+func EncryptString(text string) string {
+	if text == "" {
+		return ""
+	}
+	d := []byte(text)
+	key := []byte(ids.GetUniqueId("cloudpan189", 16))
+	r, e := crypto.EncryptAES(d, key)
+	if e != nil {
+		return text
+	}
+	return hex.EncodeToString(r)
+}
+
+// DecryptString 解密
+func DecryptString(text string) string {
+	if text == "" {
+		return ""
+	}
+	d, _  := hex.DecodeString(text)
+	key := []byte(ids.GetUniqueId("cloudpan189", 16))
+	r, e := crypto.DecryptAES(d, key)
+	if e != nil {
+		return text
+	}
+	return string(r)
 }

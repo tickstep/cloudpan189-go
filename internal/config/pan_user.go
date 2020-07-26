@@ -17,6 +17,9 @@ type PanUser struct {
 	Workdir  string `json:"workdir"`
 	WorkdirFileEntity cloudpan.FileEntity `json:"workdirFileEntity"`
 
+	LoginUserName string `json:"loginUserName"`
+	LoginUserPassword string `json:"loginUserPassword"`
+
 	WebToken cloudpan.WebLoginToken `json:"webToken"`
 	AppToken cloudpan.AppLoginToken `json:"appToken"`
 	panClient *cloudpan.PanClient

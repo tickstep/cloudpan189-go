@@ -276,6 +276,8 @@ func (c *PanConfig) SetActiveUser(user *PanUser) *PanUser {
 			u.Sex = user.Sex
 			u.WebToken = user.WebToken
 			u.AppToken = user.AppToken
+			u.LoginUserName = user.LoginUserName
+			u.LoginUserPassword = user.LoginUserPassword
 			needToInsert = false
 			break
 		}

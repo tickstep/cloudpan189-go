@@ -278,11 +278,13 @@ func main()  {
 			Action: func(c *cli.Context) error {
 				appToken := cloudpan.AppLoginToken{}
 				webToken := cloudpan.WebLoginToken{}
+				username := ""
+				passowrd := ""
 				if c.IsSet("COOKIE_LOGIN_USER") {
 					webToken.CookieLoginUser = c.String("COOKIE_LOGIN_USER")
 				} else if c.NArg() == 0 {
 					var err error
-					webToken, appToken, err = command.RunLogin(c.String("username"), c.String("password"))
+					username, passowrd, webToken, appToken, err = command.RunLogin(c.String("username"), c.String("password"))
 					if err != nil {
 						fmt.Println(err)
 						return err
@@ -292,6 +294,9 @@ func main()  {
 					return nil
 				}
 				cloudUser, _ := config.SetupUserByCookie(webToken, appToken)
+				// save username / password
+				cloudUser.LoginUserName = config.EncryptString(username)
+				cloudUser.LoginUserPassword = config.EncryptString(passowrd)
 				config.Config.SetActiveUser(cloudUser)
 				fmt.Println("天翼帐号登录成功: ", cloudUser.Nickname)
 				return nil
