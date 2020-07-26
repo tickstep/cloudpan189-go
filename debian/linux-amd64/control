@@ -5,5 +5,5 @@ Section: utils
 Priority: optional
 Architecture: amd64
 Installed-Size: 4096
-Maintainer: tickstep <i@mail.tickstep.com>
+Maintainer: tickstep <tickstep@outlook.com>
 Description: cloudpan189-go 使用Go语言编写的天翼云盘命令行客户端, 为操作天翼云盘, 提供实用功能.
