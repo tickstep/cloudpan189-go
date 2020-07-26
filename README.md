@@ -469,5 +469,5 @@ cli交互模式下, 运行命令 `config set -max_download_parallel 2` 将下载
 
 # 鸣谢
 本项目大量借鉴了以下相关项目的功能&成果   
-> [iikira/cloudpan189-go](https://github.com/iikira/cloudpan189-go)   
+> [iikira/BaiduPCS-Go](https://github.com/iikira/BaiduPCS-Go)   
 > [Aruelius/cloud189](https://github.com/Aruelius/cloud189)   
