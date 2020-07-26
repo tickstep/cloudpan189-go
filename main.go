@@ -78,14 +78,14 @@ func main()  {
 	app.Description = `cloudpan189-go 使用Go语言编写的天翼云盘命令行客户端, 为操作天翼云盘, 提供实用功能.
 	具体功能, 参见 COMMANDS 列表
 
-	---------------------------------------------------
+	------------------------------------------------------------------------------
 	前往 https://github.com/tickstep/cloudpan189-go 以获取更多帮助信息!
 	前往 https://github.com/tickstep/cloudpan189-go/releases 以获取程序更新信息!
-	---------------------------------------------------
+	------------------------------------------------------------------------------
 
 	交流反馈:
 		提交Issue: https://github.com/tickstep/cloudpan189-go/issues
-		邮箱: tickstep@outlook.com`
+		联系邮箱: tickstep@outlook.com`
 
 	// 全局options
 	app.Flags = []cli.Flag{
