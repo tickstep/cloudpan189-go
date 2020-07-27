@@ -63,6 +63,8 @@
 
 可以直接在[发布页](https://github.com/tickstep/cloudpan189-go/releases)下载使用.
 
+也可以使用这个天翼云盘分享链接进行下载：[天翼云盘下载链接](https://cloud.189.cn/t/RzUNre7nq2Uf)（访问码：io7x）
+
 如果程序运行时输出乱码, 请检查下终端的编码方式是否为 `UTF-8`.
 
 使用本程序之前, 非常建议先学习一些 linux 基础命令知识.
