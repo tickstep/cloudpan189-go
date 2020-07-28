@@ -7,7 +7,6 @@ import (
 	"github.com/tickstep/cloudpan189-go/cmder/cmdliner"
 	"github.com/tickstep/cloudpan189-go/cmder/cmdutil"
 	"github.com/tickstep/cloudpan189-go/internal/config"
-	"github.com/tickstep/cloudpan189-go/internal/file/downloader"
 	"github.com/tickstep/cloudpan189-go/library/cachepool"
 	"github.com/tickstep/cloudpan189-go/library/checkaccess"
 	"github.com/tickstep/cloudpan189-go/library/converter"
@@ -41,7 +40,8 @@ func CheckUpdate(version string, yes bool) {
 	}
 	fmt.Println("检测更新中, 稍候...")
 	client := config.Config.HTTPClient("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36")
-	client.SetTimeout(time.Duration(30) * time.Second)
+	client.SetTimeout(time.Duration(0) * time.Second)
+	client.SetKeepAlive(true)
 	resp, err := client.Req(http.MethodGet, "https://api.github.com/repos/tickstep/cloudpan189-go/releases/latest", nil, nil)
 	if resp != nil {
 		defer resp.Body.Close()
@@ -175,14 +175,13 @@ func CheckUpdate(version string, yes bool) {
 		fmt.Printf("下载更新文件发生错误: %s\n", err)
 		return
 	}
-	total := downloader.ParseContentRange(resp.Header.Get("Content-Range"))
+	total, _ := strconv.Atoi(resp.Header.Get("Content-Length"))
 	if total > 0 {
-		if total != target.size {
+		if int64(total) != target.size {
 			fmt.Printf("下载更新文件发生错误: %s\n", err)
 			return
 		}
 	}
-
 
 	// 初始化数据
 	var readErr error
@@ -190,6 +189,7 @@ func CheckUpdate(version string, yes bool) {
 	nn := 0
 	nn64 := int64(0)
 	downloadStatus := transfer.NewDownloadStatus()
+	downloadStatus.AddTotalSize(target.size)
 
 	statusIndicator := func(status *transfer.DownloadStatus) {
 		status.UpdateSpeeds() // 更新速度
@@ -221,7 +221,6 @@ func CheckUpdate(version string, yes bool) {
 			// 更新速度统计
 			downloadStatus.AddSpeedsDownloaded(nn64)
 			downloadStatus.AddDownloaded(nn64)
-			downloadStatus.AddTotalSize(nn64)
 			downloadSize += nn
 
 			if statusIndicator != nil {
