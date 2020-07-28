@@ -11,6 +11,7 @@ import (
 	"github.com/tickstep/cloudpan189-go/internal/command"
 	"github.com/tickstep/cloudpan189-go/internal/config"
 	"github.com/tickstep/cloudpan189-go/internal/functions/pandownload"
+	"github.com/tickstep/cloudpan189-go/internal/panupdate"
 	"github.com/tickstep/cloudpan189-go/library/converter"
 	"github.com/tickstep/cloudpan189-go/library/logger"
 	"github.com/urfave/cli"
@@ -1174,6 +1175,27 @@ func main()  {
 			Action: func(c *cli.Context) error {
 				cmdliner.ClearScreen()
 				return nil
+			},
+		},
+		// 检测程序更新 update
+		{
+			Name:     "update",
+			Usage:    "检测程序更新",
+			Category: "其他",
+			Action: func(c *cli.Context) error {
+				if c.IsSet("y") {
+					if !c.Bool("y") {
+						return nil
+					}
+				}
+				panupdate.CheckUpdate(app.Version, c.Bool("y"))
+				return nil
+			},
+			Flags: []cli.Flag{
+				cli.BoolFlag{
+					Name:  "y",
+					Usage: "确认更新",
+				},
 			},
 		},
 		// 退出程序 quit

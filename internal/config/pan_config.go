@@ -330,3 +330,12 @@ func (c *PanConfig) DeleteUser(uid uint64) (*PanUser, error) {
 	}
 	return nil, fmt.Errorf("未找到指定的账号")
 }
+
+// HTTPClient 返回设置好的 HTTPClient
+func (c *PanConfig) HTTPClient(ua string) *requester.HTTPClient {
+	client := requester.NewHTTPClient()
+	if ua != "" {
+		client.SetUserAgent(ua)
+	}
+	return client
+}
