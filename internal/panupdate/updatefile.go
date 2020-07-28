@@ -16,7 +16,7 @@ func update(targetPath string, src io.Reader) error {
 
 	privMode := info.Mode()
 
-	oldPath := filepath.Join(filepath.Dir(targetPath), "old"+filepath.Base(targetPath))
+	oldPath := filepath.Join(filepath.Dir(targetPath), "old-"+filepath.Base(targetPath))
 
 	err = os.Rename(targetPath, oldPath)
 	if err != nil {

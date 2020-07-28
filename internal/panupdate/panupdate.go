@@ -189,9 +189,10 @@ func CheckUpdate(version string, yes bool) {
 	downloadSize := 0
 	nn := 0
 	nn64 := int64(0)
-	downloadStatus := transfer.DownloadStatus{}
+	downloadStatus := transfer.NewDownloadStatus()
 
-	statusIndicator := func(status transfer.DownloadStatus) {
+	statusIndicator := func(status *transfer.DownloadStatus) {
+		status.UpdateSpeeds() // 更新速度
 		var leftStr string
 		left := status.TimeLeft()
 		if left < 0 {
@@ -218,7 +219,7 @@ func CheckUpdate(version string, yes bool) {
 			nn64 = int64(nn)
 
 			// 更新速度统计
-			downloadStatus.AddSpeedsDownloaded(nn64) // 限速在这里阻塞
+			downloadStatus.AddSpeedsDownloaded(nn64)
 			downloadStatus.AddDownloaded(nn64)
 			downloadStatus.AddTotalSize(nn64)
 			downloadSize += nn
@@ -232,9 +233,9 @@ func CheckUpdate(version string, yes bool) {
 
 	if int64(downloadSize) == target.size {
 		// 下载完成
-		fmt.Printf("下载完毕\n")
+		fmt.Printf("\n下载完毕\n")
 	} else {
-		fmt.Printf("下载更新文件失败")
+		fmt.Printf("\n下载更新文件失败\n")
 		return
 	}
 
