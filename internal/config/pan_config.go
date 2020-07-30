@@ -239,11 +239,11 @@ func (c *PanConfig) ActiveUser() *PanUser {
 		}
 		for _, u := range c.UserList {
 			if u.UID == c.ActiveUID {
-				c.activeUser = u
-				if c.activeUser.PanClient() == nil {
+				if u.PanClient() == nil {
 					// restore client
-					user, err := SetupUserByCookie(c.activeUser.WebToken, c.activeUser.AppToken)
+					user, err := SetupUserByCookie(u.WebToken, u.AppToken)
 					if err != nil {
+						logger.Verboseln("setup user error")
 						return nil
 					}
 					u.panClient = user.panClient
@@ -259,6 +259,7 @@ func (c *PanConfig) ActiveUser() *PanUser {
 						u.WorkdirFileEntity = *fe
 					}
 				}
+				c.activeUser = u
 				return u
 			}
 		}

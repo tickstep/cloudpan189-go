@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"github.com/tickstep/cloudpan189-go/cloudpan"
+	"github.com/tickstep/cloudpan189-go/cloudpan/apierror"
 	"github.com/tickstep/cloudpan189-go/library/logger"
 	"path"
 	"path/filepath"
@@ -26,7 +27,7 @@ type PanUser struct {
 
 type PanUserList []*PanUser
 
-func SetupUserByCookie(webToken cloudpan.WebLoginToken, appToken cloudpan.AppLoginToken) (user *PanUser, err error) {
+func SetupUserByCookie(webToken cloudpan.WebLoginToken, appToken cloudpan.AppLoginToken) (user *PanUser, err *apierror.ApiError) {
 	panClient := cloudpan.NewPanClient(webToken, appToken)
 	u := &PanUser{
 		WebToken: webToken,
@@ -37,6 +38,9 @@ func SetupUserByCookie(webToken cloudpan.WebLoginToken, appToken cloudpan.AppLog
 	}
 
 	userInfo, err := panClient.GetUserInfo()
+	if err != nil {
+		return nil, err
+	}
 	name := "Unknown"
 	if userInfo != nil {
 		name = userInfo.Nickname
@@ -49,7 +53,7 @@ func SetupUserByCookie(webToken cloudpan.WebLoginToken, appToken cloudpan.AppLog
 		u.AccountName = userInfo.UserAccount
 	} else {
 		// error, maybe the token has expired
-		return nil, fmt.Errorf("cannot get user info, the token has expired")
+		return nil, apierror.NewFailedApiError("cannot get user info, the token has expired")
 	}
 	u.Nickname = name
 
@@ -64,7 +68,7 @@ func SetupUserByCookie(webToken cloudpan.WebLoginToken, appToken cloudpan.AppLog
 		}
 	} else {
 		// error, maybe the token has expired
-		return nil, fmt.Errorf("cannot get user info, the token has expired")
+		return nil, apierror.NewFailedApiError("cannot get user info, the token has expired")
 	}
 
 	return u, nil

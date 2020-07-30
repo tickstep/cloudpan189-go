@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/tickstep/cloudpan189-go/cloudpan/apierror"
 	"github.com/tickstep/cloudpan189-go/library/logger"
+	"strings"
 )
 
 type (
@@ -85,6 +86,10 @@ func (p *PanClient) GetUserInfo() (userInfo *UserInfo, error *apierror.ApiError)
 			logger.Verboseln("get user info failed")
 			return nil, apierror.NewApiError(apierror.ApiCodeTokenExpiredCode, "登录超时")
 		}
+	}
+	if strings.Contains(string(body), "登录页页面") {
+		logger.Verboseln("token expired")
+		return nil, apierror.NewApiError(apierror.ApiCodeTokenExpiredCode, "登录超时")
 	}
 
 	ui := &UserInfo{}

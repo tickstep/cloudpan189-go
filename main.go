@@ -221,6 +221,30 @@ func main()  {
 				activeUser = config.Config.ActiveUser()
 			)
 
+			if activeUser == nil {
+				// can do automatically login?
+				for _, u := range config.Config.UserList {
+					if u.UID == config.Config.ActiveUID {
+						// login
+						_, _, webToken, appToken, err := command.RunLogin(config.DecryptString(u.LoginUserName), config.DecryptString(u.LoginUserPassword))
+						if err != nil {
+							logger.Verboseln("automatically login error")
+							break
+						}
+						// success
+						u.WebToken = webToken
+						u.AppToken = appToken
+
+						// save
+						saveFunc(c)
+						// reload
+						reloadFn(c)
+						activeUser = config.Config.ActiveUser()
+						break
+					}
+				}
+			}
+
 			if activeUser != nil && activeUser.Nickname != "" {
 				// 格式: cloudpan189-go:<工作目录> <UserName>$
 				// 工作目录太长时, 会自动缩略
