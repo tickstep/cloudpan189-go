@@ -67,6 +67,30 @@ func init() {
 	}
 }
 
+func tryLogin(c *cli.Context) *config.PanUser {
+	// can do automatically login?
+	for _, u := range config.Config.UserList {
+		if u.UID == config.Config.ActiveUID {
+			// login
+			_, _, webToken, appToken, err := command.RunLogin(config.DecryptString(u.LoginUserName), config.DecryptString(u.LoginUserPassword))
+			if err != nil {
+				logger.Verboseln("automatically login error")
+				break
+			}
+			// success
+			u.WebToken = webToken
+			u.AppToken = appToken
+
+			// save
+			saveFunc(c)
+			// reload
+			reloadFn(c)
+			return config.Config.ActiveUser()
+		}
+	}
+	return nil
+}
+
 func main()  {
 	defer config.Config.Close()
 
@@ -222,27 +246,7 @@ func main()  {
 			)
 
 			if activeUser == nil {
-				// can do automatically login?
-				for _, u := range config.Config.UserList {
-					if u.UID == config.Config.ActiveUID {
-						// login
-						_, _, webToken, appToken, err := command.RunLogin(config.DecryptString(u.LoginUserName), config.DecryptString(u.LoginUserPassword))
-						if err != nil {
-							logger.Verboseln("automatically login error")
-							break
-						}
-						// success
-						u.WebToken = webToken
-						u.AppToken = appToken
-
-						// save
-						saveFunc(c)
-						// reload
-						reloadFn(c)
-						activeUser = config.Config.ActiveUser()
-						break
-					}
-				}
+				activeUser = tryLogin(c)
 			}
 
 			if activeUser != nil && activeUser.Nickname != "" {
@@ -462,7 +466,16 @@ func main()  {
 					return nil
 				}
 
-				fmt.Printf("切换用户: %s\n", switchedUser.Nickname)
+				if switchedUser == nil {
+					switchedUser = tryLogin(c)
+				}
+
+				if switchedUser != nil {
+					fmt.Printf("切换用户: %s\n", switchedUser.Nickname)
+				} else {
+					fmt.Printf("切换用户失败\n")
+				}
+
 				return nil
 			},
 		},
