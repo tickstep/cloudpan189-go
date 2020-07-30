@@ -32,7 +32,7 @@ const (
 
 var (
 	// Version 版本号
-	Version = "v0.0.1"
+	Version = "v0.0.2"
 
 	historyFilePath = filepath.Join(config.GetConfigDir(), "cloud189_command_history.txt")
 	reloadFn        = func(c *cli.Context) error {
