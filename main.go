@@ -130,8 +130,8 @@ func main()  {
 				lineArgs                   = args.Parse(line)
 				numArgs                    = len(lineArgs)
 				acceptCompleteFileCommands = []string{
-					"cd", "cp", "download", "ls", "mkdir", "mv", "rm", "share", "upload", "login",
-					"clear", "quit", "exit", "quota", "who", "sign",
+					"cd", "cp", "download", "ls", "mkdir", "mv", "pwd", "rename", "rm", "share", "upload", "login", "loglist", "logout",
+					"clear", "quit", "exit", "quota", "who", "sign", "update", "who", "su", "config",
 				}
 				closed = strings.LastIndex(line, " ") == len(line)-1
 			)
