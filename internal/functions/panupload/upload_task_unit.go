@@ -5,12 +5,12 @@ import (
 	"github.com/tickstep/cloudpan189-go/cloudpan"
 	"github.com/tickstep/cloudpan189-go/cloudpan/apierror"
 	"github.com/tickstep/cloudpan189-go/internal/config"
+	"github.com/tickstep/cloudpan189-go/internal/file/uploader"
 	"github.com/tickstep/cloudpan189-go/internal/functions"
 	"github.com/tickstep/cloudpan189-go/internal/localfile"
-	"github.com/tickstep/cloudpan189-go/library/converter"
 	"github.com/tickstep/cloudpan189-go/internal/taskframework"
+	"github.com/tickstep/cloudpan189-go/library/converter"
 	"github.com/tickstep/cloudpan189-go/library/requester/rio"
-	"github.com/tickstep/cloudpan189-go/internal/file/uploader"
 	"path"
 	"strings"
 	"sync"
@@ -40,6 +40,8 @@ type (
 		panDir   string
 		panFile  string
 		state    *uploader.InstanceState
+
+		ShowProgress  bool
 	}
 )
 
@@ -152,12 +154,14 @@ func (utu *UploadTaskUnit) upload() (result *taskframework.TaskUnitRunResult) {
 		default:
 		}
 
-		fmt.Printf("\r[%s] ↑ %s/%s %s/s in %s ............", utu.taskInfo.Id(),
-			converter.ConvertFileSize(status.Uploaded(), 2),
-			converter.ConvertFileSize(status.TotalSize(), 2),
-			converter.ConvertFileSize(status.SpeedsPerSecond(), 2),
-			status.TimeElapsed(),
-		)
+		if utu.ShowProgress {
+			fmt.Printf("\r[%s] ↑ %s/%s %s/s in %s ............", utu.taskInfo.Id(),
+				converter.ConvertFileSize(status.Uploaded(), 2),
+				converter.ConvertFileSize(status.TotalSize(), 2),
+				converter.ConvertFileSize(status.SpeedsPerSecond(), 2),
+				status.TimeElapsed(),
+			)
+		}
 	})
 
 	// result

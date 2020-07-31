@@ -959,6 +959,7 @@ func main()  {
 					MaxRetry:      c.Int("retry"),
 					NoRapidUpload: true, // 不检测秒传，暂时不支持
 					NoSplitFile:   true, // 天翼云盘不支持分片并发上传，只支持单线程上传，支持断点续传
+					ShowProgress:  !c.Bool("np"),
 				})
 				return nil
 			},
@@ -972,6 +973,10 @@ func main()  {
 					Name:  "retry",
 					Usage: "上传失败最大重试次数",
 					Value: command.DefaultUploadMaxRetry,
+				},
+				cli.BoolFlag{
+					Name:  "np",
+					Usage: "no progress 不展示下载进度条",
 				},
 			},
 		},

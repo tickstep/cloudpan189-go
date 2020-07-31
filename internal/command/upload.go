@@ -32,6 +32,7 @@ type (
 		MaxRetry      int
 		NoRapidUpload bool
 		NoSplitFile   bool // 禁用分片上传
+		ShowProgress  bool
 	}
 )
 
@@ -123,6 +124,7 @@ func RunUpload(localPaths []string, savePath string, opt *UploadOptions) {
 				NoRapidUpload:     opt.NoRapidUpload,
 				NoSplitFile:       opt.NoSplitFile,
 				UploadStatistic:   statistic,
+				ShowProgress: opt.ShowProgress,
 			}, opt.MaxRetry)
 			fmt.Printf("[%s] 加入上传队列: %s\n", info.Id(), walkedFiles[k3])
 		}
