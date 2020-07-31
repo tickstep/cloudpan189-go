@@ -27,6 +27,7 @@ type (
 		Load                 int
 		MaxRetry             int
 		NoCheck              bool
+		ShowProgress         bool
 	}
 
 	// LocateDownloadOption 获取下载链接可选参数
@@ -76,6 +77,7 @@ func RunDownload(paths []string, options *DownloadOptions) {
 		BlockSize:                  MaxDownloadRangeSize,
 		MaxRate:                    config.Config.MaxDownloadRate,
 		InstanceStateStorageFormat: downloader.InstanceStateStorageFormatJSON,
+		ShowProgress: options.ShowProgress,
 	}
 	if cfg.CacheSize == 0 {
 		cfg.CacheSize = int(DownloadCacheSize)

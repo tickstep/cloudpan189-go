@@ -149,12 +149,14 @@ func (dtu *DownloadTaskUnit) download() (err error) {
 			leftStr = left.String()
 		}
 
-		fmt.Fprintf(builder, dtu.PrintFormat, dtu.taskInfo.Id(),
-			converter.ConvertFileSize(status.Downloaded(), 2),
-			converter.ConvertFileSize(status.TotalSize(), 2),
-			converter.ConvertFileSize(status.SpeedsPerSecond(), 2),
-			status.TimeElapsed()/1e7*1e7, leftStr,
-		)
+		if dtu.Cfg.ShowProgress {
+			fmt.Fprintf(builder, dtu.PrintFormat, dtu.taskInfo.Id(),
+				converter.ConvertFileSize(status.Downloaded(), 2),
+				converter.ConvertFileSize(status.TotalSize(), 2),
+				converter.ConvertFileSize(status.SpeedsPerSecond(), 2),
+				status.TimeElapsed()/1e7*1e7, leftStr,
+			)
+		}
 
 		if !isComplete {
 			// 如果未完成下载, 就输出

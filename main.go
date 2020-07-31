@@ -1031,6 +1031,7 @@ func main()  {
 					Load:                 c.Int("l"),
 					MaxRetry:             c.Int("retry"),
 					NoCheck:              c.Bool("nocheck"),
+					ShowProgress:         !c.Bool("np"),
 				}
 
 				command.RunDownload(c.Args(), do)
@@ -1073,6 +1074,10 @@ func main()  {
 				cli.BoolFlag{
 					Name:  "nocheck",
 					Usage: "下载文件完成后不校验文件",
+				},
+				cli.BoolFlag{
+					Name:  "np",
+					Usage: "no progress 不展示下载进度条",
 				},
 			},
 		},
