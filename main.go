@@ -32,7 +32,7 @@ const (
 
 var (
 	// Version 版本号
-	Version = "v0.0.2"
+	Version = "v0.0.3-dev"
 
 	historyFilePath = filepath.Join(config.GetConfigDir(), "cloud189_command_history.txt")
 	reloadFn        = func(c *cli.Context) error {
@@ -67,7 +67,7 @@ func init() {
 	}
 }
 
-func tryLogin(c *cli.Context) *config.PanUser {
+func tryLogin() *config.PanUser {
 	// can do automatically login?
 	for _, u := range config.Config.UserList {
 		if u.UID == config.Config.ActiveUID {
@@ -82,17 +82,31 @@ func tryLogin(c *cli.Context) *config.PanUser {
 			u.AppToken = appToken
 
 			// save
-			saveFunc(c)
+			saveFunc(nil)
 			// reload
-			reloadFn(c)
+			reloadFn(nil)
 			return config.Config.ActiveUser()
 		}
 	}
 	return nil
 }
 
-func main()  {
+func checkLoginExpiredAndRelogin() {
+	reloadFn(nil)
+	activeUser := config.Config.ActiveUser()
+	if activeUser == nil {
+		// maybe expired, try to login
+		if tryLogin() != nil {
+			saveFunc(nil)
+		}
+	}
+}
+
+func main() {
 	defer config.Config.Close()
+
+	// check & relogin
+	checkLoginExpiredAndRelogin()
 
 	app := cli.NewApp()
 	app.Name = "cloudpan189-go"
@@ -246,7 +260,7 @@ func main()  {
 			)
 
 			if activeUser == nil {
-				activeUser = tryLogin(c)
+				activeUser = tryLogin()
 			}
 
 			if activeUser != nil && activeUser.Nickname != "" {
@@ -467,7 +481,7 @@ func main()  {
 				}
 
 				if switchedUser == nil {
-					switchedUser = tryLogin(c)
+					switchedUser = tryLogin()
 				}
 
 				if switchedUser != nil {
