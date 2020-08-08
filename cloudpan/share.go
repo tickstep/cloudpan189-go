@@ -7,6 +7,7 @@ import (
 	"github.com/tickstep/cloudpan189-go/library/logger"
 	"github.com/tickstep/cloudpan189-go/library/text"
 	"net/url"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -95,6 +96,18 @@ type (
 
 	errResp struct {
 		ErrorVO apierror.ErrorResp `json:"errorVO"`
+	}
+
+	ShareListDirResult struct {
+		AccessCount AccessCount `json:"accessCount"`
+		Data FileList `json:"data"`
+		Digest string `json:"digest"`
+		ExpireTime int `json:"expireTime"`
+		ExpireType int `json:"expireType"`
+		PageNum int `json:"pageNum"`
+		PageSize int `json:"pageSize"`
+		RecordCount int `json:"recordCount"`
+		ShareDate string `json:"shareDate"`
 	}
 
 )
@@ -222,4 +235,96 @@ func (p *PanClient) ShareCancel(shareIdList []int64) (bool, *apierror.ApiError) 
 		return false, apierror.NewApiErrorWithError(err)
 	}
 	return item.Success, nil
+}
+
+func (p *PanClient) ShareGetIdByUrl(accessUrl string) (int64, string, *apierror.ApiError) {
+	if strings.Index(accessUrl, WEB_URL) < 0 {
+		return 0, "", apierror.NewFailedApiError("URL错误")
+	}
+	fullUrl := &strings.Builder{}
+	fmt.Fprintf(fullUrl, "%s", accessUrl)
+	logger.Verboseln("do request url: " + fullUrl.String())
+	body, err := p.client.DoGet(fullUrl.String())
+	if err != nil {
+		logger.Verboseln("ShareGetIdByUrl failed")
+		return 0, "", apierror.NewApiErrorWithError(err)
+	}
+
+	htmlText := string(body)
+
+	re, _ := regexp.Compile("_shareId = '(.+?)'")
+	shareIdStr := re.FindStringSubmatch(htmlText)[1]
+	shareId := 0
+	if shareIdStr != "" {
+		shareId,_ = strconv.Atoi(shareIdStr)
+	}
+
+	re, _ = regexp.Compile("_verifyCode = '(.+?)'")
+	verifyCodeStr := re.FindStringSubmatch(htmlText)[1]
+
+	return int64(shareId), verifyCodeStr, nil
+}
+
+func (p *PanClient) ShareListDirDetail(accessUrl string, accessCode string) (int64, *ShareListDirResult, *apierror.ApiError) {
+	shareId, verifyCode, apierr := p.ShareGetIdByUrl(accessUrl)
+	if apierr != nil {
+		return 0, nil, apierr
+	}
+
+	fullUrl := &strings.Builder{}
+	fmt.Fprintf(fullUrl, "%s/v2/listShareDir.action?shareId=%d&accessCode=%s&verifyCode=%s&orderBy=1&order=ASC&pageNum=1&pageSize=60 ",
+		WEB_URL, shareId, accessCode, verifyCode)
+
+	header := map[string]string {
+		"Referer": accessUrl,
+	}
+
+	logger.Verboseln("do request url: " + fullUrl.String())
+	body, err := client.Fetch("GET", fullUrl.String(), nil, header)
+	if err != nil {
+		logger.Verboseln("ShareListDirDetail failed")
+		return 0, nil, apierror.NewApiErrorWithError(err)
+	}
+
+	item := &ShareListDirResult{}
+	if err := json.Unmarshal(body, item); err != nil {
+		logger.Verboseln("ShareListDirDetail response failed")
+		return 0, nil, apierror.NewApiErrorWithError(err)
+	}
+	return shareId, item, nil
+}
+
+// ShareSave 转存分享到对应的文件夹
+func (p *PanClient) ShareSave(accessUrl string, accessCode string, savePanDirId string) (bool, *apierror.ApiError) {
+	shareId, shareListDirResult, apierror := p.ShareListDirDetail(accessUrl, accessCode)
+	if apierror != nil {
+		return false, apierror
+	}
+
+	taskReqParam := &BatchTaskParam{
+		TypeFlag: BatchTaskTypeShareSave,
+		TaskInfos: makeBatchTaskInfoListForShareSave(shareListDirResult.Data),
+		TargetFolderId: savePanDirId,
+		ShareId: shareId,
+	}
+	taskId, apierror1 := p.CreateBatchTask(taskReqParam)
+	logger.Verboseln("share save taskid: ", taskId)
+	return taskId != "", apierror1
+}
+
+func makeBatchTaskInfoListForShareSave(opFileList FileList) (infoList BatchTaskInfoList) {
+	for _, fe := range opFileList {
+		isFolder := 0
+		if fe.IsFolder {
+			isFolder = 1
+		}
+		infoItem := &BatchTaskInfo{
+			FileId: fe.FileId,
+			FileName: fe.FileName,
+			IsFolder: isFolder,
+			SrcParentId: fe.ParentId,
+		}
+		infoList = append(infoList, infoItem)
+	}
+	return
 }

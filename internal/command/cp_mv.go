@@ -5,7 +5,6 @@ import (
 	"github.com/tickstep/cloudpan189-go/cloudpan"
 	"github.com/tickstep/cloudpan189-go/library/logger"
 	"path"
-	"strconv"
 	"time"
 )
 
@@ -27,11 +26,10 @@ func RunCopy(paths ...string) {
 	}
 
 	// create task
-	targetFolderId, _ := strconv.Atoi(targetFile.FileId)
 	taskParam := &cloudpan.BatchTaskParam{
 		TypeFlag: cloudpan.BatchTaskTypeCopy,
 		TaskInfos: makeBatchTaskInfoList(opFileList),
-		TargetFolderId: targetFolderId,
+		TargetFolderId: targetFile.FileId,
 	}
 
 	taskId, err1 := activeUser.PanClient().CreateBatchTask(taskParam)
@@ -77,11 +75,10 @@ func RunMove(paths ...string) {
 	}
 
 	// create task
-	targetFolderId, _ := strconv.Atoi(targetFile.FileId)
 	taskParam := &cloudpan.BatchTaskParam{
 		TypeFlag: cloudpan.BatchTaskTypeMove,
 		TaskInfos: makeBatchTaskInfoList(opFileList),
-		TargetFolderId: targetFolderId,
+		TargetFolderId: targetFile.FileId,
 	}
 
 	taskId, err1 := activeUser.PanClient().CreateBatchTask(taskParam)

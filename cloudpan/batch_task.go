@@ -28,7 +28,8 @@ type (
 	BatchTaskParam struct {
 		TypeFlag BatchTaskType `json:"type"`
 		TaskInfos BatchTaskInfoList `json:"taskInfos"`
-		TargetFolderId int `json:"targetFolderId"`
+		TargetFolderId string `json:"targetFolderId"`
+		ShareId int64 `json:"shareId"`
 	}
 
     // CheckTaskResult 检查任务结果
@@ -62,6 +63,9 @@ const (
 
 	// BatchTaskTypeRecycleRestore 还原回收站文件
 	BatchTaskTypeRecycleRestore BatchTaskType = "RESTORE"
+
+	// BatchTaskTypeShareSave 转录分享
+	BatchTaskTypeShareSave BatchTaskType = "SHARE_SAVE"
 )
 
 func (p *PanClient) CreateBatchTask (param *BatchTaskParam) (taskId string, error *apierror.ApiError) {
@@ -79,7 +83,14 @@ func (p *PanClient) CreateBatchTask (param *BatchTaskParam) (taskId string, erro
 		postData = map[string]string {
 			"type": string(param.TypeFlag),
 			"taskInfos": string(taskInfosStr),
-			"targetFolderId": strconv.Itoa(param.TargetFolderId),
+			"targetFolderId": param.TargetFolderId,
+		}
+	} else if BatchTaskTypeShareSave == param.TypeFlag {
+		postData = map[string]string {
+			"type": string(param.TypeFlag),
+			"taskInfos": string(taskInfosStr),
+			"targetFolderId": param.TargetFolderId,
+			"shareId": strconv.Itoa(int(param.ShareId)),
 		}
 	} else {
 		return "", apierror.NewFailedApiError("不支持的操作")
@@ -89,6 +100,13 @@ func (p *PanClient) CreateBatchTask (param *BatchTaskParam) (taskId string, erro
 	if err != nil {
 		logger.Verboseln("CreateBatchTask failed")
 		return "", apierror.NewApiErrorWithError(err)
+	}
+	comResp := &apierror.ErrorResp{}
+	if err := json.Unmarshal(body, comResp); err == nil {
+		if comResp.ErrorCode == "InternalError" {
+			logger.Verboseln("response failed", comResp)
+			return "", apierror.NewFailedApiError("操作失败")
+		}
 	}
 	return strings.ReplaceAll(string(body), "\"", ""), nil
 }
