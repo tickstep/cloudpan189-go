@@ -241,7 +241,7 @@ func (c *PanConfig) ActiveUser() *PanUser {
 			if u.UID == c.ActiveUID {
 				if u.PanClient() == nil {
 					// restore client
-					user, err := SetupUserByCookie(u.WebToken, u.AppToken)
+					user, err := SetupUserByCookie(&u.WebToken, &u.AppToken)
 					if err != nil {
 						logger.Verboseln("setup user error")
 						return nil

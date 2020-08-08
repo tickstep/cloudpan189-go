@@ -12,10 +12,12 @@ import (
 	"github.com/tickstep/cloudpan189-go/library/requester"
 	"image/png"
 	"io/ioutil"
+	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 )
 
 const (
@@ -231,4 +233,52 @@ func doLoginAct(username, password, validateCode, captchaToken, returnUrl, param
 		return nil, apierror.NewFailedApiError(err.Error())
 	}
 	return r, nil
+}
+
+func buildCookie(cookieMap map[string]string) []*http.Cookie {
+	if cookieMap == nil {
+		return nil
+	}
+
+	c := make([]*http.Cookie, 0, 0)
+	for k,v := range cookieMap {
+		c = append(c,
+			&http.Cookie{
+				Name: k,
+				Value: v,
+				Path: "/",
+			})
+	}
+	return c
+}
+
+func RefreshCookieToken(sessionKey string) string {
+	client := requester.NewHTTPClient()
+
+	header := map[string]string {
+		"Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8,ja;q=0.7",
+	}
+
+	//cloudpanUrl := &url.URL{
+	//	Scheme: "http",
+	//	Host:   "cloud.189.cn",
+	//	Path: "/",
+	//}
+
+	fullUrl := &strings.Builder{}
+	fmt.Fprintf(fullUrl, "%s/ssoLogin.action?sessionKey=%s&redirectUrl=main.action%%23recycle",
+		WEB_URL, sessionKey)
+	logger.Verboseln("do request url: " + fullUrl.String())
+	resp, err := client.Req("GET", fullUrl.String(), nil, header)
+	if err != nil {
+		logger.Verboseln("refresh web token cookie error ", err)
+		return ""
+	}
+	cks := resp.Request.Cookies()
+	for _, cookie := range cks {
+		if cookie.Name == "COOKIE_LOGIN_USER" {
+			return cookie.Value
+		}
+	}
+	return ""
 }

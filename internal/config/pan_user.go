@@ -27,18 +27,30 @@ type PanUser struct {
 
 type PanUserList []*PanUser
 
-func SetupUserByCookie(webToken cloudpan.WebLoginToken, appToken cloudpan.AppLoginToken) (user *PanUser, err *apierror.ApiError) {
-	panClient := cloudpan.NewPanClient(webToken, appToken)
+func SetupUserByCookie(webToken *cloudpan.WebLoginToken, appToken *cloudpan.AppLoginToken) (user *PanUser, err *apierror.ApiError) {
+	tryRefreshWebToken := true
+
+doLoginAct:
+	panClient := cloudpan.NewPanClient(*webToken, *appToken)
 	u := &PanUser{
-		WebToken: webToken,
-		AppToken: appToken,
+		WebToken: *webToken,
+		AppToken: *appToken,
 		panClient: panClient,
 		Workdir: "/",
 		WorkdirFileEntity: *cloudpan.NewFileEntityForRootDir(),
 	}
 
+	// web api token maybe expired
 	userInfo, err := panClient.GetUserInfo()
 	if err != nil {
+		if err.Code == apierror.ApiCodeTokenExpiredCode && appToken.SessionKey != "" && tryRefreshWebToken {
+			tryRefreshWebToken = false
+			webCookie := cloudpan.RefreshCookieToken(appToken.SessionKey)
+			if webCookie != "" {
+				webToken.CookieLoginUser = webCookie
+				goto doLoginAct
+			}
+		}
 		return nil, err
 	}
 	name := "Unknown"

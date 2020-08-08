@@ -32,7 +32,7 @@ const (
 
 var (
 	// Version 版本号
-	Version = "v0.0.3-dev"
+	Version = "v0.0.4-dev"
 
 	historyFilePath = filepath.Join(config.GetConfigDir(), "cloud189_command_history.txt")
 	reloadFn        = func(c *cli.Context) error {
@@ -96,10 +96,9 @@ func checkLoginExpiredAndRelogin() {
 	activeUser := config.Config.ActiveUser()
 	if activeUser == nil {
 		// maybe expired, try to login
-		if tryLogin() != nil {
-			saveFunc(nil)
-		}
+		tryLogin()
 	}
+	saveFunc(nil)
 }
 
 func main() {
@@ -336,7 +335,7 @@ func main() {
 					cli.ShowCommandHelp(c, c.Command.Name)
 					return nil
 				}
-				cloudUser, _ := config.SetupUserByCookie(webToken, appToken)
+				cloudUser, _ := config.SetupUserByCookie(&webToken, &appToken)
 				// save username / password
 				cloudUser.LoginUserName = config.EncryptString(username)
 				cloudUser.LoginUserPassword = config.EncryptString(passowrd)

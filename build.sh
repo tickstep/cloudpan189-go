@@ -72,11 +72,11 @@ RicePack() {
 touch ./vendor/golang.org/x/sys/windows/windows.s
 
 # Android
-#export NDK_INSTALL=$ANDROID_NDK_ROOT
-#CC=$NDK_INSTALL/arm-linux-androideabi-4.9/bin/arm-linux-androideabi-gcc AndroidBuild $name-$version"-android-16-armv7" android arm 7
-#CC=$NDK_INSTALL/aarch64-linux-android-4.9/bin/aarch64-linux-android-gcc AndroidBuild $name-$version"-android-21-arm64" android arm64 7
-#CC=$NDK_INSTALL/i686-linux-android-4.9/bin/i686-linux-android-gcc AndroidBuild $name-$version"-android-16-386" android 386 7
-#CC=$NDK_INSTALL/x86_64-linux-android-4.9/bin/x86_64-linux-android-gcc AndroidBuild $name-$version"-android-21-amd64" android amd64 7
+export NDK_INSTALL=/Users/tickstep/Applications/android/android-ndk-toolchains
+CC=$NDK_INSTALL/arm-linux-androideabi-4.9/bin/arm-linux-androideabi-gcc AndroidBuild $name-$version"-android-16-armv7" android arm 7
+CC=$NDK_INSTALL/aarch64-linux-android-4.9/bin/aarch64-linux-android-gcc AndroidBuild $name-$version"-android-21-arm64" android arm64 7
+CC=$NDK_INSTALL/i686-linux-android-4.9/bin/i686-linux-android-gcc AndroidBuild $name-$version"-android-16-386" android 386 7
+CC=$NDK_INSTALL/x86_64-linux-android-4.9/bin/x86_64-linux-android-gcc AndroidBuild $name-$version"-android-21-amd64" android amd64 7
 
 # OS X / macOS
 Build $name-$version"-darwin-macos-amd64" darwin amd64
