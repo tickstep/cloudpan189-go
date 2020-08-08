@@ -20,6 +20,8 @@ const (
 	EnvConfigDir = "CLOUD189_CONFIG_DIR"
 	// ConfigName 配置文件名
 	ConfigName = "cloud189_config.json"
+	// ConfigVersion 配置文件版本
+	ConfigVersion string = "1.0"
 )
 
 var (
@@ -32,6 +34,7 @@ var (
 
 // PanConfig 配置详情
 type PanConfig struct {
+	ConfigVer string `json:"configVer"`
 	ActiveUID uint64 `json:"activeUID"`
 	UserList  PanUserList `json:"userList"`
 
@@ -216,6 +219,7 @@ func (c *PanConfig) initDefaultConfig() {
 			c.SaveDir = filepath.Join(dataPath, "Downloads")
 		}
 	}
+	c.ConfigVer = ConfigVersion
 }
 
 // GetConfigDir 获取配置路径

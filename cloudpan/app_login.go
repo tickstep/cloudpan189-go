@@ -29,6 +29,8 @@ type (
 	AppLoginToken struct {
 		SessionKey string `json:"sessionKey"`
 		SessionSecret string `json:"sessionSecret"`
+		FamilySessionKey string `json:"familySessionKey"`
+		FamilySessionSecret string `json:"familySessionSecret"`
 		// 有效期的token
 		AccessToken string `json:"accessToken"`
 		// token 过期时间点
@@ -155,6 +157,8 @@ func AppLogin(username, password string) (result *AppLoginToken, error *apierror
 	}
 	result.SessionKey = rs.SessionKey
 	result.SessionSecret = rs.SessionSecret
+	result.FamilySessionKey = rs.FamilySessionKey
+	result.FamilySessionSecret = rs.FamilySessionSecret
 
 	fullUrl = &strings.Builder{}
 	fmt.Fprintf(fullUrl, "%s/open/oauth2/getAccessTokenBySsKey.action?sessionKey=%s",
