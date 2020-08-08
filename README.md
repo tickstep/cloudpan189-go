@@ -382,6 +382,8 @@ cloudpan189-go share l
 cloudpan189-go share cancel <shareid_1> <shareid_2> ...
 cloudpan189-go share c <shareid_1> <shareid_2> ...
 ```
+目前只支持通过分享id (shareid) 来取消分享.
+
 
 ### 转录分享
 ```
@@ -389,11 +391,10 @@ cloudpan189-go share save [save_dir_path] [share_url]
 
 例子
 将 https://cloud.189.cn/t/RzUNre7nq2Uf 分享链接里面的全部文件转录到 /我的文档 这个网盘目录里面
-注意：转录需要一定的时间才能生效，需要等待一会才能完全转录到网盘文件夹里面
 cloudpan189-go share save /我的文档 https://cloud.189.cn/t/RzUNre7nq2Uf（访问码：io7x）
 ```
+注意：转录需要一定的时间才能生效，需要等待一会才能完全转录到网盘文件夹里面
 
-目前只支持通过分享id (shareid) 来取消分享.
 
 ## 显示和修改程序配置项
 ```
