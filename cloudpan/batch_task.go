@@ -59,6 +59,9 @@ const (
 	BatchTaskTypeCopy BatchTaskType = "COPY"
 	// BatchTaskTypeMove 移动文件任务
 	BatchTaskTypeMove BatchTaskType = "MOVE"
+
+	// BatchTaskTypeRecycleRestore 还原回收站文件
+	BatchTaskTypeRecycleRestore BatchTaskType = "RESTORE"
 )
 
 func (p *PanClient) CreateBatchTask (param *BatchTaskParam) (taskId string, error *apierror.ApiError) {
@@ -67,7 +70,7 @@ func (p *PanClient) CreateBatchTask (param *BatchTaskParam) (taskId string, erro
 	logger.Verboseln("do request url: " + fullUrl.String())
 	taskInfosStr, err := json.Marshal(param.TaskInfos)
 	var postData map[string]string
-	if BatchTaskTypeDelete == param.TypeFlag {
+	if BatchTaskTypeDelete == param.TypeFlag || BatchTaskTypeRecycleRestore == param.TypeFlag {
 		postData = map[string]string {
 			"type": string(param.TypeFlag),
 			"taskInfos": string(taskInfosStr),
