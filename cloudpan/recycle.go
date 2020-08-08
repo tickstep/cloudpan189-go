@@ -89,7 +89,7 @@ func (p *PanClient) RecycleList(pageNum, pageSize int) (result *RecycleFileListR
 }
 
 // RecycleDelete 删除回收站文件或目录
-func (p *PanClient) RecycleDelete(familyId int, fileIdList []string) *apierror.ApiError {
+func (p *PanClient) RecycleDelete(familyId int64, fileIdList []string) *apierror.ApiError {
 	fullUrl := &strings.Builder{}
 	if fileIdList == nil {
 		return nil
@@ -148,7 +148,7 @@ func makeBatchTaskInfoList(opFileList []*RecycleFileInfo) (infoList BatchTaskInf
 	return
 }
 
-func (p *PanClient) RecycleClear(familyId int) *apierror.ApiError {
+func (p *PanClient) RecycleClear(familyId int64) *apierror.ApiError {
 	fullUrl := &strings.Builder{}
 	if familyId <=0 {
 		fmt.Fprintf(fullUrl, "%s/v2/emptyRecycleBin.action",
