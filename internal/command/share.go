@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/tickstep/cloudpan189-go/cloudpan"
 	"github.com/tickstep/cloudpan189-go/cmder/cmdtable"
+	"github.com/tickstep/cloudpan189-go/library/text"
 	"os"
 	"strconv"
 	"strings"
@@ -102,6 +103,10 @@ func RunShareSave(shareUrl, savePanDirPath string) {
 		return
 	}
 
+	savePanDirPath = activeUser.PathJoin(savePanDirPath)
+	if savePanDirPath[len(savePanDirPath) - 1] == '/' {
+		savePanDirPath = text.Substr(savePanDirPath, 0, len(savePanDirPath) - 1)
+	}
 	fi, apier := activeUser.PanClient().FileInfoByPath(savePanDirPath)
 	if apier != nil {
 		fmt.Printf("指定的网盘文件夹路径有误\n")
