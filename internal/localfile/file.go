@@ -1,7 +1,9 @@
 package localfile
 
 import (
+	"os"
 	"path/filepath"
+	"strings"
 )
 
 // EqualLengthMD5 检测md5和大小是否相同
@@ -25,7 +27,10 @@ func (lfm *LocalFileMeta) CompleteAbsPath() {
 	if err != nil {
 		return
 	}
-
+	// windows
+	if os.PathSeparator == '\\' {
+		absPath = strings.ReplaceAll(absPath, "\\", "/")
+	}
 	lfm.Path = absPath
 }
 
