@@ -33,6 +33,7 @@ type (
 		NoRapidUpload bool
 		NoSplitFile   bool // 禁用分片上传
 		ShowProgress  bool
+		IsOverwrite   bool // 覆盖已存在的文件，如果同名文件已存在则移到回收站里
 	}
 )
 
@@ -125,6 +126,7 @@ func RunUpload(localPaths []string, savePath string, opt *UploadOptions) {
 				NoSplitFile:       opt.NoSplitFile,
 				UploadStatistic:   statistic,
 				ShowProgress: opt.ShowProgress,
+				IsOverwrite: opt.IsOverwrite,
 			}, opt.MaxRetry)
 			fmt.Printf("[%s] 加入上传队列: %s\n", info.Id(), walkedFiles[k3])
 		}

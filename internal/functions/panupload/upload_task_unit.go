@@ -42,6 +42,7 @@ type (
 		state    *uploader.InstanceState
 
 		ShowProgress  bool
+		IsOverwrite   bool // 覆盖已存在的文件，如果同名文件已存在则移到回收站里
 	}
 )
 
@@ -270,6 +271,43 @@ StepUploadPrepareUpload:
 	}
 	time.Sleep(time.Duration(2) * time.Second)
 	utu.FolderCreateMutex.Unlock()
+
+	if utu.IsOverwrite {
+		// 标记覆盖旧同名文件
+		// 检查同名文件是否存在
+		efi, apierr := utu.PanClient.FileInfoByPath(utu.SavePath)
+		if apierr != nil {
+			fmt.Println("检测同名文件失败，请稍后重试")
+			return nil
+		}
+		if efi != nil && efi.FileId != "" {
+			// existed, delete it
+			infoList := cloudpan.BatchTaskInfoList{}
+			isFolder := 0
+			if efi.IsFolder {
+				isFolder = 1
+			}
+			infoItem := &cloudpan.BatchTaskInfo{
+				FileId: efi.FileId,
+				FileName: efi.FileName,
+				IsFolder: isFolder,
+				SrcParentId: efi.ParentId,
+			}
+			infoList = append(infoList, infoItem)
+			delParam := &cloudpan.BatchTaskParam{
+				TypeFlag: cloudpan.BatchTaskTypeDelete,
+				TaskInfos: infoList,
+			}
+
+			taskId, err := utu.PanClient.CreateBatchTask(delParam)
+			if err != nil || taskId == "" {
+				fmt.Println("无法删除文件，请稍后重试")
+				return nil
+			}
+			time.Sleep(time.Duration(500) * time.Millisecond)
+			fmt.Println("检测到同名文件，已移动到回收站: " + utu.SavePath)
+		}
+	}
 
 	appCreateUploadFileParam = &cloudpan.AppCreateUploadFileParam{
 		ParentFolderId: rs.FileId,

@@ -32,7 +32,7 @@ const (
 
 var (
 	// Version 版本号
-	Version = "v0.0.4"
+	Version = "v0.0.5-dev"
 
 	historyFilePath = filepath.Join(config.GetConfigDir(), "cloud189_command_history.txt")
 	reloadFn        = func(c *cli.Context) error {
@@ -996,6 +996,7 @@ func main() {
 					NoRapidUpload: true, // 不检测秒传，暂时不支持
 					NoSplitFile:   true, // 天翼云盘不支持分片并发上传，只支持单线程上传，支持断点续传
 					ShowProgress:  !c.Bool("np"),
+					IsOverwrite:   c.Bool("ow"),
 				})
 				return nil
 			},
@@ -1013,6 +1014,10 @@ func main() {
 				cli.BoolFlag{
 					Name:  "np",
 					Usage: "no progress 不展示下载进度条",
+				},
+				cli.BoolFlag{
+					Name:  "ow",
+					Usage: "overwrite, 覆盖已存在的同名文件，注意已存在的文件会被移到回收站",
 				},
 			},
 		},
