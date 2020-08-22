@@ -20,7 +20,7 @@ type (
 		PrizeStatus int `json:"prizeStatus"`
 		PrizeType int `json:"prizeType"`
 		UseDate string `json:"useDate"`
-		UserId int `json:"userId"`
+		UserId int64 `json:"userId"`
 	}
 
 	UserDrawPrizeResult struct {

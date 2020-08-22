@@ -16,9 +16,9 @@ type (
 
 	AppFileDownloadRange struct {
 		// 起始值，包含
-		Offset int
+		Offset int64
 		// 结束值，包含
-		End int
+		End int64
 	}
 )
 
@@ -71,9 +71,9 @@ func (p *PanClient) AppDownloadFileData(downloadFileUrl string, fileRange AppFil
 	}
 	// 支持断点续传
 	if fileRange.Offset != 0 || fileRange.End != 0 {
-		rangeStr := "bytes=" + strconv.Itoa(fileRange.Offset) + "-"
+		rangeStr := "bytes=" + strconv.FormatInt(fileRange.Offset, 10) + "-"
 		if fileRange.End != 0 {
-			rangeStr += strconv.Itoa(fileRange.End)
+			rangeStr += strconv.FormatInt(fileRange.End, 10)
 		}
 		headers["range"] = rangeStr
 	}

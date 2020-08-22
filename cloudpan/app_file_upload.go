@@ -46,9 +46,9 @@ type (
 
 	AppFileUploadRange struct {
 		// 起始值，包含
-		Offset int
+		Offset int64
 		// 总上传长度
-		Len int
+		Len int64
 	}
 
 	AppUploadFileCommitResult struct {
@@ -133,7 +133,7 @@ func (p *PanClient) AppUploadFileData(uploadUrl, uploadFileId, xRequestId string
 		"X-Request-ID": requestId,
 		"ResumePolicy": "1",
 		"Edrive-UploadFileId": uploadFileId,
-		"Edrive-UploadFileRange": "bytes=" + strconv.Itoa(fileRange.Offset) + "-" + strconv.Itoa(fileRange.Len),
+		"Edrive-UploadFileRange": "bytes=" + strconv.FormatInt(fileRange.Offset, 10) + "-" + strconv.FormatInt(fileRange.Len, 10),
 		"Expect": "100-continue",
 	}
 	logger.Verboseln("do request url: " + fullUrl)

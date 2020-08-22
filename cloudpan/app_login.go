@@ -31,10 +31,12 @@ type (
 		SessionSecret string `json:"sessionSecret"`
 		FamilySessionKey string `json:"familySessionKey"`
 		FamilySessionSecret string `json:"familySessionSecret"`
-		// 有效期的token
 		AccessToken string `json:"accessToken"`
-		// token 过期时间点
-		AccessTokenExpiresIn int `json:"accessTokenExpiresIn"`
+		RefreshToken string `json:"refreshToken"`
+		// 有效期的token
+		SskAccessToken string `json:"sskAccessToken"`
+		// token 过期时间点，时间戳ms
+		SskAccessTokenExpiresIn int64 `json:"sskAccessTokenExpiresIn"`
 		RsaPublicKey string `json:"rsaPublicKey"`
 	}
 
@@ -56,7 +58,7 @@ type (
 
 	accessTokenResp struct {
 		// token过期时间，默认30天
-		ExpiresIn int `json:"expiresIn"`
+		ExpiresIn int64 `json:"expiresIn"`
 		AccessToken string `json:"accessToken"`
 	}
 	
@@ -159,7 +161,10 @@ func AppLogin(username, password string) (result *AppLoginToken, error *apierror
 	result.SessionSecret = rs.SessionSecret
 	result.FamilySessionKey = rs.FamilySessionKey
 	result.FamilySessionSecret = rs.FamilySessionSecret
+	result.AccessToken = rs.AccessToken
+	result.RefreshToken = rs.RefreshToken
 
+	// Ssk token
 	fullUrl = &strings.Builder{}
 	fmt.Fprintf(fullUrl, "%s/open/oauth2/getAccessTokenBySsKey.action?sessionKey=%s",
 		API_URL, rs.SessionKey)
@@ -187,8 +192,8 @@ func AppLogin(username, password string) (result *AppLoginToken, error *apierror
 		logger.Verboseln("parse accessToken result json error ", err)
 		return nil, apierror.NewFailedApiError(err.Error())
 	}
-	result.AccessTokenExpiresIn = atr.ExpiresIn
-	result.AccessToken = atr.AccessToken
+	result.SskAccessTokenExpiresIn = atr.ExpiresIn
+	result.SskAccessToken = atr.AccessToken
 	return result, nil
 }
 

@@ -22,7 +22,7 @@ type (
 	}
 
 	PublicShareResult struct {
-		ShareId int `json:"shareId"`
+		ShareId int64 `json:"shareId"`
 		ShortShareUrl string `json:"shortShareUrl"`
 	}
 
@@ -102,7 +102,7 @@ type (
 		AccessCount AccessCount `json:"accessCount"`
 		Data FileList `json:"data"`
 		Digest string `json:"digest"`
-		ExpireTime int `json:"expireTime"`
+		ExpireTime int64 `json:"expireTime"`
 		ExpireType int `json:"expireType"`
 		PageNum int `json:"pageNum"`
 		PageSize int `json:"pageSize"`

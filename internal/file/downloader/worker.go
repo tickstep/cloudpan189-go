@@ -271,8 +271,8 @@ func (wer *Worker) Execute() {
 	var resp *http.Response
 
 	apierr := wer.panClient.AppDownloadFileData(wer.url, cloudpan.AppFileDownloadRange{
-		Offset: int(wer.wrange.Begin),
-		End: int(wer.wrange.End) - 1,
+		Offset: wer.wrange.Begin,
+		End: wer.wrange.End - 1,
 	}, func(httpMethod, fullUrl string, headers map[string]string) (*http.Response, error) {
 		resp, wer.err = wer.client.Req(httpMethod, fullUrl, nil, headers)
 		if wer.err != nil {

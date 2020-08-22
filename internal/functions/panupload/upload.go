@@ -63,8 +63,8 @@ func (pu *PanUpload) UploadFile(ctx context.Context, partseq int, partOffset int
 
 	var respErr *uploader.MultiError
 	fileRange := &cloudpan.AppFileUploadRange{
-		Offset: int(partOffset),
-		Len: int(partEnd) - int(partOffset),
+		Offset: partOffset,
+		Len: partEnd - partOffset,
 	}
 	apiError := pu.panClient.AppUploadFileData(pu.fileUploadUrl, pu.uploadFileId, pu.xRequestId, fileRange,
 		func(httpMethod, fullUrl string, headers map[string]string) (resp *http.Response, err error) {

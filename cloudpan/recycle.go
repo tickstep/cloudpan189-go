@@ -49,7 +49,7 @@ type (
 		PageSize uint `json:"pageSize"`
 		// RecordCount 文件总数量
 		RecordCount uint `json:"recordCount"`
-		FamilyId int `json:"familyId"`
+		FamilyId int64 `json:"familyId"`
 		FamilyName string `json:"familyName"`
 	}
 
