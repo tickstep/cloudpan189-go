@@ -276,7 +276,7 @@ StepUploadPrepareUpload:
 		// 标记覆盖旧同名文件
 		// 检查同名文件是否存在
 		efi, apierr := utu.PanClient.FileInfoByPath(utu.SavePath)
-		if apierr != nil {
+		if apierr != nil && apierr.Code != apierror.ApiCodeFileNotFoundCode {
 			fmt.Println("检测同名文件失败，请稍后重试")
 			return nil
 		}
