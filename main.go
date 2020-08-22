@@ -32,7 +32,7 @@ const (
 
 var (
 	// Version 版本号
-	Version = "v0.0.5-dev"
+	Version = "v0.0.5"
 
 	historyFilePath = filepath.Join(config.GetConfigDir(), "cloud189_command_history.txt")
 	reloadFn        = func(c *cli.Context) error {
@@ -979,6 +979,9 @@ func main() {
 
 	4. 使用相对路径
 	cloudpan189-go upload 1.mp4 /视频
+
+    5. 覆盖上传，已存在的同名文件会被移到回收站
+	cloudpan189-go upload -ow 1.mp4 /视频
 `,
 			Category: "天翼云盘",
 			Before:   reloadFn,
