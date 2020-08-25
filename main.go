@@ -32,7 +32,7 @@ const (
 
 var (
 	// Version 版本号
-	Version = "v0.0.5"
+	Version = "v0.0.6-dev"
 
 	historyFilePath = filepath.Join(config.GetConfigDir(), "cloud189_command_history.txt")
 	reloadFn        = func(c *cli.Context) error {
@@ -54,6 +54,7 @@ var (
 )
 
 func init() {
+	config.AppVersion = Version
 	cmdutil.ChWorkDir()
 
 	err := config.Config.Init()

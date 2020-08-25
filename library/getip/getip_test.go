@@ -20,4 +20,7 @@ func TestGetIP(t *testing.T) {
 	}
 
 	t.Logf("from netease: %s\n", ipAddr)
+
+	ipAddr, err = IPInfoFromTechainBaidu()
+	t.Logf("from baidu: %s\n", ipAddr)
 }

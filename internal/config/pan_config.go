@@ -30,6 +30,8 @@ var (
 
 	// Config 配置信息, 由外部调用
 	Config = NewConfig(configFilePath)
+
+	AppVersion string
 )
 
 // PanConfig 配置详情
@@ -50,6 +52,7 @@ type PanConfig struct {
 
 	Proxy       string `json:"proxy"`        // 代理
 	LocalAddrs  string `json:"localAddrs"`  // 本地网卡地址
+	PreferUpdateSrv string `json:"preferUpdateSrv"` // 优先更新服务器，github | tickstep
 
 	configFilePath string
 	configFile     *os.File

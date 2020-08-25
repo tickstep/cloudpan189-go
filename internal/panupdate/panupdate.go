@@ -10,7 +10,9 @@ import (
 	"github.com/tickstep/cloudpan189-go/library/cachepool"
 	"github.com/tickstep/cloudpan189-go/library/checkaccess"
 	"github.com/tickstep/cloudpan189-go/library/converter"
+	"github.com/tickstep/cloudpan189-go/library/getip"
 	"github.com/tickstep/cloudpan189-go/library/jsonhelper"
+	"github.com/tickstep/cloudpan189-go/library/requester"
 	"github.com/tickstep/cloudpan189-go/library/requester/transfer"
 	"net/http"
 	"path/filepath"
@@ -32,6 +34,56 @@ type info struct {
 	downloadURL string
 }
 
+type tsResp struct {
+	Code int `json:"code"`
+	Data interface{} `json:"data"`
+	Msg string `json:"msg"`
+}
+
+func getReleaseFromTicstep(client *requester.HTTPClient) *ReleaseInfo {
+	tsReleaseInfo := &ReleaseInfo{}
+	tsResp := &tsResp{Data: tsReleaseInfo}
+	fullUrl := strings.Builder{}
+	ipAddr, err := getip.IPInfoFromTechainBaidu()
+	if err != nil {
+		ipAddr = "127.0.0.1"
+	}
+	fmt.Fprintf(&fullUrl, "http://api.tickstep.com/update/tickstep/cloudpan189-go/releases/latest?ip=%s&os=%s&arch=%s&version=%s",
+		ipAddr, runtime.GOOS, runtime.GOARCH, config.AppVersion)
+	resp, err := client.Req(http.MethodGet, fullUrl.String(), nil, nil)
+	if resp != nil {
+		defer resp.Body.Close()
+	}
+	if err != nil {
+		return nil
+	}
+	err = jsonhelper.UnmarshalData(resp.Body, tsResp)
+	if err != nil {
+		fmt.Printf("json数据解析失败: %s\n", err)
+		return nil
+	}
+	return tsReleaseInfo
+}
+
+func getReleaseFromGithub(client *requester.HTTPClient) *ReleaseInfo {
+	resp, err := client.Req(http.MethodGet, "https://api.github.com/repos/tickstep/cloudpan189-go/releases/latest", nil, nil)
+	if resp != nil {
+		defer resp.Body.Close()
+	}
+	if err != nil {
+		fmt.Printf("获取数据错误: %s\n", err)
+		return nil
+	}
+
+	releaseInfo := ReleaseInfo{}
+	err = jsonhelper.UnmarshalData(resp.Body, &releaseInfo)
+	if err != nil {
+		fmt.Printf("json数据解析失败: %s\n", err)
+		return nil
+	}
+	return &releaseInfo
+}
+
 // CheckUpdate 检测更新
 func CheckUpdate(version string, yes bool) {
 	if !checkaccess.AccessRDWR(cmdutil.ExecutablePath()) {
@@ -42,19 +94,38 @@ func CheckUpdate(version string, yes bool) {
 	client := config.Config.HTTPClient("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36")
 	client.SetTimeout(time.Duration(0) * time.Second)
 	client.SetKeepAlive(true)
-	resp, err := client.Req(http.MethodGet, "https://api.github.com/repos/tickstep/cloudpan189-go/releases/latest", nil, nil)
-	if resp != nil {
-		defer resp.Body.Close()
-	}
-	if err != nil {
-		fmt.Printf("获取数据错误: %s\n", err)
-		return
+
+	// check ticstep srv
+	var tsReleaseInfo *ReleaseInfo
+	for idx := 0; idx < 3; idx++ {
+		tsReleaseInfo = getReleaseFromTicstep(client)
+		if tsReleaseInfo != nil {
+			break
+		}
+		time.Sleep(time.Duration(5) * time.Second)
 	}
 
-	releaseInfo := ReleaseInfo{}
-	err = jsonhelper.UnmarshalData(resp.Body, &releaseInfo)
-	if err != nil {
-		fmt.Printf("json数据解析失败: %s\n", err)
+	// github
+	var ghReleaseInfo *ReleaseInfo
+	for idx := 0; idx < 3; idx++ {
+		ghReleaseInfo = getReleaseFromGithub(client)
+		if ghReleaseInfo != nil {
+			break
+		}
+		time.Sleep(time.Duration(5) * time.Second)
+	}
+
+	var releaseInfo *ReleaseInfo
+	if config.Config.PreferUpdateSrv == "tickstep" {
+		releaseInfo = tsReleaseInfo
+	} else {
+		releaseInfo = ghReleaseInfo
+		if ghReleaseInfo == nil {
+			releaseInfo = tsReleaseInfo
+		}
+	}
+	if releaseInfo == nil {
+		fmt.Printf("获取版本信息失败!\n")
 		return
 	}
 
@@ -170,7 +241,7 @@ func CheckUpdate(version string, yes bool) {
 
 	// 开始下载
 	buf := cachepool.RawMallocByteSlice(int(target.size))
-	resp, err = client.Req("GET", target.downloadURL, nil, nil)
+	resp, err := client.Req("GET", target.downloadURL, nil, nil)
 	if err != nil {
 		fmt.Printf("下载更新文件发生错误: %s\n", err)
 		return
