@@ -2,14 +2,14 @@ package command
 
 import (
 	"fmt"
-	"github.com/tickstep/cloudpan189-go/cloudpan"
-	"github.com/tickstep/cloudpan189-go/cloudpan/apierror"
+	"github.com/tickstep/cloudpan189-api/cloudpan"
+	"github.com/tickstep/cloudpan189-api/cloudpan/apierror"
 	"github.com/tickstep/cloudpan189-go/cmder/cmdtable"
 	"github.com/tickstep/cloudpan189-go/internal/config"
 	"github.com/tickstep/cloudpan189-go/internal/file/downloader"
 	"github.com/tickstep/cloudpan189-go/internal/functions/pandownload"
 	"github.com/tickstep/cloudpan189-go/internal/taskframework"
-	"github.com/tickstep/cloudpan189-go/library/converter"
+	"github.com/tickstep/library-go/converter"
 	"github.com/tickstep/cloudpan189-go/library/requester/transfer"
 	"os"
 	"path/filepath"

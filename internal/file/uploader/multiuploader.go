@@ -2,10 +2,10 @@ package uploader
 
 import (
 	"context"
-	"github.com/tickstep/cloudpan189-go/library/converter"
-	"github.com/tickstep/cloudpan189-go/library/requester"
-	"github.com/tickstep/cloudpan189-go/library/requester/rio"
-	"github.com/tickstep/cloudpan189-go/library/requester/rio/speeds"
+	"github.com/tickstep/library-go/converter"
+	"github.com/tickstep/library-go/requester"
+	"github.com/tickstep/library-go/requester/rio"
+	"github.com/tickstep/library-go/requester/rio/speeds"
 	"github.com/tickstep/cloudpan189-go/internal/utils"
 	"sync"
 	"time"

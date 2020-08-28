@@ -3,9 +3,9 @@ package downloader
 import (
 	"errors"
 	"github.com/json-iterator/go"
-	"github.com/tickstep/cloudpan189-go/library/cachepool"
-	"github.com/tickstep/cloudpan189-go/library/crypto"
-	"github.com/tickstep/cloudpan189-go/library/logger"
+	"github.com/tickstep/library-go/cachepool"
+	"github.com/tickstep/library-go/crypto"
+	"github.com/tickstep/library-go/logger"
 	"github.com/tickstep/cloudpan189-go/library/requester/transfer"
 	"os"
 	"sync"

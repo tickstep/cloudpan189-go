@@ -2,11 +2,12 @@
 package uploader
 
 import (
+	"github.com/tickstep/cloudpan189-go/internal/config"
 	"github.com/tickstep/cloudpan189-go/internal/utils"
-	"github.com/tickstep/cloudpan189-go/library/converter"
-	"github.com/tickstep/cloudpan189-go/library/logger"
-	"github.com/tickstep/cloudpan189-go/library/requester"
-	"github.com/tickstep/cloudpan189-go/library/requester/rio"
+	"github.com/tickstep/library-go/converter"
+	"github.com/tickstep/library-go/logger"
+	"github.com/tickstep/library-go/requester"
+	"github.com/tickstep/library-go/requester/rio"
 	"net/http"
 	"time"
 )
@@ -39,7 +40,7 @@ type (
 )
 
 var (
-	uploaderVerbose = logger.New("UPLOADER")
+	uploaderVerbose = logger.New("UPLOADER", config.EnvVerbose)
 )
 
 // NewUploader 返回 uploader 对象, url: 上传地址, readerlen64: 实现 rio.ReaderLen64 接口的对象, 例如文件

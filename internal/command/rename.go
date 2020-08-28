@@ -2,7 +2,7 @@ package command
 
 import (
 	"fmt"
-	"github.com/tickstep/cloudpan189-go/cloudpan/apiutil"
+	"github.com/tickstep/cloudpan189-api/cloudpan/apiutil"
 	"path"
 	"strings"
 )

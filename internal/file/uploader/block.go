@@ -3,7 +3,7 @@ package uploader
 import (
 	"bufio"
 	"fmt"
-	"github.com/tickstep/cloudpan189-go/library/requester/rio/speeds"
+	"github.com/tickstep/library-go/requester/rio/speeds"
 	"github.com/tickstep/cloudpan189-go/library/requester/transfer"
 	"io"
 	"os"

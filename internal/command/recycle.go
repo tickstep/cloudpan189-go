@@ -3,9 +3,9 @@ package command
 import (
 	"fmt"
 	"github.com/olekukonko/tablewriter"
-	"github.com/tickstep/cloudpan189-go/cloudpan"
+	"github.com/tickstep/cloudpan189-api/cloudpan"
 	"github.com/tickstep/cloudpan189-go/cmder/cmdtable"
-	"github.com/tickstep/cloudpan189-go/library/converter"
+	"github.com/tickstep/library-go/converter"
 	"os"
 	"strconv"
 )

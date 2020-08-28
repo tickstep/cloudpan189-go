@@ -3,8 +3,8 @@ package localfile
 import (
 	"crypto/md5"
 	"encoding/hex"
-	"github.com/tickstep/cloudpan189-go/library/cachepool"
-	"github.com/tickstep/cloudpan189-go/library/converter"
+	"github.com/tickstep/library-go/cachepool"
+	"github.com/tickstep/library-go/converter"
 	"hash/crc32"
 	"io"
 	"os"

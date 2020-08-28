@@ -2,7 +2,7 @@ package cmdutil
 
 import (
 	"github.com/kardianos/osext"
-	"github.com/tickstep/cloudpan189-go/library/logger"
+	"github.com/tickstep/library-go/logger"
 	"os"
 	"path"
 	"path/filepath"

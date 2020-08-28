@@ -3,7 +3,7 @@ package transfer
 import (
 	"errors"
 	"fmt"
-	"github.com/tickstep/cloudpan189-go/library/converter"
+	"github.com/tickstep/library-go/converter"
 	"sync"
 	"sync/atomic"
 )

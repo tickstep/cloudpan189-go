@@ -1,7 +1,7 @@
 package functions
 
 import (
-	"github.com/tickstep/cloudpan189-go/library/expires"
+	"github.com/tickstep/library-go/expires"
 	"sync/atomic"
 	"time"
 )

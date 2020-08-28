@@ -3,7 +3,7 @@ package downloader
 import (
 	"context"
 	"errors"
-	"github.com/tickstep/cloudpan189-go/library/logger"
+	"github.com/tickstep/library-go/logger"
 	"github.com/tickstep/cloudpan189-go/library/requester/transfer"
 	"sort"
 	"time"

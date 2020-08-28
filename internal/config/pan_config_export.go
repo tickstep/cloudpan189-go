@@ -3,8 +3,8 @@ package config
 import (
 	"github.com/olekukonko/tablewriter"
 	"github.com/tickstep/cloudpan189-go/cmder/cmdtable"
-	"github.com/tickstep/cloudpan189-go/library/converter"
-	"github.com/tickstep/cloudpan189-go/library/requester"
+	"github.com/tickstep/library-go/converter"
+	"github.com/tickstep/library-go/requester"
 	"os"
 	"strconv"
 	"strings"

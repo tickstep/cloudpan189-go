@@ -3,11 +3,11 @@ package config
 import (
 	"fmt"
 	"github.com/json-iterator/go"
-	"github.com/tickstep/cloudpan189-go/cloudpan"
+	"github.com/tickstep/cloudpan189-api/cloudpan"
 	"github.com/tickstep/cloudpan189-go/cmder/cmdutil"
 	"github.com/tickstep/cloudpan189-go/cmder/cmdutil/jsonhelper"
-	"github.com/tickstep/cloudpan189-go/library/logger"
-	"github.com/tickstep/cloudpan189-go/library/requester"
+	"github.com/tickstep/library-go/logger"
+	"github.com/tickstep/library-go/requester"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -16,6 +16,8 @@ import (
 )
 
 const (
+	// EnvVerbose 启用调试环境变量
+	EnvVerbose = "CLOUD189_VERBOSE"
 	// EnvConfigDir 配置路径环境变量
 	EnvConfigDir = "CLOUD189_CONFIG_DIR"
 	// ConfigName 配置文件名
@@ -25,7 +27,7 @@ const (
 )
 
 var (
-	CmdConfigVerbose = logger.New("CONFIG")
+	CmdConfigVerbose = logger.New("CONFIG", EnvVerbose)
 	configFilePath   = filepath.Join(GetConfigDir(), ConfigName)
 
 	// Config 配置信息, 由外部调用

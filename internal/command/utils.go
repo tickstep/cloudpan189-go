@@ -2,13 +2,14 @@ package command
 
 import (
 	"fmt"
-	"github.com/tickstep/cloudpan189-go/cloudpan"
-	"github.com/tickstep/cloudpan189-go/library/logger"
+	"github.com/tickstep/cloudpan189-api/cloudpan"
+	"github.com/tickstep/cloudpan189-go/internal/config"
+	"github.com/tickstep/library-go/logger"
 	"path"
 )
 
 var (
-	panCommandVerbose = logger.New("PANCOMMAND")
+	panCommandVerbose = logger.New("PANCOMMAND", config.EnvVerbose)
 )
 
 // GetFileInfoByPaths 获取指定文件路径的文件详情信息

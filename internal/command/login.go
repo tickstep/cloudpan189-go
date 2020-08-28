@@ -2,11 +2,11 @@ package command
 
 import (
 	"fmt"
-	"github.com/tickstep/cloudpan189-go/cloudpan"
-	"github.com/tickstep/cloudpan189-go/cloudpan/apierror"
+	"github.com/tickstep/cloudpan189-api/cloudpan"
+	"github.com/tickstep/cloudpan189-api/cloudpan/apierror"
 	"github.com/tickstep/cloudpan189-go/cmder/cmdliner"
-	"github.com/tickstep/cloudpan189-go/library/logger"
-	_ "github.com/tickstep/cloudpan189-go/library/requester"
+	"github.com/tickstep/library-go/logger"
+	_ "github.com/tickstep/library-go/requester"
 )
 
 func RunLogin(username, password string) (usernameStr, passwordStr string, webToken cloudpan.WebLoginToken, appToken cloudpan.AppLoginToken, error error) {

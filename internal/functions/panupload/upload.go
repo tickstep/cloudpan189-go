@@ -2,10 +2,10 @@ package panupload
 
 import (
 	"context"
-	"github.com/tickstep/cloudpan189-go/cloudpan"
+	"github.com/tickstep/cloudpan189-api/cloudpan"
 	"github.com/tickstep/cloudpan189-go/internal/file/uploader"
-	"github.com/tickstep/cloudpan189-go/library/requester"
-	"github.com/tickstep/cloudpan189-go/library/requester/rio"
+	"github.com/tickstep/library-go/requester"
+	"github.com/tickstep/library-go/requester/rio"
 	"io"
 	"net/http"
 )

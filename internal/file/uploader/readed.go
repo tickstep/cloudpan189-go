@@ -1,7 +1,7 @@
 package uploader
 
 import (
-	"github.com/tickstep/cloudpan189-go/library/requester/rio"
+	"github.com/tickstep/library-go/requester/rio"
 	"sync/atomic"
 )
 

@@ -1,7 +1,7 @@
 package transfer
 
 import (
-	"github.com/tickstep/cloudpan189-go/library/requester/rio/speeds"
+	"github.com/tickstep/library-go/requester/rio/speeds"
 	"sync"
 	"sync/atomic"
 	"time"

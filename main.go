@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/peterh/liner"
-	"github.com/tickstep/cloudpan189-go/cloudpan"
+	"github.com/tickstep/cloudpan189-api/cloudpan"
 	"github.com/tickstep/cloudpan189-go/cmder/cmdliner"
 	"github.com/tickstep/cloudpan189-go/cmder/cmdliner/args"
 	"github.com/tickstep/cloudpan189-go/cmder/cmdutil"
@@ -12,8 +12,8 @@ import (
 	"github.com/tickstep/cloudpan189-go/internal/config"
 	"github.com/tickstep/cloudpan189-go/internal/functions/pandownload"
 	"github.com/tickstep/cloudpan189-go/internal/panupdate"
-	"github.com/tickstep/cloudpan189-go/library/converter"
-	"github.com/tickstep/cloudpan189-go/library/logger"
+	"github.com/tickstep/library-go/converter"
+	"github.com/tickstep/library-go/logger"
 	"github.com/urfave/cli"
 	"os"
 	"path"
@@ -131,7 +131,7 @@ func main() {
 		cli.BoolFlag{
 			Name:        "verbose",
 			Usage:       "启用调试",
-			EnvVar:      logger.EnvVerbose,
+			EnvVar:      config.EnvVerbose,
 			Destination: &logger.IsVerbose,
 		},
 	}

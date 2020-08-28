@@ -1,8 +1,9 @@
 package panupload
 
 import (
-	"github.com/tickstep/cloudpan189-go/library/converter"
-	"github.com/tickstep/cloudpan189-go/library/logger"
+	"github.com/tickstep/cloudpan189-go/internal/config"
+	"github.com/tickstep/library-go/converter"
+	"github.com/tickstep/library-go/logger"
 )
 
 const (
@@ -17,7 +18,7 @@ const (
 )
 
 var (
-	cmdUploadVerbose = logger.New("CLOUD189_UPLOAD")
+	cmdUploadVerbose = logger.New("CLOUD189_UPLOAD", config.EnvVerbose)
 )
 
 func getBlockSize(fileSize int64) int64 {

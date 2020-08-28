@@ -1,7 +1,7 @@
 package pandownload
 
 import (
-	"github.com/tickstep/cloudpan189-go/cloudpan"
+	"github.com/tickstep/cloudpan189-api/cloudpan"
 	"os"
 )
 

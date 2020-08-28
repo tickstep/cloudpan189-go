@@ -2,8 +2,8 @@ package uploader_test
 
 import (
 	"fmt"
-	"github.com/tickstep/cloudpan189-go/library/cachepool"
-	"github.com/tickstep/cloudpan189-go/library/requester/rio"
+	"github.com/tickstep/library-go/cachepool"
+	"github.com/tickstep/library-go/requester/rio"
 	"github.com/tickstep/cloudpan189-go/library/requester/transfer"
 	"github.com/tickstep/cloudpan189-go/internal/file/uploader"
 	"io"

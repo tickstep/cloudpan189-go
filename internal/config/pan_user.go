@@ -2,9 +2,9 @@ package config
 
 import (
 	"fmt"
-	"github.com/tickstep/cloudpan189-go/cloudpan"
-	"github.com/tickstep/cloudpan189-go/cloudpan/apierror"
-	"github.com/tickstep/cloudpan189-go/library/logger"
+	"github.com/tickstep/cloudpan189-api/cloudpan"
+	"github.com/tickstep/cloudpan189-api/cloudpan/apierror"
+	"github.com/tickstep/library-go/logger"
 	"path"
 	"path/filepath"
 )

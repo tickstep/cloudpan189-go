@@ -36,3 +36,4 @@ download/
 .idea/
 
 demos/
+tests.sh

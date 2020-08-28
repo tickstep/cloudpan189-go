@@ -1,7 +1,7 @@
 package command
 
 import (
-	"github.com/tickstep/cloudpan189-go/cloudpan"
+	"github.com/tickstep/cloudpan189-api/cloudpan"
 )
 
 func RunGetUserInfo() (userInfo *cloudpan.UserInfo, error error) {

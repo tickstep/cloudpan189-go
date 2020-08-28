@@ -2,9 +2,9 @@ package command
 
 import (
 	"fmt"
-	"github.com/tickstep/cloudpan189-go/cloudpan"
+	"github.com/tickstep/cloudpan189-api/cloudpan"
 	"github.com/tickstep/cloudpan189-go/cmder/cmdtable"
-	"github.com/tickstep/cloudpan189-go/library/logger"
+	"github.com/tickstep/library-go/logger"
 	"os"
 	"path"
 	"strconv"

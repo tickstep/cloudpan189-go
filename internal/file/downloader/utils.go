@@ -1,8 +1,8 @@
 package downloader
 
 import (
-	"github.com/tickstep/cloudpan189-go/library/logger"
-	"github.com/tickstep/cloudpan189-go/library/requester"
+	"github.com/tickstep/library-go/logger"
+	"github.com/tickstep/library-go/requester"
 	mathrand "math/rand"
 	"mime"
 	"net/url"
