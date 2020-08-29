@@ -22,6 +22,8 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
+	"time"
 	"unicode"
 )
 
@@ -34,6 +36,8 @@ var (
 	// Version 版本号
 	Version = "v0.0.6-dev"
 
+	saveConfigMutex *sync.Mutex = new(sync.Mutex)
+
 	historyFilePath = filepath.Join(config.GetConfigDir(), "cloud189_command_history.txt")
 	reloadFn        = func(c *cli.Context) error {
 		err := config.Config.Reload()
@@ -43,6 +47,8 @@ var (
 		return nil
 	}
 	saveFunc = func(c *cli.Context) error {
+		saveConfigMutex.Lock()
+		defer saveConfigMutex.Unlock()
 		err := config.Config.Save()
 		if err != nil {
 			fmt.Printf("保存配置错误: %s\n", err)
@@ -252,6 +258,32 @@ func main() {
 		fmt.Printf("提示: 方向键上下可切换历史命令.\n")
 		fmt.Printf("提示: Ctrl + A / E 跳转命令 首 / 尾.\n")
 		fmt.Printf("提示: 输入 help 获取帮助.\n")
+
+		// check update
+		reloadFn(c)
+		if config.Config.UpdateCheckInfo.LatestVer != "" {
+			if config.Config.UpdateCheckInfo.LatestVer > config.AppVersion {
+				fmt.Printf("\n当前的软件版本为：%s， 现在有新版本 %s 可供更新，强烈推荐进行更新！（可以输入 update 命令进行更新）\n\n",
+					config.AppVersion, config.Config.UpdateCheckInfo.LatestVer)
+			}
+		}
+		go func() {
+			latestCheckTime := config.Config.UpdateCheckInfo.CheckTime
+			nowTime := time.Now().Unix()
+			secsOf12Hour := int64(43200)
+			if (nowTime - latestCheckTime) > secsOf12Hour {
+				releaseInfo := panupdate.GetLatestReleaseInfo(false)
+				if releaseInfo == nil {
+					logger.Verboseln("获取版本信息失败!\n")
+					return
+				}
+				config.Config.UpdateCheckInfo.LatestVer = releaseInfo.TagName
+				config.Config.UpdateCheckInfo.CheckTime = nowTime
+
+				// save
+				saveFunc(c)
+			}
+		}()
 
 		for {
 			var (

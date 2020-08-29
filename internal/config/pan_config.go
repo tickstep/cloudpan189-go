@@ -36,6 +36,12 @@ var (
 	AppVersion string
 )
 
+type UpdateCheckInfo struct {
+	PreferUpdateSrv string `json:"preferUpdateSrv"` // 优先更新服务器，github | tickstep
+	LatestVer string `json:"latestVer"` // 最后检测到的版本
+	CheckTime int64 `json:"checkTime"` // 最后检测的时间戳，单位为秒
+}
+
 // PanConfig 配置详情
 type PanConfig struct {
 	ConfigVer string `json:"configVer"`
@@ -54,7 +60,7 @@ type PanConfig struct {
 
 	Proxy       string `json:"proxy"`        // 代理
 	LocalAddrs  string `json:"localAddrs"`  // 本地网卡地址
-	PreferUpdateSrv string `json:"preferUpdateSrv"` // 优先更新服务器，github | tickstep
+	UpdateCheckInfo UpdateCheckInfo `json:"updateCheckInfo"`
 
 	configFilePath string
 	configFile     *os.File

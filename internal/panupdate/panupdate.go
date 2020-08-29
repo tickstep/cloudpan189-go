@@ -12,6 +12,7 @@ import (
 	"github.com/tickstep/library-go/converter"
 	"github.com/tickstep/library-go/getip"
 	"github.com/tickstep/library-go/jsonhelper"
+	"github.com/tickstep/library-go/logger"
 	"github.com/tickstep/library-go/requester"
 	"github.com/tickstep/cloudpan189-go/library/requester/transfer"
 	"net/http"
@@ -40,7 +41,7 @@ type tsResp struct {
 	Msg string `json:"msg"`
 }
 
-func getReleaseFromTicstep(client *requester.HTTPClient) *ReleaseInfo {
+func getReleaseFromTicstep(client *requester.HTTPClient, showPrompt bool) *ReleaseInfo {
 	tsReleaseInfo := &ReleaseInfo{}
 	tsResp := &tsResp{Data: tsReleaseInfo}
 	fullUrl := strings.Builder{}
@@ -55,33 +56,82 @@ func getReleaseFromTicstep(client *requester.HTTPClient) *ReleaseInfo {
 		defer resp.Body.Close()
 	}
 	if err != nil {
+		if showPrompt {
+			logger.Verbosef("获取数据错误: %s\n", err)
+		}
 		return nil
 	}
 	err = jsonhelper.UnmarshalData(resp.Body, tsResp)
 	if err != nil {
-		fmt.Printf("json数据解析失败: %s\n", err)
+		if showPrompt {
+			fmt.Printf("json数据解析失败: %s\n", err)
+		}
 		return nil
 	}
-	return tsReleaseInfo
+	if tsResp.Code == 0 {
+		return tsReleaseInfo
+	}
+	return nil
 }
 
-func getReleaseFromGithub(client *requester.HTTPClient) *ReleaseInfo {
+func getReleaseFromGithub(client *requester.HTTPClient, showPrompt bool) *ReleaseInfo {
 	resp, err := client.Req(http.MethodGet, "https://api.github.com/repos/tickstep/cloudpan189-go/releases/latest", nil, nil)
 	if resp != nil {
 		defer resp.Body.Close()
 	}
 	if err != nil {
-		fmt.Printf("获取数据错误: %s\n", err)
+		if showPrompt {
+			logger.Verbosef("获取数据错误: %s\n", err)
+		}
 		return nil
 	}
 
 	releaseInfo := ReleaseInfo{}
 	err = jsonhelper.UnmarshalData(resp.Body, &releaseInfo)
 	if err != nil {
-		fmt.Printf("json数据解析失败: %s\n", err)
+		if showPrompt {
+			fmt.Printf("json数据解析失败: %s\n", err)
+		}
 		return nil
 	}
 	return &releaseInfo
+}
+
+func GetLatestReleaseInfo(showPrompt bool) *ReleaseInfo {
+	client := config.Config.HTTPClient("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36")
+	client.SetTimeout(time.Duration(0) * time.Second)
+	client.SetKeepAlive(true)
+
+	// check ticstep srv
+	var tsReleaseInfo *ReleaseInfo = nil
+	for idx := 0; idx < 3; idx++ {
+		tsReleaseInfo = getReleaseFromTicstep(client, showPrompt)
+		if tsReleaseInfo != nil {
+			break
+		}
+		time.Sleep(time.Duration(5) * time.Second)
+	}
+
+	// github
+	var ghReleaseInfo *ReleaseInfo = nil
+	for idx := 0; idx < 3; idx++ {
+		ghReleaseInfo = getReleaseFromGithub(client, showPrompt)
+		if ghReleaseInfo != nil {
+			break
+		}
+		time.Sleep(time.Duration(5) * time.Second)
+	}
+
+	var releaseInfo *ReleaseInfo = nil
+	if config.Config.UpdateCheckInfo.PreferUpdateSrv == "tickstep" {
+		releaseInfo = tsReleaseInfo
+	} else {
+		releaseInfo = ghReleaseInfo
+		if ghReleaseInfo == nil {
+			releaseInfo = tsReleaseInfo
+		}
+	}
+	return releaseInfo
 }
 
 // CheckUpdate 检测更新
@@ -95,35 +145,7 @@ func CheckUpdate(version string, yes bool) {
 	client.SetTimeout(time.Duration(0) * time.Second)
 	client.SetKeepAlive(true)
 
-	// check ticstep srv
-	var tsReleaseInfo *ReleaseInfo
-	for idx := 0; idx < 3; idx++ {
-		tsReleaseInfo = getReleaseFromTicstep(client)
-		if tsReleaseInfo != nil {
-			break
-		}
-		time.Sleep(time.Duration(5) * time.Second)
-	}
-
-	// github
-	var ghReleaseInfo *ReleaseInfo
-	for idx := 0; idx < 3; idx++ {
-		ghReleaseInfo = getReleaseFromGithub(client)
-		if ghReleaseInfo != nil {
-			break
-		}
-		time.Sleep(time.Duration(5) * time.Second)
-	}
-
-	var releaseInfo *ReleaseInfo
-	if config.Config.PreferUpdateSrv == "tickstep" {
-		releaseInfo = tsReleaseInfo
-	} else {
-		releaseInfo = ghReleaseInfo
-		if ghReleaseInfo == nil {
-			releaseInfo = tsReleaseInfo
-		}
-	}
+	releaseInfo := GetLatestReleaseInfo(true)
 	if releaseInfo == nil {
 		fmt.Printf("获取版本信息失败!\n")
 		return
