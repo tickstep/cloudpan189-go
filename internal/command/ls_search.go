@@ -58,7 +58,7 @@ func RunLs(targetPath string, lsOptions *LsOptions, orderBy cloudpan.OrderBy, or
 		fileList = fileResult.Data
 
 		// more page?
-		if fileResult.RecordCount > fileResult.PageNum {
+		if fileResult.RecordCount > fileResult.PageSize {
 			pageCount := int(math.Ceil(float64(fileResult.RecordCount) / float64(fileResult.PageSize)))
 			for page := 2; page <= pageCount; page++ {
 				fileListParam.PageNum = uint(page)
