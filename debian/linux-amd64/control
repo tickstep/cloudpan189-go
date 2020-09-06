@@ -1,5 +1,5 @@
 Package: cloudpan189-go
-Version: 0.0.6
+Version: 0.0.7
 Homepage: https://github.com/tickstep/cloudpan189-go
 Section: utils
 Priority: optional
