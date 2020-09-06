@@ -34,7 +34,7 @@ const (
 
 var (
 	// Version 版本号
-	Version = "v0.0.6"
+	Version = "v0.0.7-dev"
 
 	saveConfigMutex *sync.Mutex = new(sync.Mutex)
 
@@ -1029,7 +1029,7 @@ func main() {
 					AllParallel:   c.Int("p"),
 					Parallel:      1, // 天翼云盘一个文件只支持单线程上传
 					MaxRetry:      c.Int("retry"),
-					NoRapidUpload: true, // 不检测秒传，暂时不支持
+					NoRapidUpload: c.Bool("norapid"),
 					NoSplitFile:   true, // 天翼云盘不支持分片并发上传，只支持单线程上传，支持断点续传
 					ShowProgress:  !c.Bool("np"),
 					IsOverwrite:   c.Bool("ow"),
@@ -1054,6 +1054,10 @@ func main() {
 				cli.BoolFlag{
 					Name:  "ow",
 					Usage: "overwrite, 覆盖已存在的同名文件，注意已存在的文件会被移到回收站",
+				},
+				cli.BoolFlag{
+					Name:  "norapid",
+					Usage: "不检测秒传",
 				},
 			},
 		},

@@ -117,9 +117,24 @@ func (utu *UploadTaskUnit) rapidUpload() (isContinue bool, result *taskframework
 	utu.Step = StepUploadRapidUpload
 
 	// 对于天翼云盘，文件必须是存在才支持秒传
-	// 暂时不实现秒传功能
-
-	return true, nil
+	result = &taskframework.TaskUnitRunResult{}
+	fmt.Printf("[%s] 检测秒传中, 请稍候...\n", utu.taskInfo.Id())
+	if utu.LocalFileChecksum.FileDataExists == 1 {
+		_, er := utu.PanClient.AppUploadFileCommit(utu.LocalFileChecksum.FileCommitUrl, utu.LocalFileChecksum.UploadFileId, utu.LocalFileChecksum.XRequestId)
+		if er != nil {
+			result.ResultMessage = "秒传失败"
+			result.Err = er
+			return true, result
+		} else {
+			fmt.Printf("[%s] 秒传成功, 保存到网盘路径: %s\n\n", utu.taskInfo.Id(), utu.SavePath)
+			return false, nil
+		}
+	} else {
+		fmt.Printf("[%s] 秒传失败，开始正常上传文件", utu.taskInfo.Id())
+		result.Succeed = false
+		result.ResultMessage = "文件未曾上传，无法秒传"
+		return true, result
+	}
 }
 
 // upload 上传文件
@@ -332,10 +347,10 @@ StepUploadPrepareUpload:
 
 stepUploadRapidUpload:
 	// 秒传
-	{
+	if !utu.NoRapidUpload {
 		isContinue, rapidUploadResult := utu.rapidUpload()
 		if !isContinue {
-			// 不继续, 返回秒传的结果
+			// 秒传成功, 返回秒传的结果
 			return rapidUploadResult
 		}
 	}
