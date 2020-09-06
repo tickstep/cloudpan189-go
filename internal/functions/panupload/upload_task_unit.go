@@ -130,7 +130,7 @@ func (utu *UploadTaskUnit) rapidUpload() (isContinue bool, result *taskframework
 			return false, nil
 		}
 	} else {
-		fmt.Printf("[%s] 秒传失败，开始正常上传文件", utu.taskInfo.Id())
+		fmt.Printf("[%s] 秒传失败，开始正常上传文件\n", utu.taskInfo.Id())
 		result.Succeed = false
 		result.ResultMessage = "文件未曾上传，无法秒传"
 		return true, result
