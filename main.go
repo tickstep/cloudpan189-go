@@ -176,6 +176,7 @@ func main() {
 				acceptCompleteFileCommands = []string{
 					"cd", "cp", "download", "ls", "mkdir", "mv", "pwd", "rename", "rm", "share", "upload", "login", "loglist", "logout",
 					"clear", "quit", "exit", "quota", "who", "sign", "update", "who", "su", "config",
+					"family",
 				}
 				closed = strings.LastIndex(line, " ") == len(line)-1
 			)
@@ -544,7 +545,36 @@ func main() {
 				} else if activeUser.Sex == "M" {
 					gender = "男"
 				}
-				fmt.Printf("当前帐号 uid: %d, 昵称: %s, 用户名: %s, 性别: %s\n", activeUser.UID, activeUser.Nickname, activeUser.AccountName, gender)
+				cloudName := "个人云"
+				if config.Config.ActiveFamilyId > 0 {
+					cloudName = "家庭云(" + strconv.FormatInt(config.Config.ActiveFamilyId, 10) + ")"
+				}
+				fmt.Printf("当前帐号 uid: %d, 昵称: %s, 用户名: %s, 性别: %s, 云：%s\n", activeUser.UID, activeUser.Nickname, activeUser.AccountName, gender, cloudName)
+				return nil
+			},
+		},
+		// 切换家庭云 family
+		{
+			Name:  "family",
+			Usage: "切换天翼家庭云",
+			Description: `
+	切换已登录的天翼帐号的家庭云和个人云:
+	如果运行该条命令没有提供参数, 程序将会列出所有的家庭云, 供选择切换.
+
+	示例:
+	cloudpan189-go family
+	cloudpan189-go family <familyId>
+`,
+			Category: "天翼云盘账号",
+			Before:   reloadFn,
+			After:    saveFunc,
+			Action: func(c *cli.Context) error {
+				inputData := c.Args().Get(0)
+				targetFamilyId := int64(-1)
+				if inputData != "" && len(inputData) > 0 {
+					targetFamilyId,_ = strconv.ParseInt(inputData, 10, 0)
+				}
+				command.RunSwitchFamilyList(targetFamilyId)
 				return nil
 			},
 		},

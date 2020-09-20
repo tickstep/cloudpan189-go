@@ -46,6 +46,7 @@ type UpdateCheckInfo struct {
 type PanConfig struct {
 	ConfigVer string `json:"configVer"`
 	ActiveUID uint64 `json:"activeUID"`
+	ActiveFamilyId int64 `json:"activeFamilyId"` // 0代表个人云
 	UserList  PanUserList `json:"userList"`
 
 	CacheSize           int `json:"cacheSize"`          // 下载缓存
