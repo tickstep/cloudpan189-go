@@ -34,7 +34,7 @@ const (
 
 var (
 	// Version 版本号
-	Version = "v0.0.7"
+	Version = "v0.0.8-dev"
 
 	saveConfigMutex *sync.Mutex = new(sync.Mutex)
 
@@ -546,8 +546,8 @@ func main() {
 					gender = "男"
 				}
 				cloudName := "个人云"
-				if config.Config.ActiveFamilyId > 0 {
-					cloudName = "家庭云(" + config.Config.ActiveFamilyInfo.RemarkName + ")"
+				if config.Config.ActiveUser().ActiveFamilyId > 0 {
+					cloudName = "家庭云(" + config.Config.ActiveUser().ActiveFamilyInfo.RemarkName + ")"
 				}
 				fmt.Printf("当前帐号 uid: %d, 昵称: %s, 用户名: %s, 性别: %s, 云：%s\n", activeUser.UID, activeUser.Nickname, activeUser.AccountName, gender, cloudName)
 				return nil
@@ -556,7 +556,7 @@ func main() {
 		// 切换家庭云 family
 		{
 			Name:  "family",
-			Usage: "切换天翼家庭云",
+			Usage: "切换天翼家庭云/个人云",
 			Description: `
 	切换已登录的天翼帐号的家庭云和个人云:
 	如果运行该条命令没有提供参数, 程序将会列出所有的家庭云, 供选择切换.

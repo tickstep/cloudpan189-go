@@ -17,6 +17,9 @@ type PanUser struct {
 	Workdir  string `json:"workdir"`
 	WorkdirFileEntity cloudpan.FileEntity `json:"workdirFileEntity"`
 
+	ActiveFamilyId int64 `json:"activeFamilyId"` // 0代表个人云
+	ActiveFamilyInfo cloudpan.AppFamilyInfo `json:"activeFamilyInfo"`
+
 	LoginUserName string `json:"loginUserName"`
 	LoginUserPassword string `json:"loginUserPassword"`
 

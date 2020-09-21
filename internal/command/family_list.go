@@ -52,8 +52,8 @@ func RunSwitchFamilyList(targetFamilyId int64)  {
 		return
 	}
 
-	config.Config.ActiveFamilyId = activeFamilyInfo.FamilyId
-	config.Config.ActiveFamilyInfo = *activeFamilyInfo
+	config.Config.ActiveUser().ActiveFamilyId = activeFamilyInfo.FamilyId
+	config.Config.ActiveUser().ActiveFamilyInfo = *activeFamilyInfo
 	fmt.Printf("切换家庭云：%s\n", activeFamilyInfo.RemarkName)
 }
 
