@@ -547,7 +547,7 @@ func main() {
 				}
 				cloudName := "个人云"
 				if config.Config.ActiveFamilyId > 0 {
-					cloudName = "家庭云(" + strconv.FormatInt(config.Config.ActiveFamilyId, 10) + ")"
+					cloudName = "家庭云(" + config.Config.ActiveFamilyInfo.RemarkName + ")"
 				}
 				fmt.Printf("当前帐号 uid: %d, 昵称: %s, 用户名: %s, 性别: %s, 云：%s\n", activeUser.UID, activeUser.Nickname, activeUser.AccountName, gender, cloudName)
 				return nil

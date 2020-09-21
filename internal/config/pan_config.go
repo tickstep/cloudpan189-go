@@ -47,6 +47,7 @@ type PanConfig struct {
 	ConfigVer string `json:"configVer"`
 	ActiveUID uint64 `json:"activeUID"`
 	ActiveFamilyId int64 `json:"activeFamilyId"` // 0代表个人云
+	ActiveFamilyInfo cloudpan.AppFamilyInfo `json:"activeFamilyInfo"`
 	UserList  PanUserList `json:"userList"`
 
 	CacheSize           int `json:"cacheSize"`          // 下载缓存
