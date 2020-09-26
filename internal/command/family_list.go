@@ -11,6 +11,7 @@ import (
 )
 
 func RunSwitchFamilyList(targetFamilyId int64)  {
+	currentFamilyId := config.Config.ActiveUser().ActiveFamilyId
 	var activeFamilyInfo *cloudpan.AppFamilyInfo = nil
 	familyList,renderStr := getFamilyOptionList()
 
@@ -54,6 +55,11 @@ func RunSwitchFamilyList(targetFamilyId int64)  {
 
 	config.Config.ActiveUser().ActiveFamilyId = activeFamilyInfo.FamilyId
 	config.Config.ActiveUser().ActiveFamilyInfo = *activeFamilyInfo
+	if currentFamilyId != config.Config.ActiveUser().ActiveFamilyId {
+		// clear the family work path
+		config.Config.ActiveUser().FamilyWorkdir = "/"
+		config.Config.ActiveUser().FamilyWorkdirFileEntity = *cloudpan.NewAppFileEntityForRootDir()
+	}
 	fmt.Printf("切换家庭云：%s\n", activeFamilyInfo.RemarkName)
 }
 
