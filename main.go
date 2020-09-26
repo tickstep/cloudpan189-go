@@ -911,8 +911,15 @@ func main() {
 					return nil
 				}
 
-				command.RunMove(0, c.Args()...)
+				command.RunMove(parseFamilyId(c), c.Args()...)
 				return nil
+			},
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:  "familyId",
+					Usage: "家庭云ID",
+					Value: "",
+				},
 			},
 		},
 		// 重命名文件 rename

@@ -76,34 +76,58 @@ func RunMove(familyId int64, paths ...string) {
 		return
 	}
 
-	// create task
-	taskParam := &cloudpan.BatchTaskParam{
-		TypeFlag: cloudpan.BatchTaskTypeMove,
-		TaskInfos: makeBatchTaskInfoList(opFileList),
-		TargetFolderId: targetFile.FileId,
-	}
+	if IsFamilyCloud(familyId) {
+		failedMoveFiles := []*cloudpan.AppFileEntity{}
+		b := false
+		for _,mfi := range opFileList {
+			_,er := activeUser.PanClient().AppFamilyMoveFile(familyId, mfi.FileId, targetFile.FileId)
+			if er != nil {
+				failedMoveFiles = append(failedMoveFiles, mfi)
+			}
+			b = true
+		}
+		if len(failedMoveFiles) > 0 {
+			fmt.Println("以下文件移动失败：")
+			for _,f := range failedMoveFiles {
+				fmt.Println(f.FileName)
+			}
+			fmt.Println("")
+		}
+		if b {
+			fmt.Println("操作成功, 已移动文件到目标目录: ", targetFile.Path)
+		} else {
+			fmt.Println("无法移动文件，请稍后重试")
+		}
+	} else {
+		// create task
+		taskParam := &cloudpan.BatchTaskParam{
+			TypeFlag: cloudpan.BatchTaskTypeMove,
+			TaskInfos: makeBatchTaskInfoList(opFileList),
+			TargetFolderId: targetFile.FileId,
+		}
 
-	taskId, err1 := activeUser.PanClient().CreateBatchTask(taskParam)
-	if err1 != nil {
-		fmt.Println("无法移动文件，请稍后重试")
-		return
-	}
-	logger.Verboseln("task id: " + taskId)
+		taskId, err1 := activeUser.PanClient().CreateBatchTask(taskParam)
+		if err1 != nil {
+			fmt.Println("无法移动文件，请稍后重试")
+			return
+		}
+		logger.Verboseln("task id: " + taskId)
 
-	// check task
-	time.Sleep(time.Duration(200) * time.Millisecond)
-	taskRes, err2 := activeUser.PanClient().CheckBatchTask(cloudpan.BatchTaskTypeMove, taskId)
-	if err2 != nil {
-		fmt.Println("无法移动文件，请稍后重试")
-		return
-	}
-	if taskRes.TaskStatus == cloudpan.BatchTaskStatusNotAction {
-		fmt.Println("无法移动文件，文件可能已经存在")
-		return
-	}
+		// check task
+		time.Sleep(time.Duration(200) * time.Millisecond)
+		taskRes, err2 := activeUser.PanClient().CheckBatchTask(cloudpan.BatchTaskTypeMove, taskId)
+		if err2 != nil {
+			fmt.Println("无法移动文件，请稍后重试")
+			return
+		}
+		if taskRes.TaskStatus == cloudpan.BatchTaskStatusNotAction {
+			fmt.Println("无法移动文件，文件可能已经存在")
+			return
+		}
 
-	if taskRes.TaskStatus == cloudpan.BatchTaskStatusOk {
-		fmt.Println("操作成功, 已移动文件到目标目录: ", targetFile.Path)
+		if taskRes.TaskStatus == cloudpan.BatchTaskStatusOk {
+			fmt.Println("操作成功, 已移动文件到目标目录: ", targetFile.Path)
+		}
 	}
 }
 
