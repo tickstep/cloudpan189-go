@@ -299,8 +299,8 @@ func main() {
 			if activeUser != nil && activeUser.Nickname != "" {
 				// 格式: cloudpan189-go:<工作目录> <UserName>$
 				// 工作目录太长时, 会自动缩略
-				if command.IsFamilyCloud(config.Config.ActiveUser().ActiveFamilyId) {
-					prompt = app.Name + ":" + converter.ShortDisplay(path.Base(activeUser.Workdir), NameShortDisplayNum) + " " + activeUser.Nickname + "(" + command.GetFamilyCloudMark(config.Config.ActiveUser().ActiveFamilyId) + ")$ "
+				if command.IsFamilyCloud(activeUser.ActiveFamilyId) {
+					prompt = app.Name + ":" + converter.ShortDisplay(path.Base(activeUser.Workdir), NameShortDisplayNum) + " " + activeUser.Nickname + "(" + command.GetFamilyCloudMark(activeUser.ActiveFamilyId) + ")$ "
 				} else {
 					prompt = app.Name + ":" + converter.ShortDisplay(path.Base(activeUser.Workdir), NameShortDisplayNum) + " " + activeUser.Nickname + "$ "
 				}
@@ -384,9 +384,6 @@ func main() {
 			// 命令的附加options参数说明，使用 help login 命令即可查看
 			Flags: []cli.Flag{
 				cli.StringFlag{
-					Name:  "username",
-					Usage: "登录天翼帐号的用户名(手机号/邮箱/别名)",
-				},cli.StringFlag{
 					Name:  "username",
 					Usage: "登录天翼帐号的用户名(手机号/邮箱/别名)",
 				},
