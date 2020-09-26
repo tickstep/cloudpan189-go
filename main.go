@@ -1003,6 +1003,10 @@ func main() {
 							fmt.Println("未登录账号")
 							return nil
 						}
+						if command.IsFamilyCloud(config.Config.ActiveUser().ActiveFamilyId) {
+							fmt.Println("家庭云不支持文件分享，请切换到个人云")
+							return nil
+						}
 						et := cloudpan.ShareExpiredTimeForever
 						if c.IsSet("time") {
 							op := c.String("time")
