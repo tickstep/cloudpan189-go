@@ -845,8 +845,15 @@ func main() {
 					fmt.Println("未登录账号")
 					return nil
 				}
-				command.RunRemove(c.Args()...)
+				command.RunRemove(parseFamilyId(c), c.Args()...)
 				return nil
+			},
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:  "familyId",
+					Usage: "家庭云ID",
+					Value: "",
+				},
 			},
 		},
 		// 拷贝文件/目录 cp
