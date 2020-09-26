@@ -8,16 +8,23 @@ import (
 	"strings"
 )
 
-func RunMkdir(name string) {
+func RunMkdir(familyId int64, name string) {
 	activeUser := GetActiveUser()
-	fullpath := activeUser.PathJoin(0, name)
+	fullpath := activeUser.PathJoin(familyId, name)
 	pathSlice := strings.Split(fullpath, "/")
-	rs := &cloudpan.MkdirResult{}
+	rs := &cloudpan.AppMkdirResult{}
 	err := apierror.NewFailedApiError("")
-	if path.Dir(fullpath) == activeUser.Workdir {
-		rs, err = activeUser.PanClient().MkdirRecursive(activeUser.WorkdirFileEntity.FileId, path.Clean(path.Dir(fullpath)), len(pathSlice) - 1, pathSlice)
+
+	var cWorkDir = activeUser.Workdir
+	var cFileId = activeUser.WorkdirFileEntity.FileId
+	if IsFamilyCloud(familyId) {
+		cWorkDir = activeUser.FamilyWorkdir
+		cFileId = activeUser.FamilyWorkdirFileEntity.FileId
+	}
+	if path.Dir(fullpath) == cWorkDir {
+		rs, err = activeUser.PanClient().AppMkdirRecursive(familyId, cFileId, path.Clean(path.Dir(fullpath)), len(pathSlice) - 1, pathSlice)
 	} else {
-		rs, err = activeUser.PanClient().MkdirRecursive("", "", 0, pathSlice)
+		rs, err = activeUser.PanClient().AppMkdirRecursive(familyId,"", "", 0, pathSlice)
 	}
 
 	if err != nil {
@@ -25,13 +32,9 @@ func RunMkdir(name string) {
 		return
 	}
 
-	if rs.IsNew {
+	if rs.FileId != "" {
 		fmt.Println("创建文件夹成功: ", fullpath)
 	} else {
-		if rs.FileId != "" {
-			fmt.Println("文件夹已存在: ", fullpath)
-		} else {
-			fmt.Println("创建文件夹失败: ", fullpath)
-		}
+		fmt.Println("创建文件夹失败: ", fullpath)
 	}
 }

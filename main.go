@@ -803,8 +803,15 @@ func main() {
 					fmt.Println("未登录账号")
 					return nil
 				}
-				command.RunMkdir(c.Args().Get(0))
+				command.RunMkdir(parseFamilyId(c), c.Args().Get(0))
 				return nil
+			},
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:  "familyId",
+					Usage: "家庭云ID",
+					Value: "",
+				},
 			},
 		},
 		// 删除文件/目录 rm
