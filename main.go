@@ -686,7 +686,11 @@ func main() {
 					fmt.Println("未登录账号")
 					return nil
 				}
-				fmt.Println(config.Config.ActiveUser().Workdir)
+				if command.IsFamilyCloud(config.Config.ActiveUser().ActiveFamilyId) {
+					fmt.Println(config.Config.ActiveUser().FamilyWorkdir)
+				} else {
+					fmt.Println(config.Config.ActiveUser().Workdir)
+				}
 				return nil
 			},
 		},
