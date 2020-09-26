@@ -8,7 +8,6 @@ import (
 	"github.com/tickstep/cloudpan189-go/internal/config"
 	"github.com/tickstep/library-go/converter"
 	"github.com/tickstep/library-go/text"
-	"math"
 	"os"
 	"strconv"
 )
@@ -31,45 +30,46 @@ const (
 	opSearch
 )
 
-func RunLs(targetPath string, lsOptions *LsOptions, orderBy cloudpan.OrderBy, orderSort cloudpan.OrderSort)  {
+func RunLs(familyId int64, targetPath string, lsOptions *LsOptions, orderBy cloudpan.OrderBy, orderSort cloudpan.OrderSort)  {
 	activeUser := config.Config.ActiveUser()
 	targetPath = activeUser.PathJoin(targetPath)
 	if targetPath[len(targetPath) - 1] == '/' {
 		targetPath = text.Substr(targetPath, 0, len(targetPath) - 1)
 	}
 
-	targetPathInfo, err := activeUser.PanClient().FileInfoByPath(targetPath)
+	targetPathInfo, err := activeUser.PanClient().AppFileInfoByPath(familyId, targetPath)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	fileList := cloudpan.FileList{}
-	fileListParam := cloudpan.NewFileListParam()
+	fileList := cloudpan.AppFileList{}
+	fileListParam := cloudpan.NewAppFileListParam()
 	fileListParam.FileId = targetPathInfo.FileId
+	fileListParam.FamilyId = familyId
 	fileListParam.OrderBy = orderBy
 	fileListParam.OrderSort = orderSort
 	if targetPathInfo.IsFolder {
-		fileResult, err := activeUser.PanClient().FileList(fileListParam)
+		fileResult, err := activeUser.PanClient().AppGetAllFileList(fileListParam)
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
-		fileList = fileResult.Data
+		fileList = fileResult.FileList
 
 		// more page?
-		if fileResult.RecordCount > fileResult.PageSize {
-			pageCount := int(math.Ceil(float64(fileResult.RecordCount) / float64(fileResult.PageSize)))
-			for page := 2; page <= pageCount; page++ {
-				fileListParam.PageNum = uint(page)
-				fileResult, err = activeUser.PanClient().FileList(fileListParam)
-				if err != nil {
-					fmt.Println(err)
-					break
-				}
-				fileList = append(fileList, fileResult.Data...)
-			}
-		}
+		//if fileResult.RecordCount > fileResult.PageSize {
+		//	pageCount := int(math.Ceil(float64(fileResult.RecordCount) / float64(fileResult.PageSize)))
+		//	for page := 2; page <= pageCount; page++ {
+		//		fileListParam.PageNum = uint(page)
+		//		fileResult, err = activeUser.PanClient().FileList(fileListParam)
+		//		if err != nil {
+		//			fmt.Println(err)
+		//			break
+		//		}
+		//		fileList = append(fileList, fileResult.Data...)
+		//	}
+		//}
 	} else {
 		fileList = append(fileList, targetPathInfo)
 	}
@@ -77,7 +77,7 @@ func RunLs(targetPath string, lsOptions *LsOptions, orderBy cloudpan.OrderBy, or
 }
 
 
-func renderTable(op int, isTotal bool, path string, files cloudpan.FileList) {
+func renderTable(op int, isTotal bool, path string, files cloudpan.AppFileList) {
 	tb := cmdtable.NewTable(os.Stdout)
 	var (
 		fN, dN   int64
@@ -92,19 +92,19 @@ func renderTable(op int, isTotal bool, path string, files cloudpan.FileList) {
 	}
 
 	if isTotal {
-		tb.SetHeader([]string{"#", "file_id", "文件大小", "创建日期", "修改日期", showPath})
-		tb.SetColumnAlignment([]int{tablewriter.ALIGN_DEFAULT, tablewriter.ALIGN_RIGHT, tablewriter.ALIGN_LEFT, tablewriter.ALIGN_LEFT, tablewriter.ALIGN_LEFT, tablewriter.ALIGN_LEFT})
+		tb.SetHeader([]string{"#", "file_id", "文件大小", "文件MD5", "文件大小(原始)", "创建日期", "修改日期", showPath})
+		tb.SetColumnAlignment([]int{tablewriter.ALIGN_DEFAULT, tablewriter.ALIGN_RIGHT, tablewriter.ALIGN_LEFT, tablewriter.ALIGN_LEFT, tablewriter.ALIGN_LEFT, tablewriter.ALIGN_LEFT, tablewriter.ALIGN_LEFT, tablewriter.ALIGN_LEFT})
 		for k, file := range files {
 			if file.IsFolder {
-				tb.Append([]string{strconv.Itoa(k), file.FileId, "-", file.CreateTime, file.LastOpTime, file.FileName + cloudpan.PathSeparator})
+				tb.Append([]string{strconv.Itoa(k), file.FileId, "-", "-", "-", file.CreateTime, file.LastOpTime, file.FileName + cloudpan.PathSeparator})
 				continue
 			}
 
 			switch op {
 			case opLs:
-				tb.Append([]string{strconv.Itoa(k), file.FileId, converter.ConvertFileSize(file.FileSize, 2), file.CreateTime, file.LastOpTime, file.FileName})
+				tb.Append([]string{strconv.Itoa(k), file.FileId, converter.ConvertFileSize(file.FileSize, 2), file.FileMd5, strconv.FormatInt(file.FileSize, 10), file.CreateTime, file.LastOpTime, file.FileName})
 			case opSearch:
-				tb.Append([]string{strconv.Itoa(k), file.FileId, converter.ConvertFileSize(file.FileSize, 2), file.CreateTime, file.LastOpTime, file.Path})
+				tb.Append([]string{strconv.Itoa(k), file.FileId, converter.ConvertFileSize(file.FileSize, 2), file.FileMd5, strconv.FormatInt(file.FileSize, 10), file.CreateTime, file.LastOpTime, file.Path})
 			}
 		}
 		fN, dN = files.Count()

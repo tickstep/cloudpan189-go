@@ -77,7 +77,7 @@ func getFamilyOptionList() ([]*cloudpan.AppFamilyInfo, string) {
 	builder := &strings.Builder{}
 	tb := cmdtable.NewTable(builder)
 	tb.SetColumnAlignment([]int{tablewriter.ALIGN_DEFAULT, tablewriter.ALIGN_RIGHT, tablewriter.ALIGN_CENTER, tablewriter.ALIGN_CENTER})
-	tb.SetHeader([]string{"#", "family_id", "家庭名", "创建日期"})
+	tb.SetHeader([]string{"#", "family_id", "家庭云名", "创建日期"})
 
 	for k, familyInfo := range familyList {
 		tb.Append([]string{strconv.Itoa(k), strconv.FormatInt(familyInfo.FamilyId, 10), familyInfo.RemarkName, familyInfo.CreateTime})

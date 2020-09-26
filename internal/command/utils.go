@@ -39,3 +39,14 @@ func matchPathByShellPattern(patterns ...string) (panpaths []string, err error) 
 	}
 	return panpaths, nil
 }
+
+func IsFamilyCloud(familyId int64) bool {
+	return familyId > 0
+}
+
+func GetFamilyCloudMark(familyId int64) string {
+	if familyId > 0 {
+		return "家庭云"
+	}
+	return "个人云"
+}

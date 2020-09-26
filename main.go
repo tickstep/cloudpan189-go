@@ -299,7 +299,11 @@ func main() {
 			if activeUser != nil && activeUser.Nickname != "" {
 				// 格式: cloudpan189-go:<工作目录> <UserName>$
 				// 工作目录太长时, 会自动缩略
-				prompt = app.Name + ":" + converter.ShortDisplay(path.Base(activeUser.Workdir), NameShortDisplayNum) + " " + activeUser.Nickname + "$ "
+				if command.IsFamilyCloud(config.Config.ActiveUser().ActiveFamilyId) {
+					prompt = app.Name + ":" + converter.ShortDisplay(path.Base(activeUser.Workdir), NameShortDisplayNum) + " " + activeUser.Nickname + "(" + command.GetFamilyCloudMark(config.Config.ActiveUser().ActiveFamilyId) + ")$ "
+				} else {
+					prompt = app.Name + ":" + converter.ShortDisplay(path.Base(activeUser.Workdir), NameShortDisplayNum) + " " + activeUser.Nickname + "$ "
+				}
 			} else {
 				// cloudpan189-go >
 				prompt = app.Name + " > "
@@ -380,6 +384,9 @@ func main() {
 			// 命令的附加options参数说明，使用 help login 命令即可查看
 			Flags: []cli.Flag{
 				cli.StringFlag{
+					Name:  "username",
+					Usage: "登录天翼帐号的用户名(手机号/邮箱/别名)",
+				},cli.StringFlag{
 					Name:  "username",
 					Usage: "登录天翼帐号的用户名(手机号/邮箱/别名)",
 				},
@@ -723,7 +730,17 @@ func main() {
 					orderBy = cloudpan.OrderByTime
 				}
 
-				command.RunLs(c.Args().Get(0), &command.LsOptions{
+				familyId := config.Config.ActiveUser().ActiveFamilyId
+				if c.IsSet("familyId") {
+					fid,errfi := strconv.ParseInt(c.String("familyId"), 10, 64)
+					if errfi != nil {
+						familyId = 0
+					} else {
+						familyId = fid
+					}
+				}
+
+				command.RunLs(familyId, c.Args().Get(0), &command.LsOptions{
 					Total: c.Bool("l") || c.Parent().Args().Get(0) == "ll",
 				}, orderBy, orderSort)
 
@@ -753,6 +770,11 @@ func main() {
 				cli.BoolFlag{
 					Name:  "size",
 					Usage: "根据大小排序",
+				},
+				cli.StringFlag{
+					Name:  "familyId",
+					Usage: "家庭云ID",
+					Value: "",
 				},
 			},
 		},
