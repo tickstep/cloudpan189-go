@@ -15,7 +15,10 @@ type PanUser struct {
 	AccountName string `json:"accountName"`
 	Sex      string `json:"sex"`
 	Workdir  string `json:"workdir"`
-	WorkdirFileEntity cloudpan.FileEntity `json:"workdirFileEntity"`
+	WorkdirFileEntity cloudpan.AppFileEntity `json:"workdirFileEntity"`
+
+	FamilyWorkdir  string `json:"familyWorkdir"`
+	FamilyWorkdirFileEntity cloudpan.AppFileEntity `json:"familyWorkdirFileEntity"`
 
 	ActiveFamilyId int64 `json:"activeFamilyId"` // 0代表个人云
 	ActiveFamilyInfo cloudpan.AppFamilyInfo `json:"activeFamilyInfo"`
@@ -40,7 +43,9 @@ doLoginAct:
 		AppToken: *appToken,
 		panClient: panClient,
 		Workdir: "/",
-		WorkdirFileEntity: *cloudpan.NewFileEntityForRootDir(),
+		WorkdirFileEntity: *cloudpan.NewAppFileEntityForRootDir(),
+		FamilyWorkdir: "/",
+		FamilyWorkdirFileEntity: *cloudpan.NewAppFileEntityForRootDir(),
 	}
 
 	// web api token maybe expired
@@ -94,20 +99,28 @@ func (pu *PanUser) PanClient() *cloudpan.PanClient {
 }
 
 // PathJoin 合并工作目录和相对路径p, 若p为绝对路径则忽略
-func (pu *PanUser) PathJoin(p string) string {
+func (pu *PanUser) PathJoin(familyId int64, p string) string {
 	if path.IsAbs(p) {
 		return p
 	}
-	return path.Join(pu.Workdir, p)
+	if familyId > 0 {
+		return path.Join(pu.FamilyWorkdir, p)
+	} else {
+		return path.Join(pu.Workdir, p)
+	}
 }
 
 func (pu *PanUser) FreshWorkdirInfo() {
-	fe, err := pu.PanClient().FileInfoById(pu.WorkdirFileEntity.FileId)
+	fe, err := pu.PanClient().AppFileInfoById(pu.ActiveFamilyId, pu.WorkdirFileEntity.FileId)
 	if err != nil {
 		logger.Verboseln("刷新工作目录信息失败")
 		return
 	}
-	pu.WorkdirFileEntity = *fe
+	if pu.ActiveFamilyId > 0 {
+		pu.FamilyWorkdirFileEntity = *fe
+	} else {
+		pu.WorkdirFileEntity = *fe
+	}
 }
 
 // GetSavePath 根据提供的网盘文件路径 panpath, 返回本地储存路径,

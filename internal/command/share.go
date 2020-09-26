@@ -103,7 +103,7 @@ func RunShareSave(shareUrl, savePanDirPath string) {
 		return
 	}
 
-	savePanDirPath = activeUser.PathJoin(savePanDirPath)
+	savePanDirPath = activeUser.PathJoin(0, savePanDirPath)
 	if savePanDirPath[len(savePanDirPath) - 1] == '/' {
 		savePanDirPath = text.Substr(savePanDirPath, 0, len(savePanDirPath) - 1)
 	}

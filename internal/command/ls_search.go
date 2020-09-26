@@ -32,7 +32,7 @@ const (
 
 func RunLs(familyId int64, targetPath string, lsOptions *LsOptions, orderBy cloudpan.OrderBy, orderSort cloudpan.OrderSort)  {
 	activeUser := config.Config.ActiveUser()
-	targetPath = activeUser.PathJoin(targetPath)
+	targetPath = activeUser.PathJoin(familyId, targetPath)
 	if targetPath[len(targetPath) - 1] == '/' {
 		targetPath = text.Substr(targetPath, 0, len(targetPath) - 1)
 	}

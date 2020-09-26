@@ -61,7 +61,7 @@ func getBatchTaskInfoList(paths ...string) (*cloudpan.BatchTaskInfoList, *[]stri
 	delFileInfos := make([]*cloudpan.FileEntity, 0, len(paths))
 	infoList := cloudpan.BatchTaskInfoList{}
 	for _, p := range paths {
-		absolutePath := path.Clean(activeUser.PathJoin(p))
+		absolutePath := path.Clean(activeUser.PathJoin(0, p))
 		fe, err := activeUser.PanClient().FileInfoByPath(absolutePath)
 		if err != nil {
 			failedRmPaths = append(failedRmPaths, absolutePath)

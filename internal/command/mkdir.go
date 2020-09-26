@@ -10,7 +10,7 @@ import (
 
 func RunMkdir(name string) {
 	activeUser := GetActiveUser()
-	fullpath := activeUser.PathJoin(name)
+	fullpath := activeUser.PathJoin(0, name)
 	pathSlice := strings.Split(fullpath, "/")
 	rs := &cloudpan.MkdirResult{}
 	err := apierror.NewFailedApiError("")

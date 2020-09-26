@@ -5,11 +5,11 @@ import (
 	"github.com/tickstep/cloudpan189-go/internal/config"
 )
 
-func RunChangeDirectory(targetPath string) {
+func RunChangeDirectory(familyId int64, targetPath string) {
 	user := config.Config.ActiveUser()
-	targetPath = user.PathJoin(targetPath)
+	targetPath = user.PathJoin(familyId, targetPath)
 
-	targetPathInfo, err := user.PanClient().FileInfoByPath(targetPath)
+	targetPathInfo, err := user.PanClient().AppFileInfoByPath(familyId, targetPath)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -20,8 +20,13 @@ func RunChangeDirectory(targetPath string) {
 		return
 	}
 
-	user.Workdir = targetPath
-	user.WorkdirFileEntity = *targetPathInfo
+	if IsFamilyCloud(familyId) {
+		user.FamilyWorkdir = targetPath
+		user.FamilyWorkdirFileEntity = *targetPathInfo
+	} else {
+		user.Workdir = targetPath
+		user.WorkdirFileEntity = *targetPathInfo
+	}
 
 	fmt.Printf("改变工作目录: %s\n", targetPath)
 }

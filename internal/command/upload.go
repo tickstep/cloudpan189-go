@@ -56,7 +56,7 @@ func RunUpload(localPaths []string, savePath string, opt *UploadOptions) {
 		opt.MaxRetry = DefaultUploadMaxRetry
 	}
 
-	savePath = activeUser.PathJoin(savePath)
+	savePath = activeUser.PathJoin(0, savePath)
 	_, err1 := activeUser.PanClient().FileInfoByPath(savePath)
 	if err1 != nil {
 		fmt.Printf("警告: 上传文件, 获取云盘路径 %s 错误, %s\n", savePath, err1)

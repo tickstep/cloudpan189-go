@@ -108,6 +108,19 @@ func checkLoginExpiredAndRelogin() {
 	saveFunc(nil)
 }
 
+func parseFamilyId(c *cli.Context) int64 {
+	familyId := config.Config.ActiveUser().ActiveFamilyId
+	if c.IsSet("familyId") {
+		fid,errfi := strconv.ParseInt(c.String("familyId"), 10, 64)
+		if errfi != nil {
+			familyId = 0
+		} else {
+			familyId = fid
+		}
+	}
+	return familyId
+}
+
 func main() {
 	defer config.Config.Close()
 
@@ -300,7 +313,7 @@ func main() {
 				// 格式: cloudpan189-go:<工作目录> <UserName>$
 				// 工作目录太长时, 会自动缩略
 				if command.IsFamilyCloud(activeUser.ActiveFamilyId) {
-					prompt = app.Name + ":" + converter.ShortDisplay(path.Base(activeUser.Workdir), NameShortDisplayNum) + " " + activeUser.Nickname + "(" + command.GetFamilyCloudMark(activeUser.ActiveFamilyId) + ")$ "
+					prompt = app.Name + ":" + converter.ShortDisplay(path.Base(activeUser.FamilyWorkdir), NameShortDisplayNum) + " " + activeUser.Nickname + "(" + command.GetFamilyCloudMark(activeUser.ActiveFamilyId) + ")$ "
 				} else {
 					prompt = app.Name + ":" + converter.ShortDisplay(path.Base(activeUser.Workdir), NameShortDisplayNum) + " " + activeUser.Nickname + "$ "
 				}
@@ -650,10 +663,15 @@ func main() {
 					fmt.Println("未登录账号")
 					return nil
 				}
-				command.RunChangeDirectory(c.Args().Get(0))
+				command.RunChangeDirectory(parseFamilyId(c), c.Args().Get(0))
 				return nil
 			},
 			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:  "familyId",
+					Usage: "家庭云ID",
+					Value: "",
+				},
 			},
 		},
 		// 输出工作目录 pwd
@@ -727,17 +745,7 @@ func main() {
 					orderBy = cloudpan.OrderByTime
 				}
 
-				familyId := config.Config.ActiveUser().ActiveFamilyId
-				if c.IsSet("familyId") {
-					fid,errfi := strconv.ParseInt(c.String("familyId"), 10, 64)
-					if errfi != nil {
-						familyId = 0
-					} else {
-						familyId = fid
-					}
-				}
-
-				command.RunLs(familyId, c.Args().Get(0), &command.LsOptions{
+				command.RunLs(parseFamilyId(c), c.Args().Get(0), &command.LsOptions{
 					Total: c.Bool("l") || c.Parent().Args().Get(0) == "ll",
 				}, orderBy, orderSort)
 

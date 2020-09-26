@@ -266,11 +266,16 @@ func (c *PanConfig) ActiveUser() *PanUser {
 					u.Nickname = user.Nickname
 
 					// check workdir valid or not
-					fe, err1 := u.PanClient().FileInfoByPath(u.Workdir)
+					fe, err1 := u.PanClient().AppFileInfoByPath(u.ActiveFamilyId, u.Workdir)
 					if err1 != nil {
 						// default to root
-						u.Workdir = "/"
-						u.WorkdirFileEntity = *cloudpan.NewFileEntityForRootDir()
+						if u.ActiveFamilyId > 0 {
+							u.FamilyWorkdir = "/"
+							u.FamilyWorkdirFileEntity = *cloudpan.NewAppFileEntityForRootDir()
+						} else {
+							u.Workdir = "/"
+							u.WorkdirFileEntity = *cloudpan.NewAppFileEntityForRootDir()
+						}
 					} else {
 						u.WorkdirFileEntity = *fe
 					}

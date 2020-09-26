@@ -112,7 +112,7 @@ func getFileInfo(paths ...string) (opFileList []*cloudpan.FileEntity, targetFile
 	activeUser := GetActiveUser()
 	// the last one is the target file path
 	targetFilePath := path.Clean(paths[len(paths)-1])
-	absolutePath := activeUser.PathJoin(targetFilePath)
+	absolutePath := activeUser.PathJoin(0, targetFilePath)
 	targetFile, err := activeUser.PanClient().FileInfoByPath(absolutePath)
 	if err != nil || !targetFile.IsFolder {
 		return nil, nil, nil, fmt.Errorf("指定目标文件夹不存在")

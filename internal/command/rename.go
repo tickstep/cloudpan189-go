@@ -17,8 +17,8 @@ func RunRename(oldName string, newName string) {
 		return
 	}
 	activeUser := GetActiveUser()
-	oldName = activeUser.PathJoin(strings.TrimSpace(oldName))
-	newName = activeUser.PathJoin(strings.TrimSpace(newName))
+	oldName = activeUser.PathJoin(0, strings.TrimSpace(oldName))
+	newName = activeUser.PathJoin(0, strings.TrimSpace(newName))
 	if path.Dir(oldName) != path.Dir(newName) {
 		fmt.Println("只能命名同一个目录的文件")
 		return
@@ -29,7 +29,7 @@ func RunRename(oldName string, newName string) {
 	}
 
 	fileId := ""
-	r, err := GetActivePanClient().FileInfoByPath(activeUser.PathJoin(oldName))
+	r, err := GetActivePanClient().FileInfoByPath(activeUser.PathJoin(0, oldName))
 	if err != nil {
 		fmt.Printf("原文件不存在： %s, %s\n", oldName, err)
 		return

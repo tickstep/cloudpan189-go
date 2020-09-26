@@ -20,7 +20,7 @@ func GetFileInfoByPaths(paths ...string) (fileInfoList []*cloudpan.FileEntity, f
 	activeUser := GetActiveUser()
 
 	for idx := 0; idx < len(paths); idx++ {
-		absolutePath := path.Clean(activeUser.PathJoin(paths[idx]))
+		absolutePath := path.Clean(activeUser.PathJoin(0, paths[idx]))
 		fe, err := activeUser.PanClient().FileInfoByPath(absolutePath)
 		if err != nil {
 			failedPaths = append(failedPaths, absolutePath)
@@ -34,7 +34,7 @@ func GetFileInfoByPaths(paths ...string) (fileInfoList []*cloudpan.FileEntity, f
 func matchPathByShellPattern(patterns ...string) (panpaths []string, err error) {
 	acUser := GetActiveUser()
 	for k := range patterns {
-		ps := acUser.PathJoin(patterns[k])
+		ps := acUser.PathJoin(0, patterns[k])
 		panpaths = append(panpaths, ps)
 	}
 	return panpaths, nil
