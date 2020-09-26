@@ -931,8 +931,15 @@ func main() {
 					fmt.Println("未登录账号")
 					return nil
 				}
-				command.RunRename(c.Args().Get(0), c.Args().Get(1))
+				command.RunRename(parseFamilyId(c), c.Args().Get(0), c.Args().Get(1))
 				return nil
+			},
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:  "familyId",
+					Usage: "家庭云ID",
+					Value: "",
+				},
 			},
 		},
 		// 分享文件/目录 share

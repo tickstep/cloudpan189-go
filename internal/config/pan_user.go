@@ -104,7 +104,11 @@ func (pu *PanUser) PathJoin(familyId int64, p string) string {
 		return p
 	}
 	if familyId > 0 {
-		return path.Join(pu.FamilyWorkdir, p)
+		if familyId == pu.ActiveFamilyId {
+			return path.Join(pu.FamilyWorkdir, p)
+		} else {
+			return path.Join("/", p)
+		}
 	} else {
 		return path.Join(pu.Workdir, p)
 	}
