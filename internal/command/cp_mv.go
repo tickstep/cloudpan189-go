@@ -10,8 +10,10 @@ import (
 
 // RunCopy 执行复制文件/目录
 func RunCopy(paths ...string) {
+	// 只支持个人云
+	familyId := int64(0)
 	activeUser := GetActiveUser()
-	opFileList, targetFile, _, err := getFileInfo(paths...)
+	opFileList, targetFile, _, err := getFileInfo(familyId, paths...)
 	if err !=  nil {
 		fmt.Println(err)
 		return
@@ -58,9 +60,9 @@ func RunCopy(paths ...string) {
 
 
 // RunMove 执行移动文件/目录
-func RunMove(paths ...string) {
+func RunMove(familyId int64, paths ...string) {
 	activeUser := GetActiveUser()
-	opFileList, targetFile, _, err := getFileInfo(paths...)
+	opFileList, targetFile, _, err := getFileInfo(familyId, paths...)
 	if err !=  nil {
 		fmt.Println(err)
 		return
@@ -105,24 +107,24 @@ func RunMove(paths ...string) {
 	}
 }
 
-func getFileInfo(paths ...string) (opFileList []*cloudpan.FileEntity, targetFile *cloudpan.FileEntity, failedPaths []string, error error) {
+func getFileInfo(familyId int64, paths ...string) (opFileList []*cloudpan.AppFileEntity, targetFile *cloudpan.AppFileEntity, failedPaths []string, error error) {
 	if len(paths) <= 1 {
 		return nil, nil, nil, fmt.Errorf("请指定目标文件夹路径")
 	}
 	activeUser := GetActiveUser()
 	// the last one is the target file path
 	targetFilePath := path.Clean(paths[len(paths)-1])
-	absolutePath := activeUser.PathJoin(0, targetFilePath)
-	targetFile, err := activeUser.PanClient().FileInfoByPath(absolutePath)
+	absolutePath := activeUser.PathJoin(familyId, targetFilePath)
+	targetFile, err := activeUser.PanClient().AppFileInfoByPath(familyId, absolutePath)
 	if err != nil || !targetFile.IsFolder {
 		return nil, nil, nil, fmt.Errorf("指定目标文件夹不存在")
 	}
 
-	opFileList, failedPaths, error = GetFileInfoByPaths(paths[:len(paths)-1]...)
+	opFileList, failedPaths, error = GetAppFileInfoByPaths(familyId, paths[:len(paths)-1]...)
 	return
 }
 
-func makeBatchTaskInfoList(opFileList []*cloudpan.FileEntity) (infoList cloudpan.BatchTaskInfoList) {
+func makeBatchTaskInfoList(opFileList []*cloudpan.AppFileEntity) (infoList cloudpan.BatchTaskInfoList) {
 	for _, fe := range opFileList {
 		isFolder := 0
 		if fe.IsFolder {

@@ -877,6 +877,10 @@ func main() {
 					fmt.Println("未登录账号")
 					return nil
 				}
+				if command.IsFamilyCloud(config.Config.ActiveUser().ActiveFamilyId) {
+					fmt.Println("家庭云不支持复制操作")
+					return nil
+				}
 				command.RunCopy(c.Args()...)
 				return nil
 			},
@@ -907,7 +911,7 @@ func main() {
 					return nil
 				}
 
-				command.RunMove(c.Args()...)
+				command.RunMove(0, c.Args()...)
 				return nil
 			},
 		},
