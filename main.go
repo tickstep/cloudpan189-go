@@ -1215,6 +1215,7 @@ func main() {
 					MaxRetry:             c.Int("retry"),
 					NoCheck:              c.Bool("nocheck"),
 					ShowProgress:         !c.Bool("np"),
+					FamilyId:             parseFamilyId(c),
 				}
 
 				command.RunDownload(c.Args(), do)
@@ -1261,6 +1262,11 @@ func main() {
 				cli.BoolFlag{
 					Name:  "np",
 					Usage: "no progress 不展示下载进度条",
+				},
+				cli.StringFlag{
+					Name:  "familyId",
+					Usage: "家庭云ID",
+					Value: "",
 				},
 			},
 		},

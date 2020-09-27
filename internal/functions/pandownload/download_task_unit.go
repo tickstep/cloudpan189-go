@@ -43,8 +43,10 @@ type (
 
 		FilePanPath string // 要下载的网盘文件路径
 		SavePath    string // 文件保存在本地的路径
+		OriginSaveRootPath    string // 文件保存在本地的根目录路径
+		FamilyId    int64 // 家庭云ID, 个人云默认为0
 
-		fileInfo *cloudpan.FileEntity // 文件或目录详情
+		fileInfo *cloudpan.AppFileEntity // 文件或目录详情
 	}
 )
 
@@ -108,6 +110,7 @@ func (dtu *DownloadTaskUnit) download() (err error) {
 
 	der := downloader.NewDownloader(writer, dtu.Cfg, dtu.PanClient)
 	der.SetFileInfo(dtu.fileInfo)
+	der.SetFamilyId(dtu.FamilyId)
 	der.SetStatusCodeBodyCheckFunc(func(respBody io.Reader) error {
 		// 解析错误
 		return apierror.NewFailedApiError("")
@@ -315,7 +318,7 @@ func (dtu *DownloadTaskUnit) Run() (result *taskframework.TaskUnitRunResult) {
 		// 没有获取文件信息
 		// 如果是动态添加的下载任务, 是会写入文件信息的
 		// 如果该任务重试过, 则应该再获取一次文件信息
-		dtu.fileInfo, apierr = dtu.PanClient.FileInfoByPath(dtu.FilePanPath)
+		dtu.fileInfo, apierr = dtu.PanClient.AppFileInfoByPath(dtu.FamilyId, dtu.FilePanPath)
 		if apierr != nil {
 			// 如果不是未登录或文件不存在, 则不重试
 			result.ResultMessage = "获取下载路径信息错误"
@@ -337,7 +340,7 @@ func (dtu *DownloadTaskUnit) Run() (result *taskframework.TaskUnitRunResult) {
 		}
 
 		// 获取该目录下的文件列表
-		fileList := dtu.PanClient.FilesDirectoriesRecurseList(dtu.FilePanPath, nil)
+		fileList := dtu.PanClient.AppFilesDirectoriesRecurseList(dtu.FamilyId, dtu.FilePanPath, nil)
 		if fileList == nil {
 			result.ResultMessage = "获取目录信息错误"
 			result.Err = err
@@ -355,7 +358,7 @@ func (dtu *DownloadTaskUnit) Run() (result *taskframework.TaskUnitRunResult) {
 			subUnit.Cfg = &newCfg
 			subUnit.fileInfo = fileList[k] // 保存文件信息
 			subUnit.FilePanPath = fileList[k].Path
-			subUnit.SavePath = filepath.Join(dtu.SavePath, fileList[k].FileName) // 保存位置
+			subUnit.SavePath = filepath.Join(dtu.OriginSaveRootPath, fileList[k].Path) // 保存位置
 
 			// 加入父队列
 			info := dtu.ParentTaskExecutor.Append(&subUnit, dtu.taskInfo.MaxRetry())

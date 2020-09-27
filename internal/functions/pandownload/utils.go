@@ -6,7 +6,7 @@ import (
 )
 
 // CheckFileValid 检测文件有效性
-func CheckFileValid(filePath string, fileInfo *cloudpan.FileEntity) error {
+func CheckFileValid(filePath string, fileInfo *cloudpan.AppFileEntity) error {
 	// 检查MD5
 	// 检查文件大小
 	// 检查digest签名

@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"github.com/tickstep/cloudpan189-api/cloudpan"
+	"github.com/tickstep/cloudpan189-api/cloudpan/apierror"
 	"github.com/tickstep/cloudpan189-go/cmder/cmdutil"
 	"github.com/tickstep/cloudpan189-go/internal/waitgroup"
 	"github.com/tickstep/library-go/cachepool"
@@ -37,7 +38,8 @@ type (
 
 		monitorCancelFunc context.CancelFunc
 
-		fileInfo               *cloudpan.FileEntity      // 下载的文件信息
+		fileInfo               *cloudpan.AppFileEntity      // 下载的文件信息
+		familyId               int64
 		loadBalancerCompareFunc LoadBalancerCompareFunc // 负载均衡检测函数
 		durlCheckFunc           DURLCheckFunc           // 下载url检测函数
 		statusCodeBodyCheckFunc StatusCodeBodyCheckFunc
@@ -69,8 +71,12 @@ func NewDownloader(writer io.WriterAt, config *Config, p *cloudpan.PanClient) (d
 }
 
 //SetClient 设置http客户端
-func (der *Downloader) SetFileInfo(f *cloudpan.FileEntity ) {
+func (der *Downloader) SetFileInfo(f *cloudpan.AppFileEntity) {
 	der.fileInfo = f
+}
+
+func (der *Downloader) SetFamilyId(familyId int64) {
+	der.familyId = familyId
 }
 
 //SetClient 设置http客户端
@@ -356,7 +362,13 @@ func (der *Downloader) Execute() error {
 		}
 
 		// 获取下载链接
-		durl, apierr := der.panClient.AppGetFileDownloadUrl(der.fileInfo.FileId)
+		var durl string
+		var apierr *apierror.ApiError
+		if der.familyId > 0 {
+			durl, apierr = der.panClient.AppFamilyGetFileDownloadUrl(der.familyId, der.fileInfo.FileId)
+		} else {
+			durl, apierr = der.panClient.AppGetFileDownloadUrl(der.fileInfo.FileId)
+		}
 		time.Sleep(time.Duration(200) * time.Millisecond)
 		if apierr != nil {
 			logger.Verbosef("ERROR: get download url error: %s\n", der.fileInfo.FileId)

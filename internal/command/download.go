@@ -28,6 +28,7 @@ type (
 		MaxRetry             int
 		NoCheck              bool
 		ShowProgress         bool
+		FamilyId             int64
 	}
 
 	// LocateDownloadOption 获取下载链接可选参数
@@ -88,7 +89,7 @@ func RunDownload(paths []string, options *DownloadOptions) {
 		options.Parallel = config.Config.MaxDownloadParallel
 	}
 
-	paths, err := matchPathByShellPattern(paths...)
+	paths, err := matchPathByShellPattern(options.FamilyId, paths...)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -105,7 +106,7 @@ func RunDownload(paths []string, options *DownloadOptions) {
 	// 预测要下载的文件数量
 	for k := range paths {
 		// 使用递归获取文件的方法计算路径包含的文件的总数量
-		panClient.FilesDirectoriesRecurseList(paths[k], func(depth int, _ string, fd *cloudpan.FileEntity, apiError *apierror.ApiError) bool {
+		panClient.AppFilesDirectoriesRecurseList(options.FamilyId, paths[k], func(depth int, _ string, fd *cloudpan.AppFileEntity, apiError *apierror.ApiError) bool {
 			if apiError != nil {
 				panCommandVerbose.Warnf("%s\n", apiError)
 				return true
@@ -156,13 +157,16 @@ func RunDownload(paths []string, options *DownloadOptions) {
 			IsOverwrite:          options.IsOverwrite,
 			NoCheck:              options.NoCheck,
 			FilePanPath:          paths[k],
+			FamilyId:             options.FamilyId,
 		}
 
 		// 设置储存的路径
 		if options.SaveTo != "" {
+			unit.OriginSaveRootPath = options.SaveTo
 			unit.SavePath = filepath.Join(options.SaveTo, filepath.Base(paths[k]))
 		} else {
 			// 使用默认的保存路径
+			unit.OriginSaveRootPath = GetActiveUser().GetSavePath("")
 			unit.SavePath = GetActiveUser().GetSavePath(paths[k])
 		}
 		info := executor.Append(&unit, options.MaxRetry)

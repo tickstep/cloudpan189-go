@@ -50,10 +50,10 @@ func GetFileInfoByPaths(paths ...string) (fileInfoList []*cloudpan.FileEntity, f
 	return
 }
 
-func matchPathByShellPattern(patterns ...string) (panpaths []string, err error) {
+func matchPathByShellPattern(familyId int64, patterns ...string) (panpaths []string, err error) {
 	acUser := GetActiveUser()
 	for k := range patterns {
-		ps := acUser.PathJoin(0, patterns[k])
+		ps := acUser.PathJoin(familyId, patterns[k])
 		panpaths = append(panpaths, ps)
 	}
 	return panpaths, nil
