@@ -1130,6 +1130,7 @@ func main() {
 					NoSplitFile:   true, // 天翼云盘不支持分片并发上传，只支持单线程上传，支持断点续传
 					ShowProgress:  !c.Bool("np"),
 					IsOverwrite:   c.Bool("ow"),
+					FamilyId:      parseFamilyId(c),
 				})
 				return nil
 			},
@@ -1155,6 +1156,11 @@ func main() {
 				cli.BoolFlag{
 					Name:  "norapid",
 					Usage: "不检测秒传",
+				},
+				cli.StringFlag{
+					Name:  "familyId",
+					Usage: "家庭云ID",
+					Value: "",
 				},
 			},
 		},

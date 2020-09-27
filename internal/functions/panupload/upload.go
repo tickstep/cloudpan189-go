@@ -3,6 +3,7 @@ package panupload
 import (
 	"context"
 	"github.com/tickstep/cloudpan189-api/cloudpan"
+	"github.com/tickstep/cloudpan189-api/cloudpan/apierror"
 	"github.com/tickstep/cloudpan189-go/internal/file/uploader"
 	"github.com/tickstep/library-go/requester"
 	"github.com/tickstep/library-go/requester/rio"
@@ -14,6 +15,7 @@ type (
 	PanUpload struct {
 		panClient        *cloudpan.PanClient
 		targetPath string
+		familyId int64
 
 		// UploadFileId 上传文件请求ID
 		uploadFileId string
@@ -37,10 +39,11 @@ func (e EmptyReaderLen64) Len() int64 {
 	return 0
 }
 
-func NewPanUpload(panClient *cloudpan.PanClient, targetPath, uploadUrl, commitUrl, uploadFileId, xRequestId string) uploader.MultiUpload {
+func NewPanUpload(panClient *cloudpan.PanClient, targetPath, uploadUrl, commitUrl, uploadFileId, xRequestId string, familyId int64) uploader.MultiUpload {
 	return &PanUpload{
 		panClient:     panClient,
 		targetPath:    targetPath,
+		familyId: familyId,
 		uploadFileId:  uploadFileId,
 		fileUploadUrl: uploadUrl,
 		fileCommitUrl: commitUrl,
@@ -66,8 +69,8 @@ func (pu *PanUpload) UploadFile(ctx context.Context, partseq int, partOffset int
 		Offset: partOffset,
 		Len: partEnd - partOffset,
 	}
-	apiError := pu.panClient.AppUploadFileData(pu.fileUploadUrl, pu.uploadFileId, pu.xRequestId, fileRange,
-		func(httpMethod, fullUrl string, headers map[string]string) (resp *http.Response, err error) {
+	var apiError *apierror.ApiError
+	uploadFunc := func(httpMethod, fullUrl string, headers map[string]string) (resp *http.Response, err error) {
 		client := requester.NewHTTPClient()
 		client.SetTimeout(0)
 
@@ -94,7 +97,12 @@ func (pu *PanUpload) UploadFile(ctx context.Context, partseq int, partOffset int
 			// return
 		}
 		return
-	})
+	}
+	if pu.familyId > 0 {
+		apiError = pu.panClient.AppFamilyUploadFileData(pu.familyId, pu.fileUploadUrl, pu.uploadFileId, pu.xRequestId, fileRange, uploadFunc)
+	} else {
+		apiError = pu.panClient.AppUploadFileData(pu.fileUploadUrl, pu.uploadFileId, pu.xRequestId, fileRange, uploadFunc)
+	}
 
 	if respErr != nil {
 		return false, respErr
@@ -109,7 +117,12 @@ func (pu *PanUpload) UploadFile(ctx context.Context, partseq int, partOffset int
 
 func (pu *PanUpload) CommitFile() (cerr error) {
 	pu.lazyInit()
-	_, er := pu.panClient.AppUploadFileCommit(pu.fileCommitUrl, pu.uploadFileId, pu.xRequestId)
+	var er *apierror.ApiError
+	if pu.familyId > 0 {
+		_, er = pu.panClient.AppFamilyUploadFileCommit(pu.familyId, pu.fileCommitUrl, pu.uploadFileId, pu.xRequestId)
+	} else {
+		_, er = pu.panClient.AppUploadFileCommit(pu.fileCommitUrl, pu.uploadFileId, pu.xRequestId)
+	}
 	if er != nil {
 		return er
 	}

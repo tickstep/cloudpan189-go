@@ -34,6 +34,7 @@ type (
 		NoSplitFile   bool // 禁用分片上传
 		ShowProgress  bool
 		IsOverwrite   bool // 覆盖已存在的文件，如果同名文件已存在则移到回收站里
+		FamilyId      int64
 	}
 )
 
@@ -56,8 +57,8 @@ func RunUpload(localPaths []string, savePath string, opt *UploadOptions) {
 		opt.MaxRetry = DefaultUploadMaxRetry
 	}
 
-	savePath = activeUser.PathJoin(0, savePath)
-	_, err1 := activeUser.PanClient().FileInfoByPath(savePath)
+	savePath = activeUser.PathJoin(opt.FamilyId, savePath)
+	_, err1 := activeUser.PanClient().AppFileInfoByPath(opt.FamilyId, savePath)
 	if err1 != nil {
 		fmt.Printf("警告: 上传文件, 获取云盘路径 %s 错误, %s\n", savePath, err1)
 	}
@@ -118,6 +119,7 @@ func RunUpload(localPaths []string, savePath string, opt *UploadOptions) {
 			info := executor.Append(&panupload.UploadTaskUnit{
 				LocalFileChecksum: localfile.NewLocalFileEntity(walkedFiles[k3]),
 				SavePath:          path.Clean(savePath + cloudpan.PathSeparator + subSavePath),
+				FamilyId:          opt.FamilyId,
 				PanClient:         activeUser.PanClient(),
 				UploadingDatabase: uploadDatabase,
 				FolderCreateMutex: folderCreateMutex,

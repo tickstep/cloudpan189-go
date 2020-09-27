@@ -26,6 +26,7 @@ type (
 		LocalFileChecksum *localfile.LocalFileEntity // 要上传的本地文件详情
 		Step              StepUpload
 		SavePath          string // 保存路径
+		FamilyId          int64
 		FolderCreateMutex *sync.Mutex
 
 		PanClient         *cloudpan.PanClient
@@ -80,7 +81,13 @@ func (utu *UploadTaskUnit) prepareFile() {
 		utu.Step = StepUploadUpload
 
 		// 服务器上次上传的部分数据是否还存在
-		appGetUploadFileStatusResult, apierr := utu.PanClient.AppGetUploadFileStatus(utu.LocalFileChecksum.UploadFileId)
+		var appGetUploadFileStatusResult *cloudpan.AppGetUploadFileStatusResult
+		var apierr *apierror.ApiError
+		if utu.FamilyId > 0 {
+			appGetUploadFileStatusResult, apierr = utu.PanClient.AppFamilyGetUploadFileStatus(utu.FamilyId, utu.LocalFileChecksum.UploadFileId)
+		} else {
+			appGetUploadFileStatusResult, apierr = utu.PanClient.AppGetUploadFileStatus(utu.LocalFileChecksum.UploadFileId)
+		}
 		if apierr != nil {
 			if apierr.Code == apierror.ApiCodeUploadFileNotFound {
 				cmdUploadVerbose.Warn("断点续传失败，需要重新从0开始上传文件：" + apierr.Error())
@@ -120,7 +127,12 @@ func (utu *UploadTaskUnit) rapidUpload() (isContinue bool, result *taskframework
 	result = &taskframework.TaskUnitRunResult{}
 	fmt.Printf("[%s] 检测秒传中, 请稍候...\n", utu.taskInfo.Id())
 	if utu.LocalFileChecksum.FileDataExists == 1 {
-		_, er := utu.PanClient.AppUploadFileCommit(utu.LocalFileChecksum.FileCommitUrl, utu.LocalFileChecksum.UploadFileId, utu.LocalFileChecksum.XRequestId)
+		var er *apierror.ApiError
+		if utu.FamilyId > 0 {
+			_, er = utu.PanClient.AppFamilyUploadFileCommit(utu.FamilyId, utu.LocalFileChecksum.FileCommitUrl, utu.LocalFileChecksum.UploadFileId, utu.LocalFileChecksum.XRequestId)
+		} else {
+			_, er = utu.PanClient.AppUploadFileCommit(utu.LocalFileChecksum.FileCommitUrl, utu.LocalFileChecksum.UploadFileId, utu.LocalFileChecksum.XRequestId)
+		}
 		if er != nil {
 			result.ResultMessage = "秒传失败"
 			result.Err = er
@@ -150,7 +162,7 @@ func (utu *UploadTaskUnit) upload() (result *taskframework.TaskUnitRunResult) {
 	}
 
 	muer := uploader.NewMultiUploader(utu.LocalFileChecksum.FileUploadUrl, utu.LocalFileChecksum.FileCommitUrl, utu.LocalFileChecksum.UploadFileId, utu.LocalFileChecksum.XRequestId,
-		NewPanUpload(utu.PanClient, utu.SavePath, utu.LocalFileChecksum.FileUploadUrl, utu.LocalFileChecksum.FileCommitUrl, utu.LocalFileChecksum.UploadFileId, utu.LocalFileChecksum.XRequestId),
+		NewPanUpload(utu.PanClient, utu.SavePath, utu.LocalFileChecksum.FileUploadUrl, utu.LocalFileChecksum.FileCommitUrl, utu.LocalFileChecksum.UploadFileId, utu.LocalFileChecksum.XRequestId, utu.FamilyId),
 		rio.NewFileReaderAtLen64(utu.LocalFileChecksum.GetFile()), &uploader.MultiUploaderConfig{
 		Parallel:  utu.Parallel,
 		BlockSize: blockSize,
@@ -262,7 +274,7 @@ func (utu *UploadTaskUnit) Run() (result *taskframework.TaskUnitRunResult) {
 
 	var r *cloudpan.AppCreateUploadFileResult
 	var apierr *apierror.ApiError
-	var rs *cloudpan.MkdirResult
+	var rs *cloudpan.AppMkdirResult
 	var appCreateUploadFileParam *cloudpan.AppCreateUploadFileParam
 
 	switch utu.Step {
@@ -279,7 +291,7 @@ StepUploadPrepareUpload:
 	utu.LocalFileChecksum.Sum(localfile.CHECKSUM_MD5)
 
 	utu.FolderCreateMutex.Lock()
-	rs, apierr = utu.PanClient.MkdirRecursive("", "", 0, strings.Split(path.Clean(path.Dir(utu.SavePath)), "/"))
+	rs, apierr = utu.PanClient.AppMkdirRecursive(utu.FamilyId, "", "", 0, strings.Split(path.Clean(path.Dir(utu.SavePath)), "/"))
 	if apierr != nil || rs.FileId == "" {
 		fmt.Println("创建云盘文件夹失败")
 		return nil
@@ -290,7 +302,7 @@ StepUploadPrepareUpload:
 	if utu.IsOverwrite {
 		// 标记覆盖旧同名文件
 		// 检查同名文件是否存在
-		efi, apierr := utu.PanClient.FileInfoByPath(utu.SavePath)
+		efi, apierr := utu.PanClient.AppFileInfoByPath(utu.FamilyId, utu.SavePath)
 		if apierr != nil && apierr.Code != apierror.ApiCodeFileNotFoundCode {
 			fmt.Println("检测同名文件失败，请稍后重试")
 			return nil
@@ -314,7 +326,14 @@ StepUploadPrepareUpload:
 				TaskInfos: infoList,
 			}
 
-			taskId, err := utu.PanClient.CreateBatchTask(delParam)
+			var taskId string
+			var err *apierror.ApiError
+			if utu.FamilyId > 0 {
+				taskId, err = utu.PanClient.AppCreateBatchTask(utu.FamilyId, delParam)
+			} else {
+				taskId, err = utu.PanClient.CreateBatchTask(delParam)
+			}
+
 			if err != nil || taskId == "" {
 				fmt.Println("无法删除文件，请稍后重试")
 				return nil
@@ -331,8 +350,13 @@ StepUploadPrepareUpload:
 		Md5: utu.LocalFileChecksum.MD5,
 		LastWrite: time.Unix(utu.LocalFileChecksum.ModTime, 0).Format("2006-01-02 15:04:05"),
 		LocalPath: utu.LocalFileChecksum.Path,
+		FamilyId: utu.FamilyId,
 	}
-	r, apierr = utu.PanClient.AppCreateUploadFile(appCreateUploadFileParam)
+	if utu.FamilyId > 0 {
+		r, apierr = utu.PanClient.AppFamilyCreateUploadFile(appCreateUploadFileParam)
+	} else {
+		r, apierr = utu.PanClient.AppCreateUploadFile(appCreateUploadFileParam)
+	}
 	if apierr != nil {
 		fmt.Println("创建上传任务失败")
 		return nil
