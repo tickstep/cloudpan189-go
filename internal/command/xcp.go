@@ -29,7 +29,11 @@ func RunXCopy(source FileSourceType, familyId int64, paths ...string) {
 			fmt.Println("获取家庭列表失败")
 			return
 		}
-		familyId = familyResult.FamilyInfoList[0].FamilyId
+		for _,f := range familyResult.FamilyInfoList {
+			if f.UserRole == 1 {
+				familyId = f.FamilyId
+			}
+		}
 	}
 
 	var opFileList []*cloudpan.AppFileEntity
