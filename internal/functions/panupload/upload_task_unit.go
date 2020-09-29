@@ -276,6 +276,8 @@ func (utu *UploadTaskUnit) Run() (result *taskframework.TaskUnitRunResult) {
 	var apierr *apierror.ApiError
 	var rs *cloudpan.AppMkdirResult
 	var appCreateUploadFileParam *cloudpan.AppCreateUploadFileParam
+	var md5Str string
+	var saveFilePath string
 
 	switch utu.Step {
 	case StepUploadPrepareUpload:
@@ -291,10 +293,20 @@ StepUploadPrepareUpload:
 	utu.LocalFileChecksum.Sum(localfile.CHECKSUM_MD5)
 
 	utu.FolderCreateMutex.Lock()
-	rs, apierr = utu.PanClient.AppMkdirRecursive(utu.FamilyId, "", "", 0, strings.Split(path.Clean(path.Dir(utu.SavePath)), "/"))
-	if apierr != nil || rs.FileId == "" {
-		fmt.Println("创建云盘文件夹失败")
-		return nil
+	saveFilePath = path.Dir(utu.SavePath)
+	if saveFilePath != "/" {
+		rs, apierr = utu.PanClient.AppMkdirRecursive(utu.FamilyId, "", "", 0, strings.Split(path.Clean(saveFilePath), "/"))
+		if apierr != nil || rs.FileId == "" {
+			fmt.Println("创建云盘文件夹失败")
+			return nil
+		}
+	} else {
+		rs = &cloudpan.AppMkdirResult{}
+		if utu.FamilyId > 0 {
+			rs.FileId = ""
+		} else {
+			rs.FileId = "-11"
+		}
 	}
 	time.Sleep(time.Duration(2) * time.Second)
 	utu.FolderCreateMutex.Unlock()
@@ -343,11 +355,15 @@ StepUploadPrepareUpload:
 		}
 	}
 
+	md5Str = utu.LocalFileChecksum.MD5
+	if utu.LocalFileChecksum.Length == 0 {
+		md5Str = cloudpan.DefaultEmptyFileMd5
+	}
 	appCreateUploadFileParam = &cloudpan.AppCreateUploadFileParam{
 		ParentFolderId: rs.FileId,
 		FileName: path.Base(utu.LocalFileChecksum.Path),
 		Size: utu.LocalFileChecksum.Length,
-		Md5: utu.LocalFileChecksum.MD5,
+		Md5: md5Str,
 		LastWrite: time.Unix(utu.LocalFileChecksum.ModTime, 0).Format("2006-01-02 15:04:05"),
 		LocalPath: utu.LocalFileChecksum.Path,
 		FamilyId: utu.FamilyId,
