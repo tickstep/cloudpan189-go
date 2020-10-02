@@ -16,7 +16,7 @@ func RunSwitchFamilyList(targetFamilyId int64)  {
 	familyList,renderStr := getFamilyOptionList()
 
 	if familyList == nil || len(familyList) == 0 {
-		fmt.Println("切换家庭云失败")
+		fmt.Println("切换云工作模式失败")
 		return
 	}
 
@@ -35,7 +35,7 @@ func RunSwitchFamilyList(targetFamilyId int64)  {
 		if n, err := strconv.Atoi(index); err == nil && n >= 0 && n < len(familyList) {
 			activeFamilyInfo = familyList[n]
 		} else {
-			fmt.Printf("切换家庭云失败, 请检查 # 值是否正确\n")
+			fmt.Printf("切换云工作模式失败, 请检查 # 值是否正确\n")
 			return
 		}
 	} else {
@@ -49,7 +49,7 @@ func RunSwitchFamilyList(targetFamilyId int64)  {
 	}
 
 	if activeFamilyInfo == nil {
-		fmt.Printf("切换家庭云失败\n")
+		fmt.Printf("切换云工作模式失败\n")
 		return
 	}
 
@@ -60,7 +60,12 @@ func RunSwitchFamilyList(targetFamilyId int64)  {
 		config.Config.ActiveUser().FamilyWorkdir = "/"
 		config.Config.ActiveUser().FamilyWorkdirFileEntity = *cloudpan.NewAppFileEntityForRootDir()
 	}
-	fmt.Printf("切换家庭云：%s\n", activeFamilyInfo.RemarkName)
+	if activeFamilyInfo.FamilyId > 0 {
+		fmt.Printf("切换云工作模式：家庭云 %s\n", activeFamilyInfo.RemarkName)
+	} else {
+		fmt.Printf("切换云工作模式：%s\n", activeFamilyInfo.RemarkName)
+	}
+
 }
 
 func getFamilyOptionList() ([]*cloudpan.AppFamilyInfo, string) {
