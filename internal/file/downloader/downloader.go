@@ -379,7 +379,7 @@ func (der *Downloader) Execute() error {
 		client.SetKeepAlive(true)
 		client.SetTimeout(10 * time.Minute)
 
-		worker := NewWorker(k, der.fileInfo.FileId, durl, writer)
+		worker := NewWorker(k, der.familyId, der.fileInfo.FileId, durl, writer)
 		worker.SetClient(client)
 		worker.SetPanClient(der.panClient)
 		worker.SetWriteMutex(writeMu)

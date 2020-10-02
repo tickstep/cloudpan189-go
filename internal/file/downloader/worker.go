@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/tickstep/cloudpan189-api/cloudpan"
+	"github.com/tickstep/cloudpan189-api/cloudpan/apierror"
 	"github.com/tickstep/library-go/cachepool"
 	"github.com/tickstep/library-go/logger"
 	"github.com/tickstep/library-go/requester"
@@ -23,6 +24,7 @@ type (
 		speedsStat   *speeds.Speeds
 		id           int    // work id
 		fileId       string // 文件ID
+		familyId     int64
 		url          string // 下载地址
 		acceptRanges string
 		panClient    *cloudpan.PanClient
@@ -52,12 +54,13 @@ func (wl WorkerList) Duplicate() WorkerList {
 }
 
 //NewWorker 初始化Worker
-func NewWorker(id int, fileId, durl string, writerAt io.WriterAt) *Worker {
+func NewWorker(id int, familyId int64, fileId, durl string, writerAt io.WriterAt) *Worker {
 	return &Worker{
 		id:       id,
 		url:      durl,
 		writerAt: writerAt,
 		fileId: fileId,
+		familyId: familyId,
 	}
 }
 
@@ -192,7 +195,14 @@ func (wer *Worker) Reset() {
 
 // RefreshDownloadUrl 重新刷新下载链接
 func (wer *Worker) RefreshDownloadUrl() {
-	durl, apierr := wer.panClient.AppGetFileDownloadUrl(wer.fileId)
+	var durl string
+	var apierr *apierror.ApiError
+
+	if wer.familyId > 0 {
+		durl, apierr = wer.panClient.AppFamilyGetFileDownloadUrl(wer.familyId, wer.fileId)
+	} else {
+		durl, apierr = wer.panClient.AppGetFileDownloadUrl(wer.fileId)
+	}
 	if apierr != nil {
 		wer.status.statusCode = StatusCodeTooManyConnections
 		return
