@@ -12,6 +12,7 @@ import (
 	"github.com/tickstep/cloudpan189-go/internal/config"
 	"github.com/tickstep/cloudpan189-go/internal/functions/pandownload"
 	"github.com/tickstep/cloudpan189-go/internal/panupdate"
+	"github.com/tickstep/cloudpan189-go/internal/utils"
 	"github.com/tickstep/library-go/converter"
 	"github.com/tickstep/library-go/logger"
 	"github.com/urfave/cli"
@@ -276,7 +277,7 @@ func main() {
 		// check update
 		reloadFn(c)
 		if config.Config.UpdateCheckInfo.LatestVer != "" {
-			if config.Config.UpdateCheckInfo.LatestVer > config.AppVersion {
+			if utils.ParseVersionNum(config.Config.UpdateCheckInfo.LatestVer) > utils.ParseVersionNum(config.AppVersion) {
 				fmt.Printf("\n当前的软件版本为：%s， 现在有新版本 %s 可供更新，强烈推荐进行更新！（可以输入 update 命令进行更新）\n\n",
 					config.AppVersion, config.Config.UpdateCheckInfo.LatestVer)
 			}

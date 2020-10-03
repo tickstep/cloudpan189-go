@@ -7,6 +7,7 @@ import (
 	"github.com/tickstep/cloudpan189-go/cmder/cmdliner"
 	"github.com/tickstep/cloudpan189-go/cmder/cmdutil"
 	"github.com/tickstep/cloudpan189-go/internal/config"
+	"github.com/tickstep/cloudpan189-go/internal/utils"
 	"github.com/tickstep/library-go/cachepool"
 	"github.com/tickstep/library-go/checkaccess"
 	"github.com/tickstep/library-go/converter"
@@ -152,7 +153,7 @@ func CheckUpdate(version string, yes bool) {
 	}
 
 	// 没有更新, 或忽略 Beta 版本, 和版本前缀不符的
-	if strings.Contains(releaseInfo.TagName, "Beta") || !strings.HasPrefix(releaseInfo.TagName, "v") || version >= releaseInfo.TagName {
+	if strings.Contains(releaseInfo.TagName, "Beta") || !strings.HasPrefix(releaseInfo.TagName, "v") || utils.ParseVersionNum(version) >= utils.ParseVersionNum(releaseInfo.TagName) {
 		fmt.Printf("未检测到更新!\n")
 		return
 	}

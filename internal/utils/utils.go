@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http/cookiejar"
 	"net/url"
+	"strconv"
 	"strings"
 )
 
@@ -83,4 +84,19 @@ func TriggerOnSync(f func()) {
 		return
 	}
 	f()
+}
+
+func ParseVersionNum(versionStr string) int {
+	versionStr = strings.ReplaceAll(versionStr, "-dev", "")
+	versionStr = strings.ReplaceAll(versionStr, "v", "")
+	versionParts := strings.Split(versionStr, ".")
+	verNum := parseInt(versionParts[0]) * 1e4 + parseInt(versionParts[1]) * 1e2 + parseInt(versionParts[2])
+	return verNum
+}
+func parseInt(numStr string) int {
+	num,e := strconv.Atoi(numStr)
+	if e != nil {
+		return 0
+	}
+	return num
 }
