@@ -34,6 +34,8 @@
   * [转存拷贝文件/目录](#转存拷贝文件目录)  
   * [移动文件/目录](#移动文件目录)
   * [重命名文件/目录](#重命名文件目录)
+  * [导出文件](#导出文件)
+  * [导入文件](#导入文件)
   * [分享文件/目录](#分享文件目录)
     + [设置分享文件/目录](#设置分享文件目录)
     + [列出已分享文件/目录](#列出已分享文件目录)
@@ -58,6 +60,8 @@
 天翼云盘多用户支持;
 
 支持个人云，家庭云无缝切换；
+
+支持导入/导出功能，快速备份（导出）和恢复（导入）网盘文件。利用该功能可以进行跨网盘迁移文件。
 
 [下载](#下载文件目录)网盘内文件, 支持多个文件或目录下载, 支持断点续传和单文件并行下载;
 
@@ -392,6 +396,45 @@ cloudpan189-go rename <旧文件/目录名> <新文件/目录名>
 ```
 # 将 /我的文档/1.mp4 重命名为 /我的文档/2.mp4
 cloudpan189-go rename /我的文档/1.mp4 /我的文档/2.mp4
+```
+
+## 导出文件
+```
+cloudpan189-go export <网盘文件/目录的路径1> <文件/目录2> <文件/目录3> ... <本地保存文件路径>
+```
+导出指定文件/目录下面的所有文件的元数据信息，并保存到指定的本地文件里面。导出的文件元信息可以使用 import 命令（秒传文件功能）导入到网盘中。
+
+### 例子
+```
+导出 /我的资源 整个目录 元数据到文件 /Users/tickstep/Downloads/export_files.txt
+cloudpan189-go export /我的资源 /Users/tickstep/Downloads/export_files.txt
+
+导出 网盘 整个目录 元数据到文件 /Users/tickstep/Downloads/export_files.txt
+cloudpan189-go export / /Users/tickstep/Downloads/export_files.txt
+```
+
+## 导入文件
+```
+cloudpan189-go export <本地元数据文件路径>
+```
+导入文件中记录的元数据文件到网盘。保存到网盘的文件会使用文件元数据记录的路径位置，如果没有指定云盘目录(saveto)则默认导入到目录 cloudpan189-go 中。
+导入的文件可以使用 export 命令获得。
+    
+导入文件每一行是一个文件元数据，样例如下：
+```
+{"md5":"3F9EEEBC4E583574D9D64A75E5061E56","size":6365224,"path":"/test/file.dmg"}
+```
+  
+### 例子
+```
+导入文件 /Users/tickstep/Downloads/export_files.txt
+cloudpan189-go import /Users/tickstep/Downloads/export_files.txt
+
+导入文件 /Users/tickstep/Downloads/export_files.txt 并保存到目录 /my2020 中
+cloudpan189-go import -saveto=/my2020 /Users/tickstep/Downloads/export_files.txt
+
+导入文件 /Users/tickstep/Downloads/export_files.txt 并保存到网盘根目录 / 中
+cloudpan189-go import -saveto=/ /Users/tickstep/Downloads/export_files.txt
 ```
 
 ## 分享文件/目录
