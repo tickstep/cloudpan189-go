@@ -288,7 +288,7 @@ func main() {
 			if (nowTime - latestCheckTime) > secsOf12Hour {
 				releaseInfo := panupdate.GetLatestReleaseInfo(false)
 				if releaseInfo == nil {
-					logger.Verboseln("获取版本信息失败!\n")
+					logger.Verboseln("获取版本信息失败!")
 					return
 				}
 				config.Config.UpdateCheckInfo.LatestVer = releaseInfo.TagName
@@ -573,7 +573,7 @@ func main() {
 		// 切换家庭云 family
 		{
 			Name:  "family",
-			Usage: "切换云工作模式",
+			Usage: "切换云工作模式（家庭云/个人云）",
 			Description: `
 	切换已登录的天翼帐号的云工作模式（家庭云/个人云）
 	如果运行该条命令没有提供参数, 程序将会列出所有的家庭云, 供选择切换.
@@ -1429,6 +1429,64 @@ func main() {
 					Name:  "familyId",
 					Usage: "家庭云ID",
 					Value: "",
+				},
+			},
+		},
+		// 导入文件 import
+		{
+			Name:      "import",
+			Usage:     "导入文件",
+			UsageText: app.Name + " export <本地元数据文件路径>",
+			Description: `
+    导入文件中记录的元数据文件到网盘。保存到网盘的文件会使用文件元数据记录的路径位置，如果没有指定云盘目录(saveto)则默认导入到目录 cloudpan189-go 中。
+    导入的文件可以使用 export 命令获得。
+    
+    导入文件每一行是一个文件元数据，样例如下：
+    {"md5":"3F9EEEBC4E583574D9D64A75E5061E56","size":6365224,"path":"/test/file.dmg"}
+    
+    注意：导入文件依赖秒传功能，即会消耗你每日上传文件的限额，如果你导入的文件过多达到每日限额，则剩余的文件无法在当日完成导入。
+    
+	示例:
+
+    导入文件 /Users/tickstep/Downloads/export_files.txt
+    cloudpan189-go import /Users/tickstep/Downloads/export_files.txt
+
+    导入文件 /Users/tickstep/Downloads/export_files.txt 并保存到目录 /my2020 中
+    cloudpan189-go import -saveto=/my2020 /Users/tickstep/Downloads/export_files.txt
+
+    导入文件 /Users/tickstep/Downloads/export_files.txt 并保存到网盘根目录 / 中
+    cloudpan189-go import -saveto=/ /Users/tickstep/Downloads/export_files.txt
+`,
+			Category: "天翼云盘",
+			Before:   reloadFn,
+			Action: func(c *cli.Context) error {
+				if c.NArg() < 1 {
+					cli.ShowCommandHelp(c, c.Command.Name)
+					return nil
+				}
+
+				saveTo := ""
+				if c.String("saveto") != "" {
+					saveTo = filepath.Clean(c.String("saveto"))
+				}
+
+				subArgs := c.Args()
+				command.RunImportFiles(parseFamilyId(c), c.Bool("ow"), saveTo, subArgs[0])
+				return nil
+			},
+			Flags: []cli.Flag{
+				cli.BoolFlag{
+					Name:  "ow",
+					Usage: "overwrite, 覆盖已存在的网盘文件",
+				},
+				cli.StringFlag{
+					Name:  "familyId",
+					Usage: "家庭云ID",
+					Value: "",
+				},
+				cli.StringFlag{
+					Name:  "saveto",
+					Usage: "将文件保存到指定的目录",
 				},
 			},
 		},
