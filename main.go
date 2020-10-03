@@ -189,7 +189,7 @@ func main() {
 				acceptCompleteFileCommands = []string{
 					"cd", "cp", "xcp", "download", "ls", "mkdir", "mv", "pwd", "rename", "rm", "share", "upload", "login", "loglist", "logout",
 					"clear", "quit", "exit", "quota", "who", "sign", "update", "who", "su", "config",
-					"family",
+					"family", "export", "import",
 				}
 				closed = strings.LastIndex(line, " ") == len(line)-1
 			)
@@ -1380,6 +1380,50 @@ func main() {
 				cli.BoolFlag{
 					Name:  "np",
 					Usage: "no progress 不展示下载进度条",
+				},
+				cli.StringFlag{
+					Name:  "familyId",
+					Usage: "家庭云ID",
+					Value: "",
+				},
+			},
+		},
+		// 导出文件/目录元数据 export
+		{
+			Name:      "export",
+			Usage:     "导出文件/目录元数据",
+			UsageText: app.Name + " export <网盘文件/目录的路径1> <文件/目录2> <文件/目录3> ... <本地保存文件路径>",
+			Description: `
+	导出指定文件/目录下面的所有文件的元数据信息，并保存到指定的本地文件里面。导出的文件元信息可以使用 import 命令（秒传文件功能）导入到网盘中。
+	支持多个文件或目录的导出.
+
+	示例:
+
+	导出 /我的资源/1.mp4 元数据到文件 /Users/tickstep/Downloads/export_files.txt
+	cloudpan189-go export /我的资源/1.mp4 /Users/tickstep/Downloads/export_files.txt
+
+	导出 /我的资源 整个目录 元数据到文件 /Users/tickstep/Downloads/export_files.txt
+	cloudpan189-go export /我的资源 /Users/tickstep/Downloads/export_files.txt
+
+    导出 网盘 整个目录 元数据到文件 /Users/tickstep/Downloads/export_files.txt
+	cloudpan189-go export / /Users/tickstep/Downloads/export_files.txt
+`,
+			Category: "天翼云盘",
+			Before:   reloadFn,
+			Action: func(c *cli.Context) error {
+				if c.NArg() < 2 {
+					cli.ShowCommandHelp(c, c.Command.Name)
+					return nil
+				}
+
+				subArgs := c.Args()
+				command.RunExportFiles(parseFamilyId(c), c.Bool("ow"), subArgs[:len(subArgs)-1], subArgs[len(subArgs)-1])
+				return nil
+			},
+			Flags: []cli.Flag{
+				cli.BoolFlag{
+					Name:  "ow",
+					Usage: "overwrite, 覆盖已存在的导出文件",
 				},
 				cli.StringFlag{
 					Name:  "familyId",
