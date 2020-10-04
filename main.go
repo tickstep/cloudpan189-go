@@ -35,7 +35,7 @@ const (
 
 var (
 	// Version 版本号
-	Version = "v0.0.9-dev"
+	Version = "v0.0.9"
 
 	saveConfigMutex *sync.Mutex = new(sync.Mutex)
 
@@ -1234,7 +1234,7 @@ func main() {
 			Name:      "rapidupload",
 			Aliases:   []string{"ru"},
 			Usage:     "手动秒传文件",
-			UsageText: app.Name + " rapidupload -length=<文件的大小> -md5=<文件的md5值> <保存的网盘路径, 需包含文件名>",
+			UsageText: app.Name + " rapidupload -size=<文件的大小> -md5=<文件的md5值> <保存的网盘路径, 需包含文件名>",
 			Description: `
 	使用此功能秒传文件, 前提是知道文件的大小, md5, 且网盘中存在一模一样的文件.
 	上传的文件将会保存到网盘的目标目录.
@@ -1242,17 +1242,17 @@ func main() {
 	示例:
 
 	1. 如果秒传成功, 则保存到网盘路径 /test/file.txt
-	cloudpan189-go rapidupload -length=56276137 -md5=fbe082d80e90f90f0fb1f94adbbcfa7f /test/file.txt
+	cloudpan189-go rapidupload -size=56276137 -md5=fbe082d80e90f90f0fb1f94adbbcfa7f /test/file.txt
 `,
 			Category: "天翼云盘",
 			Before:   reloadFn,
 			Action: func(c *cli.Context) error {
-				if c.NArg() <= 0 || !c.IsSet("md5") || !c.IsSet("length") {
+				if c.NArg() <= 0 || !c.IsSet("md5") || !c.IsSet("size") {
 					cli.ShowCommandHelp(c, c.Command.Name)
 					return nil
 				}
 
-				command.RunRapidUpload(parseFamilyId(c), c.Bool("ow"), c.Args().Get(0), c.String("md5"), c.Int64("length"))
+				command.RunRapidUpload(parseFamilyId(c), c.Bool("ow"), c.Args().Get(0), c.String("md5"), c.Int64("size"))
 				return nil
 			},
 			Flags: []cli.Flag{
@@ -1262,7 +1262,7 @@ func main() {
 					Required: true,
 				},
 				cli.Int64Flag{
-					Name:  "length",
+					Name:  "size",
 					Usage: "文件的大小",
 					Required: true,
 				},

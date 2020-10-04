@@ -44,8 +44,6 @@ github.com/stretchr/testify v1.3.0 h1:TivCn/peBQ7UY8ooIcPgZFpTNSz0Q2U6UrFlUfqbe0
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
 github.com/stretchr/testify v1.6.1 h1:hDPOHmpOpP40lSULcqw7IrRb/u7w6RpDC9399XyoNd0=
 github.com/stretchr/testify v1.6.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
-github.com/tickstep/cloudpan189-api v0.0.2 h1:OhVnJyMjrfGHlQhOuky7s8I3V1CNc0P0uFCPpFQQpBE=
-github.com/tickstep/cloudpan189-api v0.0.2/go.mod h1:1H1r6h5fOu8sEhPY6h09YTuSt4OKl5uFJchFscBFRwo=
 github.com/tickstep/cloudpan189-api v0.0.3 h1:L8woe6XSUjQOsa7XRC7zH8VZj8SNKo/1qQb1k2ttLkU=
 github.com/tickstep/cloudpan189-api v0.0.3/go.mod h1:1H1r6h5fOu8sEhPY6h09YTuSt4OKl5uFJchFscBFRwo=
 github.com/tickstep/library-go v0.0.1 h1:UbXeGE6ZxnxA6KTjMofEhG3h2aHJ4UGacfh7U2B4zgw=

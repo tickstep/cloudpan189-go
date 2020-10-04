@@ -28,6 +28,7 @@
   * [列出目录](#列出目录)
   * [下载文件/目录](#下载文件目录)
   * [上传文件/目录](#上传文件目录)
+  * [手动秒传文件](#手动秒传文件)
   * [创建目录](#创建目录)
   * [删除文件/目录](#删除文件目录)
   * [拷贝文件/目录](#拷贝文件目录)
@@ -303,6 +304,17 @@ cloudpan189-go upload C:/Users/Administrator/Desktop/1.mp4 C:/Users/Administrato
 
 # 将本地的 C:\Users\Administrator\Desktop 整个目录上传到网盘 /视频 目录
 cloudpan189-go upload C:/Users/Administrator/Desktop /视频
+```
+
+## 手动秒传上传文件
+```
+cloudpan189-go rapidupload -size=<文件的大小> -md5=<文件的md5值> <保存的网盘路径, 需包含文件名>
+```
+
+### 例子:
+```
+如果秒传成功, 则保存到网盘路径 /test/file.txt
+cloudpan189-go rapidupload -size=56276137 -md5=fbe082d80e90f90f0fb1f94adbbcfa7f /test/file.txt
 ```
 
 ## 创建目录
