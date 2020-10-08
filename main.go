@@ -26,7 +26,9 @@ import (
 	"github.com/tickstep/cloudpan189-go/internal/functions/pandownload"
 	"github.com/tickstep/cloudpan189-go/internal/panupdate"
 	"github.com/tickstep/cloudpan189-go/internal/utils"
+	"github.com/tickstep/cloudpan189-go/library/crypto"
 	"github.com/tickstep/library-go/converter"
+	"github.com/tickstep/library-go/getip"
 	"github.com/tickstep/library-go/logger"
 	"github.com/urfave/cli"
 	"os"
@@ -44,6 +46,20 @@ import (
 const (
 	// NameShortDisplayNum 文件名缩略显示长度
 	NameShortDisplayNum = 16
+
+	cryptoDescription = `
+	可用的方法 <method>:
+		aes-128-ctr, aes-192-ctr, aes-256-ctr,
+		aes-128-cfb, aes-192-cfb, aes-256-cfb,
+		aes-128-ofb, aes-192-ofb, aes-256-ofb.
+
+	密钥 <key>:
+		aes-128 对应key长度为16, aes-192 对应key长度为24, aes-256 对应key长度为32,
+		如果key长度不符合, 则自动修剪key, 舍弃超出长度的部分, 长度不足的部分用'\0'填充.
+
+	GZIP <disable-gzip>:
+		在文件加密之前, 启用GZIP压缩文件; 文件解密之后启用GZIP解压缩文件, 默认启用,
+		如果不启用, 则无法检测文件是否解密成功, 解密文件时会保留源文件, 避免解密失败造成文件数据丢失.`
 )
 
 var (
@@ -1712,6 +1728,117 @@ func main() {
 						cli.StringFlag{
 							Name:  "local_addrs",
 							Usage: "设置本地网卡地址, 多个地址用逗号隔开",
+						},
+					},
+				},
+			},
+		},
+		// 工具箱 tool
+		{
+			Name:  "tool",
+			Usage: "工具箱",
+			Action: func(c *cli.Context) error {
+				cli.ShowCommandHelp(c, c.Command.Name)
+				return nil
+			},
+			Subcommands: []cli.Command{
+				{
+					Name:  "getip",
+					Usage: "获取IP地址",
+					Action: func(c *cli.Context) error {
+						fmt.Printf("内网IP地址: \n")
+						for _, address := range cmdutil.ListAddresses() {
+							fmt.Printf("%s\n", address)
+						}
+						fmt.Printf("\n")
+
+						ipAddr, err := getip.IPInfoFromTechainBaiduByClient(config.Config.HTTPClient(""))
+						if err != nil {
+							fmt.Printf("获取公网IP错误: %s\n", err)
+							return nil
+						}
+
+						fmt.Printf("公网IP地址: %s\n", ipAddr)
+						return nil
+					},
+				},
+				{
+					Name:        "enc",
+					Usage:       "加密文件",
+					UsageText:   app.Name + " enc -method=<method> -key=<key> [files...]",
+					Description: cryptoDescription,
+					Action: func(c *cli.Context) error {
+						if c.NArg() <= 0 {
+							cli.ShowCommandHelp(c, c.Command.Name)
+							return nil
+						}
+
+						for _, filePath := range c.Args() {
+							encryptedFilePath, err := crypto.EncryptFile(c.String("method"), []byte(c.String("key")), filePath, !c.Bool("disable-gzip"))
+							if err != nil {
+								fmt.Printf("%s\n", err)
+								continue
+							}
+
+							fmt.Printf("加密成功, %s -> %s\n", filePath, encryptedFilePath)
+						}
+
+						return nil
+					},
+					Flags: []cli.Flag{
+						cli.StringFlag{
+							Name:  "method",
+							Usage: "加密方法",
+							Value: "aes-128-ctr",
+						},
+						cli.StringFlag{
+							Name:  "key",
+							Usage: "加密密钥",
+							Value: app.Name,
+						},
+						cli.BoolFlag{
+							Name:  "disable-gzip",
+							Usage: "不启用GZIP",
+						},
+					},
+				},
+				{
+					Name:        "dec",
+					Usage:       "解密文件",
+					UsageText:   app.Name + " dec -method=<method> -key=<key> [files...]",
+					Description: cryptoDescription,
+					Action: func(c *cli.Context) error {
+						if c.NArg() <= 0 {
+							cli.ShowCommandHelp(c, c.Command.Name)
+							return nil
+						}
+
+						for _, filePath := range c.Args() {
+							decryptedFilePath, err := crypto.DecryptFile(c.String("method"), []byte(c.String("key")), filePath, !c.Bool("disable-gzip"))
+							if err != nil {
+								fmt.Printf("%s\n", err)
+								continue
+							}
+
+							fmt.Printf("解密成功, %s -> %s\n", filePath, decryptedFilePath)
+						}
+
+						return nil
+					},
+					Flags: []cli.Flag{
+						cli.StringFlag{
+							Name:  "method",
+							Usage: "加密方法",
+							Value: "aes-128-ctr",
+						},
+						cli.StringFlag{
+							Name:  "key",
+							Usage: "加密密钥",
+							Value: app.Name,
+						},
+						cli.BoolFlag{
+							Name:  "disable-gzip",
+							Usage: "不启用GZIP",
 						},
 					},
 				},

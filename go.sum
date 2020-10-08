@@ -48,6 +48,8 @@ github.com/tickstep/cloudpan189-api v0.0.3 h1:L8woe6XSUjQOsa7XRC7zH8VZj8SNKo/1qQ
 github.com/tickstep/cloudpan189-api v0.0.3/go.mod h1:1H1r6h5fOu8sEhPY6h09YTuSt4OKl5uFJchFscBFRwo=
 github.com/tickstep/library-go v0.0.1 h1:UbXeGE6ZxnxA6KTjMofEhG3h2aHJ4UGacfh7U2B4zgw=
 github.com/tickstep/library-go v0.0.1/go.mod h1:egoK/RvOJ3Qs2tHpkq374CWjhNjI91JSCCG1GrhDYSw=
+github.com/tickstep/library-go v0.0.2 h1:0JCxT2ZzRMrydUyqou3d9FI44ULrlxnkFcyioaGUbrE=
+github.com/tickstep/library-go v0.0.2/go.mod h1:egoK/RvOJ3Qs2tHpkq374CWjhNjI91JSCCG1GrhDYSw=
 github.com/urfave/cli v1.21.1-0.20190817182405-23c83030263f h1:xKDKjIsL76VUyHcA0G4Qe1cIAUB/nrq6Pt8D411bd1g=
 github.com/urfave/cli v1.21.1-0.20190817182405-23c83030263f/go.mod h1:qXyCeJubPqsgeiLd3kvHOGHHSrQcNdjZ2ScXIcVZK/I=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
