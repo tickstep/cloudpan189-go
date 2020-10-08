@@ -38,3 +38,4 @@ download/
 demos/
 tests.sh
 main_test.go
+license_header.sh
