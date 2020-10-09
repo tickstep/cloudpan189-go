@@ -64,7 +64,7 @@ const (
 
 var (
 	// Version 版本号
-	Version = "v0.0.9"
+	Version = "v0.1.0-dev"
 
 	saveConfigMutex *sync.Mutex = new(sync.Mutex)
 
