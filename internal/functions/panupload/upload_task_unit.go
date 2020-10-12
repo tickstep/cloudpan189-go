@@ -15,6 +15,11 @@ package panupload
 
 import (
 	"fmt"
+	"path"
+	"strings"
+	"sync"
+	"time"
+
 	"github.com/tickstep/cloudpan189-api/cloudpan"
 	"github.com/tickstep/cloudpan189-api/cloudpan/apierror"
 	"github.com/tickstep/cloudpan189-go/internal/config"
@@ -24,10 +29,6 @@ import (
 	"github.com/tickstep/cloudpan189-go/internal/taskframework"
 	"github.com/tickstep/library-go/converter"
 	"github.com/tickstep/library-go/requester/rio"
-	"path"
-	"strings"
-	"sync"
-	"time"
 )
 
 type (
@@ -55,8 +56,8 @@ type (
 		panFile  string
 		state    *uploader.InstanceState
 
-		ShowProgress  bool
-		IsOverwrite   bool // 覆盖已存在的文件，如果同名文件已存在则移到回收站里
+		ShowProgress bool
+		IsOverwrite  bool // 覆盖已存在的文件，如果同名文件已存在则移到回收站里
 	}
 )
 
@@ -177,10 +178,10 @@ func (utu *UploadTaskUnit) upload() (result *taskframework.TaskUnitRunResult) {
 	muer := uploader.NewMultiUploader(utu.LocalFileChecksum.FileUploadUrl, utu.LocalFileChecksum.FileCommitUrl, utu.LocalFileChecksum.UploadFileId, utu.LocalFileChecksum.XRequestId,
 		NewPanUpload(utu.PanClient, utu.SavePath, utu.LocalFileChecksum.FileUploadUrl, utu.LocalFileChecksum.FileCommitUrl, utu.LocalFileChecksum.UploadFileId, utu.LocalFileChecksum.XRequestId, utu.FamilyId),
 		rio.NewFileReaderAtLen64(utu.LocalFileChecksum.GetFile()), &uploader.MultiUploaderConfig{
-		Parallel:  utu.Parallel,
-		BlockSize: blockSize,
-		MaxRate:   config.Config.MaxUploadRate,
-	})
+			Parallel:  utu.Parallel,
+			BlockSize: blockSize,
+			MaxRate:   config.Config.MaxUploadRate,
+		})
 
 	// 设置断点续传
 	if utu.state != nil {
@@ -333,6 +334,10 @@ StepUploadPrepareUpload:
 			return nil
 		}
 		if efi != nil && efi.FileId != "" {
+			if efi.FileMd5 == strings.ToUpper(utu.LocalFileChecksum.MD5) {
+				fmt.Printf("[%s] 文件未修改跳过: %s\n", utu.taskInfo.Id(), utu.LocalFileChecksum.Path)
+				return nil
+			}
 			// existed, delete it
 			infoList := cloudpan.BatchTaskInfoList{}
 			isFolder := 0
@@ -340,14 +345,14 @@ StepUploadPrepareUpload:
 				isFolder = 1
 			}
 			infoItem := &cloudpan.BatchTaskInfo{
-				FileId: efi.FileId,
-				FileName: efi.FileName,
-				IsFolder: isFolder,
+				FileId:      efi.FileId,
+				FileName:    efi.FileName,
+				IsFolder:    isFolder,
 				SrcParentId: efi.ParentId,
 			}
 			infoList = append(infoList, infoItem)
 			delParam := &cloudpan.BatchTaskParam{
-				TypeFlag: cloudpan.BatchTaskTypeDelete,
+				TypeFlag:  cloudpan.BatchTaskTypeDelete,
 				TaskInfos: infoList,
 			}
 
@@ -374,12 +379,12 @@ StepUploadPrepareUpload:
 	}
 	appCreateUploadFileParam = &cloudpan.AppCreateUploadFileParam{
 		ParentFolderId: rs.FileId,
-		FileName: path.Base(utu.LocalFileChecksum.Path),
-		Size: utu.LocalFileChecksum.Length,
-		Md5: md5Str,
-		LastWrite: time.Unix(utu.LocalFileChecksum.ModTime, 0).Format("2006-01-02 15:04:05"),
-		LocalPath: utu.LocalFileChecksum.Path,
-		FamilyId: utu.FamilyId,
+		FileName:       path.Base(utu.LocalFileChecksum.Path),
+		Size:           utu.LocalFileChecksum.Length,
+		Md5:            md5Str,
+		LastWrite:      time.Unix(utu.LocalFileChecksum.ModTime, 0).Format("2006-01-02 15:04:05"),
+		LocalPath:      utu.LocalFileChecksum.Path,
+		FamilyId:       utu.FamilyId,
 	}
 	if utu.FamilyId > 0 {
 		r, apierr = utu.PanClient.AppFamilyCreateUploadFile(appCreateUploadFileParam)
