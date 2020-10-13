@@ -22,11 +22,12 @@ import (
 	"sync"
 	"time"
 
+	"github.com/tickstep/cloudpan189-go/cmder/cmdutil"
+
 	"github.com/oleiade/lane"
 	"github.com/tickstep/cloudpan189-api/cloudpan"
 	"github.com/tickstep/cloudpan189-api/cloudpan/apierror"
 	"github.com/tickstep/cloudpan189-go/cmder/cmdtable"
-	"github.com/tickstep/cloudpan189-go/cmder/cmdutil"
 	"github.com/tickstep/cloudpan189-go/internal/config"
 	"github.com/tickstep/cloudpan189-go/internal/functions/panupload"
 	"github.com/tickstep/cloudpan189-go/internal/localfile"
@@ -99,7 +100,6 @@ func RunUpload(localPaths []string, savePath string, opt *UploadOptions) {
 		executor = &taskframework.TaskExecutor{
 			IsFailedDeque: true, // 失败统计
 		}
-		subSavePath string
 		// 统计
 		statistic = &panupload.UploadStatistic{}
 
@@ -149,10 +149,18 @@ func RunUpload(localPaths []string, savePath string, opt *UploadOptions) {
 
 	for _, curPath := range localPaths {
 		var walkFunc filepath.WalkFunc
+		localPathDir := filepath.Dir(curPath)
+
+		// 避免去除文件名开头的"."
+		if localPathDir == "." {
+			localPathDir = ""
+		}
+
 		walkFunc = func(file string, fi os.FileInfo, err error) error {
 			if err != nil {
 				return err
 			}
+
 			if fi.IsDir() { // 忽略目录
 				return nil
 			}
@@ -162,21 +170,12 @@ func RunUpload(localPaths []string, savePath string, opt *UploadOptions) {
 				return err
 			}
 
-			var localPathDir string
+			subSavePath := strings.TrimPrefix(file, localPathDir)
+
 			// 针对 windows 的目录处理
 			if os.PathSeparator == '\\' {
-				file = cmdutil.ConvertToUnixPathSeparator(file)
-				localPathDir = cmdutil.ConvertToUnixPathSeparator(filepath.Dir(curPath))
-			} else {
-				localPathDir = filepath.Dir(curPath)
+				subSavePath = cmdutil.ConvertToUnixPathSeparator(subSavePath)
 			}
-
-			// 避免去除文件名开头的"."
-			if localPathDir == "." {
-				localPathDir = ""
-			}
-
-			subSavePath = strings.TrimPrefix(file, localPathDir)
 
 			taskinfo := executor.Append(&panupload.UploadTaskUnit{
 				LocalFileChecksum: localfile.NewLocalFileEntity(file),
