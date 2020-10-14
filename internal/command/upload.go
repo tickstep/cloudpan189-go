@@ -15,21 +15,24 @@ package command
 
 import (
 	"fmt"
-	"github.com/tickstep/cloudpan189-api/cloudpan"
-	"github.com/tickstep/cloudpan189-api/cloudpan/apierror"
-	"github.com/tickstep/cloudpan189-go/cmder/cmdtable"
-	"github.com/tickstep/cloudpan189-go/cmder/cmdutil"
-	"github.com/tickstep/cloudpan189-go/internal/config"
-	"github.com/tickstep/cloudpan189-go/internal/functions/panupload"
-	"github.com/tickstep/cloudpan189-go/internal/localfile"
-	"github.com/tickstep/cloudpan189-go/internal/taskframework"
-	"github.com/tickstep/library-go/converter"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/tickstep/cloudpan189-go/cmder/cmdutil"
+
+	"github.com/oleiade/lane"
+	"github.com/tickstep/cloudpan189-api/cloudpan"
+	"github.com/tickstep/cloudpan189-api/cloudpan/apierror"
+	"github.com/tickstep/cloudpan189-go/cmder/cmdtable"
+	"github.com/tickstep/cloudpan189-go/internal/config"
+	"github.com/tickstep/cloudpan189-go/internal/functions/panupload"
+	"github.com/tickstep/cloudpan189-go/internal/localfile"
+	"github.com/tickstep/cloudpan189-go/internal/taskframework"
+	"github.com/tickstep/library-go/converter"
 )
 
 const (
@@ -97,7 +100,6 @@ func RunUpload(localPaths []string, savePath string, opt *UploadOptions) {
 		executor = &taskframework.TaskExecutor{
 			IsFailedDeque: true, // 失败统计
 		}
-		subSavePath string
 		// 统计
 		statistic = &panupload.UploadStatistic{}
 
@@ -107,32 +109,76 @@ func RunUpload(localPaths []string, savePath string, opt *UploadOptions) {
 
 	statistic.StartTimer() // 开始计时
 
-	for k := range localPaths {
-		walkedFiles, err := cmdutil.WalkDir(localPaths[k], "")
-		if err != nil {
-			fmt.Printf("警告: 遍历错误: %s\n", err)
-			continue
+	wg := sync.WaitGroup{}
+
+	// 启动上传任务
+	Done := make(chan struct{})
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		var failedList []*lane.Deque
+	FOR:
+		for {
+			select {
+			case <-Done:
+				break FOR
+			default:
+				executor.Execute()
+				failed := executor.FailedDeque()
+				if failed.Size() > 0 {
+					failedList = append(failedList, failed)
+				}
+			}
+		}
+		fmt.Printf("\n")
+		fmt.Printf("上传结束, 时间: %s, 总大小: %s\n", statistic.Elapsed()/1e6*1e6, converter.ConvertFileSize(statistic.TotalSize()))
+
+		// 输出上传失败的文件列表
+		for _, failed := range failedList {
+			if failed.Size() != 0 {
+				fmt.Printf("以下文件上传失败: \n")
+				tb := cmdtable.NewTable(os.Stdout)
+				for e := failed.Shift(); e != nil; e = failed.Shift() {
+					item := e.(*taskframework.TaskInfoItem)
+					tb.Append([]string{item.Info.Id(), item.Unit.(*panupload.UploadTaskUnit).LocalFileChecksum.Path})
+				}
+				tb.Render()
+			}
+		}
+	}()
+
+	for _, curPath := range localPaths {
+		var walkFunc filepath.WalkFunc
+		localPathDir := filepath.Dir(curPath)
+
+		// 避免去除文件名开头的"."
+		if localPathDir == "." {
+			localPathDir = ""
 		}
 
-		for k3 := range walkedFiles {
-			var localPathDir string
+		walkFunc = func(file string, fi os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+
+			if fi.IsDir() { // 忽略目录
+				return nil
+			}
+
+			if fi.Mode()&os.ModeSymlink != 0 { // 读取 symbol link
+				err = filepath.Walk(file+string(os.PathSeparator), walkFunc)
+				return err
+			}
+
+			subSavePath := strings.TrimPrefix(file, localPathDir)
+
 			// 针对 windows 的目录处理
 			if os.PathSeparator == '\\' {
-				walkedFiles[k3] = cmdutil.ConvertToUnixPathSeparator(walkedFiles[k3])
-				localPathDir = cmdutil.ConvertToUnixPathSeparator(filepath.Dir(localPaths[k]))
-			} else {
-				localPathDir = filepath.Dir(localPaths[k])
+				subSavePath = cmdutil.ConvertToUnixPathSeparator(subSavePath)
 			}
 
-			// 避免去除文件名开头的"."
-			if localPathDir == "." {
-				localPathDir = ""
-			}
-
-			subSavePath = strings.TrimPrefix(walkedFiles[k3], localPathDir)
-
-			info := executor.Append(&panupload.UploadTaskUnit{
-				LocalFileChecksum: localfile.NewLocalFileEntity(walkedFiles[k3]),
+			taskinfo := executor.Append(&panupload.UploadTaskUnit{
+				LocalFileChecksum: localfile.NewLocalFileEntity(file),
 				SavePath:          path.Clean(savePath + cloudpan.PathSeparator + subSavePath),
 				FamilyId:          opt.FamilyId,
 				PanClient:         activeUser.PanClient(),
@@ -142,36 +188,21 @@ func RunUpload(localPaths []string, savePath string, opt *UploadOptions) {
 				NoRapidUpload:     opt.NoRapidUpload,
 				NoSplitFile:       opt.NoSplitFile,
 				UploadStatistic:   statistic,
-				ShowProgress: opt.ShowProgress,
-				IsOverwrite: opt.IsOverwrite,
+				ShowProgress:      opt.ShowProgress,
+				IsOverwrite:       opt.IsOverwrite,
 			}, opt.MaxRetry)
-			fmt.Printf("[%s] 加入上传队列: %s\n", info.Id(), walkedFiles[k3])
+			fmt.Printf("[%s] 加入上传队列: %s\n", taskinfo.Id(), file)
+			return nil
+		}
+		err := filepath.Walk(curPath, walkFunc)
+		if err != nil {
+			fmt.Printf("警告: 遍历错误: %s\n", err)
+			continue
 		}
 	}
-
-	// 没有添加任何任务
-	if executor.Count() == 0 {
-		fmt.Printf("未检测到上传的文件.\n")
-		return
-	}
-
-	// 执行上传任务
-	executor.Execute()
-
-	fmt.Printf("\n")
-	fmt.Printf("上传结束, 时间: %s, 总大小: %s\n", statistic.Elapsed()/1e6*1e6, converter.ConvertFileSize(statistic.TotalSize()))
-
-	// 输出上传失败的文件列表
-	failedList := executor.FailedDeque()
-	if failedList.Size() != 0 {
-		fmt.Printf("以下文件上传失败: \n")
-		tb := cmdtable.NewTable(os.Stdout)
-		for e := failedList.Shift(); e != nil; e = failedList.Shift() {
-			item := e.(*taskframework.TaskInfoItem)
-			tb.Append([]string{item.Info.Id(), item.Unit.(*panupload.UploadTaskUnit).LocalFileChecksum.Path})
-		}
-		tb.Render()
-	}
+	close(Done)
+	wg.Wait()
+	fmt.Println("Upload Ok!")
 }
 
 func RunRapidUpload(familyId int64, isOverwrite bool, panFilePath string, md5Str string, length int64) {
@@ -222,14 +253,14 @@ func RunRapidUpload(familyId int64, isOverwrite bool, panFilePath string, md5Str
 				isFolder = 1
 			}
 			infoItem := &cloudpan.BatchTaskInfo{
-				FileId: efi.FileId,
-				FileName: efi.FileName,
-				IsFolder: isFolder,
+				FileId:      efi.FileId,
+				FileName:    efi.FileName,
+				IsFolder:    isFolder,
 				SrcParentId: efi.ParentId,
 			}
 			infoList = append(infoList, infoItem)
 			delParam := &cloudpan.BatchTaskParam{
-				TypeFlag: cloudpan.BatchTaskTypeDelete,
+				TypeFlag:  cloudpan.BatchTaskTypeDelete,
 				TaskInfos: infoList,
 			}
 
@@ -252,12 +283,12 @@ func RunRapidUpload(familyId int64, isOverwrite bool, panFilePath string, md5Str
 
 	appCreateUploadFileParam = &cloudpan.AppCreateUploadFileParam{
 		ParentFolderId: rs.FileId,
-		FileName: panFileName,
-		Size: length,
-		Md5: strings.ToUpper(md5Str),
-		LastWrite: time.Now().Format("2006-01-02 15:04:05"),
-		LocalPath: "",
-		FamilyId: familyId,
+		FileName:       panFileName,
+		Size:           length,
+		Md5:            strings.ToUpper(md5Str),
+		LastWrite:      time.Now().Format("2006-01-02 15:04:05"),
+		LocalPath:      "",
+		FamilyId:       familyId,
 	}
 	if familyId > 0 {
 		r, apierr = panClient.AppFamilyCreateUploadFile(appCreateUploadFileParam)
