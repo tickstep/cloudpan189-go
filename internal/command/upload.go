@@ -149,11 +149,22 @@ func RunUpload(localPaths []string, savePath string, opt *UploadOptions) {
 
 	for _, curPath := range localPaths {
 		var walkFunc filepath.WalkFunc
+		var db *panupload.FolderSyncDb
+		curPath = filepath.Clean(curPath)
 		localPathDir := filepath.Dir(curPath)
 
 		// 避免去除文件名开头的"."
 		if localPathDir == "." {
 			localPathDir = ""
+		}
+
+		if fi, err := os.Stat(curPath); err == nil && fi.IsDir() {
+			db, _ = panupload.OpenSyncDb(localPathDir+string(os.PathSeparator)+fi.Name()+string(os.PathSeparator)+".ecloud"+string(os.PathSeparator)+"db", "ecloud")
+			if db != nil {
+				defer func(syncDb *panupload.FolderSyncDb) {
+					db.Close()
+				}(db)
+			}
 		}
 
 		walkFunc = func(file string, fi os.FileInfo, err error) error {
@@ -162,6 +173,9 @@ func RunUpload(localPaths []string, savePath string, opt *UploadOptions) {
 			}
 
 			if fi.IsDir() { // 忽略目录
+				if fi.Name() == ".ecloud" {
+					return filepath.SkipDir
+				}
 				return nil
 			}
 
@@ -190,14 +204,13 @@ func RunUpload(localPaths []string, savePath string, opt *UploadOptions) {
 				UploadStatistic:   statistic,
 				ShowProgress:      opt.ShowProgress,
 				IsOverwrite:       opt.IsOverwrite,
+				FolderSyncDb:      db,
 			}, opt.MaxRetry)
 			fmt.Printf("[%s] 加入上传队列: %s\n", taskinfo.Id(), file)
 			return nil
 		}
-		err := filepath.Walk(curPath, walkFunc)
-		if err != nil {
+		if err := filepath.Walk(curPath, walkFunc); err != nil {
 			fmt.Printf("警告: 遍历错误: %s\n", err)
-			continue
 		}
 	}
 	close(Done)

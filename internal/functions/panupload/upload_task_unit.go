@@ -14,11 +14,15 @@
 package panupload
 
 import (
+	"bytes"
 	"fmt"
 	"path"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/tickstep/cloudpan189-go/cmder/cmdutil/jsonhelper"
 
 	"github.com/tickstep/cloudpan189-api/cloudpan"
 	"github.com/tickstep/cloudpan189-api/cloudpan/apierror"
@@ -42,6 +46,7 @@ type (
 		SavePath          string // 保存路径
 		FamilyId          int64
 		FolderCreateMutex *sync.Mutex
+		FolderSyncDb      *FolderSyncDb //文件备份状态数据库
 
 		PanClient         *cloudpan.PanClient
 		UploadingDatabase *UploadingDatabase // 数据库
@@ -153,7 +158,8 @@ func (utu *UploadTaskUnit) rapidUpload() (isContinue bool, result *taskframework
 			return true, result
 		} else {
 			fmt.Printf("[%s] 秒传成功, 保存到网盘路径: %s\n\n", utu.taskInfo.Id(), utu.SavePath)
-			return false, nil
+			result.Succeed = true
+			return false, result
 		}
 	} else {
 		fmt.Printf("[%s] 秒传失败，开始正常上传文件\n", utu.taskInfo.Id())
@@ -273,8 +279,14 @@ func (utu *UploadTaskUnit) RetryWait() time.Duration {
 	return functions.RetryWait(utu.taskInfo.Retry())
 }
 
+var filestatus = map[int]string{
+	0: "0-未知！",
+	1: "1-无变化",
+	2: "2-未更新",
+	3: "3-已同步",
+}
+
 func (utu *UploadTaskUnit) Run() (result *taskframework.TaskUnitRunResult) {
-	fmt.Printf("[%s] 准备上传: %s\n", utu.taskInfo.Id(), utu.LocalFileChecksum.Path)
 
 	err := utu.LocalFileChecksum.OpenPath()
 	if err != nil {
@@ -283,6 +295,7 @@ func (utu *UploadTaskUnit) Run() (result *taskframework.TaskUnitRunResult) {
 	}
 	defer utu.LocalFileChecksum.Close() // 关闭文件
 
+	fmt.Printf("[%s] 准备上传: %s\n", utu.taskInfo.Id(), utu.LocalFileChecksum.Path)
 	// 准备文件
 	utu.prepareFile()
 
@@ -292,6 +305,7 @@ func (utu *UploadTaskUnit) Run() (result *taskframework.TaskUnitRunResult) {
 	var appCreateUploadFileParam *cloudpan.AppCreateUploadFileParam
 	var md5Str string
 	var saveFilePath string
+	var testFileMeta *localfile.LocalFileMeta = &localfile.LocalFileMeta{}
 
 	switch utu.Step {
 	case StepUploadPrepareUpload:
@@ -303,8 +317,44 @@ func (utu *UploadTaskUnit) Run() (result *taskframework.TaskUnitRunResult) {
 	}
 
 StepUploadPrepareUpload:
+	defer func() {
+		if result != nil && result.Succeed {
+			testFileMeta.FileDataExists = 3
+		}
+		fmt.Printf("[%s] 文件状态: %s=>%s\n", utu.taskInfo.Id(), filestatus[testFileMeta.FileDataExists], utu.LocalFileChecksum.Path)
+		if testFileMeta.FileDataExists < 2 || utu.FolderSyncDb == nil { //不需要更新数据库
+			return
+		}
+		var buf bytes.Buffer
+		jsonhelper.MarshalData(&buf, localfile.LocalFileMeta{
+			MD5:     utu.LocalFileChecksum.MD5,
+			ModTime: utu.LocalFileChecksum.ModTime,
+			Length:  utu.LocalFileChecksum.Length,
+		})
+		utu.FolderSyncDb.Put(utu.SavePath, buf.Bytes())
+	}()
+
+	if utu.FolderSyncDb != nil {
+		//启用了备份功能，强制使用覆盖同名文件功能
+		utu.IsOverwrite = true
+		data := utu.FolderSyncDb.Get(utu.SavePath)
+		if data != nil {
+			jsonhelper.UnmarshalData(bytes.NewBuffer(data), testFileMeta)
+		}
+	}
+	//文件是否有更新判断，这边只简单判断文件日期和文件大小
+	if testFileMeta.ModTime == utu.LocalFileChecksum.ModTime &&
+		testFileMeta.Length == utu.LocalFileChecksum.Length {
+		testFileMeta.FileDataExists = 1
+		return nil
+	}
 	// 创建上传任务
 	utu.LocalFileChecksum.Sum(localfile.CHECKSUM_MD5)
+
+	if testFileMeta.MD5 == utu.LocalFileChecksum.MD5 {
+		testFileMeta.FileDataExists = 2
+		return nil
+	}
 
 	utu.FolderCreateMutex.Lock()
 	saveFilePath = path.Dir(utu.SavePath)
@@ -335,7 +385,7 @@ StepUploadPrepareUpload:
 		}
 		if efi != nil && efi.FileId != "" {
 			if efi.FileMd5 == strings.ToUpper(utu.LocalFileChecksum.MD5) {
-				fmt.Printf("[%s] 文件未修改跳过: %s\n", utu.taskInfo.Id(), utu.LocalFileChecksum.Path)
+				testFileMeta.FileDataExists = 2
 				return nil
 			}
 			// existed, delete it
@@ -377,9 +427,10 @@ StepUploadPrepareUpload:
 	if utu.LocalFileChecksum.Length == 0 {
 		md5Str = cloudpan.DefaultEmptyFileMd5
 	}
+
 	appCreateUploadFileParam = &cloudpan.AppCreateUploadFileParam{
 		ParentFolderId: rs.FileId,
-		FileName:       path.Base(utu.LocalFileChecksum.Path),
+		FileName:       filepath.Base(utu.LocalFileChecksum.Path),
 		Size:           utu.LocalFileChecksum.Length,
 		Md5:            md5Str,
 		LastWrite:      time.Unix(utu.LocalFileChecksum.ModTime, 0).Format("2006-01-02 15:04:05"),
