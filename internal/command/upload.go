@@ -159,11 +159,13 @@ func RunUpload(localPaths []string, savePath string, opt *UploadOptions) {
 		}
 
 		if fi, err := os.Stat(curPath); err == nil && fi.IsDir() {
-			db, _ = panupload.OpenSyncDb(localPathDir+string(os.PathSeparator)+fi.Name()+string(os.PathSeparator)+".ecloud"+string(os.PathSeparator)+"db", "ecloud")
+			db, err = panupload.OpenSyncDb(localPathDir+string(os.PathSeparator)+fi.Name()+string(os.PathSeparator)+".ecloud"+string(os.PathSeparator)+"db", "ecloud")
 			if db != nil {
 				defer func(syncDb *panupload.FolderSyncDb) {
 					db.Close()
 				}(db)
+			} else {
+				fmt.Println(err)
 			}
 		}
 

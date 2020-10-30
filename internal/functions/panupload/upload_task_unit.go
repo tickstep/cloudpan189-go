@@ -264,26 +264,26 @@ func (utu *UploadTaskUnit) OnSuccess(lastRunResult *taskframework.TaskUnitRunRes
 
 func (utu *UploadTaskUnit) OnFailed(lastRunResult *taskframework.TaskUnitRunResult) {
 	// 失败
-	if lastRunResult.Err == nil {
-		// result中不包含Err, 忽略输出
-		fmt.Printf("[%s] %s\n", utu.taskInfo.Id(), lastRunResult.ResultMessage)
-		return
-	}
-	fmt.Printf("[%s] %s, %s\n", utu.taskInfo.Id(), lastRunResult.ResultMessage, lastRunResult.Err)
 }
 
+var ResultLocalFileNotUpdated = &taskframework.TaskUnitRunResult{ResultCode: 1, Succeed: true, ResultMessage: "本地文件未更新，无需上传！"}
+var ResultUpdateLocalDatabase = &taskframework.TaskUnitRunResult{ResultCode: 2, Succeed: true, ResultMessage: "本地文件和云端文件MD5一致，无需上传！"}
+
 func (utu *UploadTaskUnit) OnComplete(lastRunResult *taskframework.TaskUnitRunResult) {
+	if utu.FolderSyncDb == nil || !lastRunResult.Succeed || lastRunResult == ResultLocalFileNotUpdated { //不需要更新数据库
+		return
+	}
+	var buf bytes.Buffer
+	jsonhelper.MarshalData(&buf, localfile.LocalFileMeta{
+		MD5:     utu.LocalFileChecksum.MD5,
+		ModTime: utu.LocalFileChecksum.ModTime,
+		Length:  utu.LocalFileChecksum.Length,
+	})
+	utu.FolderSyncDb.Put(utu.SavePath, buf.Bytes())
 }
 
 func (utu *UploadTaskUnit) RetryWait() time.Duration {
 	return functions.RetryWait(utu.taskInfo.Retry())
-}
-
-var filestatus = map[int]string{
-	0: "0-未知！",
-	1: "1-无变化",
-	2: "2-未更新",
-	3: "3-已同步",
 }
 
 func (utu *UploadTaskUnit) Run() (result *taskframework.TaskUnitRunResult) {
@@ -295,7 +295,22 @@ func (utu *UploadTaskUnit) Run() (result *taskframework.TaskUnitRunResult) {
 	}
 	defer utu.LocalFileChecksum.Close() // 关闭文件
 
-	fmt.Printf("[%s] 准备上传: %s\n", utu.taskInfo.Id(), utu.LocalFileChecksum.Path)
+	timeStart := time.Now()
+	result = &taskframework.TaskUnitRunResult{}
+
+	fmt.Printf("%s [%s] 准备上传: %s\n", time.Now().Format("2006-01-02 15:04:06"), utu.taskInfo.Id(), utu.LocalFileChecksum.Path)
+
+	defer func() {
+		var msg string
+		if result.Err != nil {
+			msg = "失败！" + result.ResultMessage + "," + result.Err.Error()
+		} else if result.Succeed {
+			msg = "成功！" + result.ResultMessage
+		} else {
+			msg = result.ResultMessage
+		}
+		fmt.Printf("%s [%s] 文件上传结果：%s  耗时 %s\n", time.Now().Format("2006-01-02 15:04:06"), utu.taskInfo.Id(), msg, time.Now().Sub(timeStart))
+	}()
 	// 准备文件
 	utu.prepareFile()
 
@@ -317,22 +332,6 @@ func (utu *UploadTaskUnit) Run() (result *taskframework.TaskUnitRunResult) {
 	}
 
 StepUploadPrepareUpload:
-	defer func() {
-		if result != nil && result.Succeed {
-			testFileMeta.FileDataExists = 3
-		}
-		fmt.Printf("[%s] 文件状态: %s=>%s\n", utu.taskInfo.Id(), filestatus[testFileMeta.FileDataExists], utu.LocalFileChecksum.Path)
-		if testFileMeta.FileDataExists < 2 || utu.FolderSyncDb == nil { //不需要更新数据库
-			return
-		}
-		var buf bytes.Buffer
-		jsonhelper.MarshalData(&buf, localfile.LocalFileMeta{
-			MD5:     utu.LocalFileChecksum.MD5,
-			ModTime: utu.LocalFileChecksum.ModTime,
-			Length:  utu.LocalFileChecksum.Length,
-		})
-		utu.FolderSyncDb.Put(utu.SavePath, buf.Bytes())
-	}()
 
 	if utu.FolderSyncDb != nil {
 		//启用了备份功能，强制使用覆盖同名文件功能
@@ -345,15 +344,13 @@ StepUploadPrepareUpload:
 	//文件是否有更新判断，这边只简单判断文件日期和文件大小
 	if testFileMeta.ModTime == utu.LocalFileChecksum.ModTime &&
 		testFileMeta.Length == utu.LocalFileChecksum.Length {
-		testFileMeta.FileDataExists = 1
-		return nil
+		return ResultLocalFileNotUpdated
 	}
 	// 创建上传任务
 	utu.LocalFileChecksum.Sum(localfile.CHECKSUM_MD5)
 
 	if testFileMeta.MD5 == utu.LocalFileChecksum.MD5 {
-		testFileMeta.FileDataExists = 2
-		return nil
+		return ResultUpdateLocalDatabase
 	}
 
 	utu.FolderCreateMutex.Lock()
@@ -361,8 +358,9 @@ StepUploadPrepareUpload:
 	if saveFilePath != "/" {
 		rs, apierr = utu.PanClient.AppMkdirRecursive(utu.FamilyId, "", "", 0, strings.Split(path.Clean(saveFilePath), "/"))
 		if apierr != nil || rs.FileId == "" {
-			fmt.Println("创建云盘文件夹失败")
-			return nil
+			result.Err = apierr
+			result.ResultMessage = "创建云盘文件夹失败"
+			return
 		}
 	} else {
 		rs = &cloudpan.AppMkdirResult{}
@@ -380,13 +378,13 @@ StepUploadPrepareUpload:
 		// 检查同名文件是否存在
 		efi, apierr := utu.PanClient.AppFileInfoByPath(utu.FamilyId, utu.SavePath)
 		if apierr != nil && apierr.Code != apierror.ApiCodeFileNotFoundCode {
-			fmt.Println("检测同名文件失败，请稍后重试")
-			return nil
+			result.Err = apierr
+			result.ResultMessage = "检测同名文件失败"
+			return
 		}
 		if efi != nil && efi.FileId != "" {
 			if efi.FileMd5 == strings.ToUpper(utu.LocalFileChecksum.MD5) {
-				testFileMeta.FileDataExists = 2
-				return nil
+				return ResultUpdateLocalDatabase
 			}
 			// existed, delete it
 			infoList := cloudpan.BatchTaskInfoList{}
@@ -415,11 +413,12 @@ StepUploadPrepareUpload:
 			}
 
 			if err != nil || taskId == "" {
-				fmt.Println("无法删除文件，请稍后重试")
-				return nil
+				result.Err = err
+				result.ResultMessage = "无法删除文件，请稍后重试"
+				return
 			}
 			time.Sleep(time.Duration(500) * time.Millisecond)
-			fmt.Println("检测到同名文件，已移动到回收站: " + utu.SavePath)
+			fmt.Println(utu.taskInfo.Id(), "检测到同名文件，已移动到回收站: "+utu.SavePath)
 		}
 	}
 
@@ -443,8 +442,9 @@ StepUploadPrepareUpload:
 		r, apierr = utu.PanClient.AppCreateUploadFile(appCreateUploadFileParam)
 	}
 	if apierr != nil {
-		fmt.Println("创建上传任务失败")
-		return nil
+		result.Err = apierr
+		result.ResultMessage = "创建上传任务失败"
+		return
 	}
 
 	utu.LocalFileChecksum.ParentFolderId = rs.FileId
