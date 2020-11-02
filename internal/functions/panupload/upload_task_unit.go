@@ -260,6 +260,17 @@ func (utu *UploadTaskUnit) OnRetry(lastRunResult *taskframework.TaskUnitRunResul
 }
 
 func (utu *UploadTaskUnit) OnSuccess(lastRunResult *taskframework.TaskUnitRunResult) {
+	//文件上传成功
+	if utu.FolderSyncDb == nil || lastRunResult == ResultLocalFileNotUpdated { //不需要更新数据库
+		return
+	}
+	var buf bytes.Buffer
+	jsonhelper.MarshalData(&buf, localfile.LocalFileMeta{
+		MD5:     utu.LocalFileChecksum.MD5,
+		ModTime: utu.LocalFileChecksum.ModTime,
+		Length:  utu.LocalFileChecksum.Length,
+	})
+	utu.FolderSyncDb.Put(utu.SavePath, buf.Bytes())
 }
 
 func (utu *UploadTaskUnit) OnFailed(lastRunResult *taskframework.TaskUnitRunResult) {
@@ -270,16 +281,7 @@ var ResultLocalFileNotUpdated = &taskframework.TaskUnitRunResult{ResultCode: 1, 
 var ResultUpdateLocalDatabase = &taskframework.TaskUnitRunResult{ResultCode: 2, Succeed: true, ResultMessage: "本地文件和云端文件MD5一致，无需上传！"}
 
 func (utu *UploadTaskUnit) OnComplete(lastRunResult *taskframework.TaskUnitRunResult) {
-	if utu.FolderSyncDb == nil || !lastRunResult.Succeed || lastRunResult == ResultLocalFileNotUpdated { //不需要更新数据库
-		return
-	}
-	var buf bytes.Buffer
-	jsonhelper.MarshalData(&buf, localfile.LocalFileMeta{
-		MD5:     utu.LocalFileChecksum.MD5,
-		ModTime: utu.LocalFileChecksum.ModTime,
-		Length:  utu.LocalFileChecksum.Length,
-	})
-	utu.FolderSyncDb.Put(utu.SavePath, buf.Bytes())
+
 }
 
 func (utu *UploadTaskUnit) RetryWait() time.Duration {
@@ -298,7 +300,7 @@ func (utu *UploadTaskUnit) Run() (result *taskframework.TaskUnitRunResult) {
 	timeStart := time.Now()
 	result = &taskframework.TaskUnitRunResult{}
 
-	fmt.Printf("%s [%s] 准备上传: %s\n", time.Now().Format("2006-01-02 15:04:06"), utu.taskInfo.Id(), utu.LocalFileChecksum.Path)
+	fmt.Printf("%s [%s] 准备上传: %s=>%s\n", time.Now().Format("2006-01-02 15:04:06"), utu.taskInfo.Id(), utu.LocalFileChecksum.Path, utu.SavePath)
 
 	defer func() {
 		var msg string
