@@ -1,7 +1,12 @@
+//+build !nutsdb
+
 package panupload
 
 import (
 	"database/sql"
+	"fmt"
+
+	jsoniter "github.com/json-iterator/go"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -9,6 +14,10 @@ import (
 type FolderSyncDb struct {
 	db     *sql.DB
 	bucket []byte
+}
+
+func init() {
+	fmt.Println("sqlite")
 }
 
 func OpenSyncDb(file string, bucket string) (*FolderSyncDb, error) {
@@ -23,23 +32,22 @@ func OpenSyncDb(file string, bucket string) (*FolderSyncDb, error) {
 
 	return &FolderSyncDb{db: db, bucket: []byte(bucket)}, nil
 }
-func (db *FolderSyncDb) Get(key string) []byte {
+func (db *FolderSyncDb) Get(key string) *UploadedFileMeta {
 	var data []byte
+	meta := &UploadedFileMeta{}
 	row := db.db.QueryRow("select data from ecloud where path=?", key)
-	row.Scan(&data)
-	return data
+	if err := row.Scan(&data); err == nil {
+		err = jsoniter.Unmarshal(data, meta)
+	}
+	return meta
 }
 
-func (db *FolderSyncDb) Put(key string, value []byte) error {
-	var t int
-	var err error
-	row := db.db.QueryRow("select 1 from ecloud where path=?", key)
-	row.Scan(&t)
-	if t > 0 {
-		_, err = db.db.Exec("update ecloud set data=? where path=?", value, key)
-	} else {
-		_, err = db.db.Exec("insert into ecloud values(?,?)", key, value)
+func (db *FolderSyncDb) Put(key string, value *UploadedFileMeta) error {
+	data, err := jsoniter.Marshal(value)
+	if err != nil {
+		return err
 	}
+	_, err = db.db.Exec("replace into ecloud values(?,?)", key, data)
 	return err
 }
 

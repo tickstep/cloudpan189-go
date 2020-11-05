@@ -1,8 +1,10 @@
-//+build !sqlite
+//+build nutsdb
 
 package panupload
 
 import (
+	jsoniter "github.com/json-iterator/go"
+
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/xujiajun/nutsdb"
 )
@@ -22,22 +24,26 @@ func OpenSyncDb(file string, bucket string) (*FolderSyncDb, error) {
 	}
 	return &FolderSyncDb{db: db, bucket: bucket}, nil
 }
-func (db *FolderSyncDb) Get(key string) []byte {
-	var data []byte
+func (db *FolderSyncDb) Get(key string) *UploadedFileMeta {
+	data := &UploadedFileMeta{}
 	db.db.View(func(tx *nutsdb.Tx) error {
 		ent, err := tx.Get(db.bucket, []byte(key))
 		if err != nil {
 			return err
 		}
-		data = ent.Value
-		return nil
+		return jsoniter.Unmarshal(ent.Value, &data)
 	})
+
 	return data
 }
 
-func (db *FolderSyncDb) Put(key string, value []byte) error {
+func (db *FolderSyncDb) Put(key string, value *UploadedFileMeta) error {
 	return db.db.Update(func(tx *nutsdb.Tx) error {
-		return tx.Put(db.bucket, []byte(key), value, 0)
+		data, err := jsoniter.Marshal(value)
+		if err != nil {
+			return err
+		}
+		return tx.Put(db.bucket, []byte(key), data, 0)
 	})
 }
 

@@ -14,7 +14,6 @@
 package panupload
 
 import (
-	"bytes"
 	"fmt"
 	"path"
 	"path/filepath"
@@ -22,7 +21,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/tickstep/cloudpan189-go/cmder/cmdutil/jsonhelper"
+	"github.com/tickstep/library-go/logger"
 
 	"github.com/tickstep/cloudpan189-api/cloudpan"
 	"github.com/tickstep/cloudpan189-api/cloudpan/apierror"
@@ -264,13 +263,11 @@ func (utu *UploadTaskUnit) OnSuccess(lastRunResult *taskframework.TaskUnitRunRes
 	if utu.FolderSyncDb == nil || lastRunResult == ResultLocalFileNotUpdated { //不需要更新数据库
 		return
 	}
-	var buf bytes.Buffer
-	jsonhelper.MarshalData(&buf, localfile.LocalFileMeta{
+	utu.FolderSyncDb.Put(utu.SavePath, &UploadedFileMeta{
 		MD5:     utu.LocalFileChecksum.MD5,
 		ModTime: utu.LocalFileChecksum.ModTime,
-		Length:  utu.LocalFileChecksum.Length,
+		Size:    utu.LocalFileChecksum.Length,
 	})
-	utu.FolderSyncDb.Put(utu.SavePath, buf.Bytes())
 }
 
 func (utu *UploadTaskUnit) OnFailed(lastRunResult *taskframework.TaskUnitRunResult) {
@@ -300,7 +297,7 @@ func (utu *UploadTaskUnit) Run() (result *taskframework.TaskUnitRunResult) {
 	timeStart := time.Now()
 	result = &taskframework.TaskUnitRunResult{}
 
-	fmt.Printf("%s [%s] 准备上传: %s=>%s\n", time.Now().Format("2006-01-02 15:04:06"), utu.taskInfo.Id(), utu.LocalFileChecksum.Path, utu.SavePath)
+	logger.Verbosef("[%s] 准备上传: %s=>%s\n", utu.taskInfo.Id(), utu.LocalFileChecksum.Path, utu.SavePath)
 
 	defer func() {
 		var msg string
@@ -322,7 +319,7 @@ func (utu *UploadTaskUnit) Run() (result *taskframework.TaskUnitRunResult) {
 	var appCreateUploadFileParam *cloudpan.AppCreateUploadFileParam
 	var md5Str string
 	var saveFilePath string
-	var testFileMeta *localfile.LocalFileMeta = &localfile.LocalFileMeta{}
+	var testFileMeta *UploadedFileMeta = &UploadedFileMeta{}
 
 	switch utu.Step {
 	case StepUploadPrepareUpload:
@@ -338,15 +335,7 @@ StepUploadPrepareUpload:
 	if utu.FolderSyncDb != nil {
 		//启用了备份功能，强制使用覆盖同名文件功能
 		utu.IsOverwrite = true
-		data := utu.FolderSyncDb.Get(utu.SavePath)
-		if data != nil {
-			jsonhelper.UnmarshalData(bytes.NewBuffer(data), testFileMeta)
-		}
-	}
-	//文件是否有更新判断，这边只简单判断文件日期和文件大小
-	if testFileMeta.ModTime == utu.LocalFileChecksum.ModTime &&
-		testFileMeta.Length == utu.LocalFileChecksum.Length {
-		return ResultLocalFileNotUpdated
+		testFileMeta = utu.FolderSyncDb.Get(utu.SavePath)
 	}
 	// 创建上传任务
 	utu.LocalFileChecksum.Sum(localfile.CHECKSUM_MD5)
@@ -420,7 +409,7 @@ StepUploadPrepareUpload:
 				return
 			}
 			time.Sleep(time.Duration(500) * time.Millisecond)
-			fmt.Println(utu.taskInfo.Id(), "检测到同名文件，已移动到回收站: "+utu.SavePath)
+			logger.Verbosef("[%s] 检测到同名文件，已移动到回收站: %s", utu.taskInfo.Id(), utu.SavePath)
 		}
 	}
 

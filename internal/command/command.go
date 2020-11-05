@@ -14,9 +14,17 @@
 package command
 
 import (
+	"errors"
+	"strconv"
+
+	"github.com/urfave/cli"
+
 	"github.com/tickstep/cloudpan189-api/cloudpan"
 	"github.com/tickstep/cloudpan189-go/internal/config"
 )
+
+var ErrBadArgs = errors.New("参数错误")
+var ErrNotLogined = errors.New("未登录账号")
 
 func GetActivePanClient() *cloudpan.PanClient {
 	return config.Config.ActiveUser().PanClient()
@@ -24,4 +32,17 @@ func GetActivePanClient() *cloudpan.PanClient {
 
 func GetActiveUser() *config.PanUser {
 	return config.Config.ActiveUser()
+}
+
+func parseFamilyId(c *cli.Context) int64 {
+	familyId := config.Config.ActiveUser().ActiveFamilyId
+	if c.IsSet("familyId") {
+		fid, errfi := strconv.ParseInt(c.String("familyId"), 10, 64)
+		if errfi != nil {
+			familyId = 0
+		} else {
+			familyId = fid
+		}
+	}
+	return familyId
 }

@@ -15,20 +15,21 @@ package panupload
 
 import (
 	"context"
+	"io"
+	"net/http"
+
 	"github.com/tickstep/cloudpan189-api/cloudpan"
 	"github.com/tickstep/cloudpan189-api/cloudpan/apierror"
 	"github.com/tickstep/cloudpan189-go/internal/file/uploader"
 	"github.com/tickstep/library-go/requester"
 	"github.com/tickstep/library-go/requester/rio"
-	"io"
-	"net/http"
 )
 
 type (
 	PanUpload struct {
-		panClient        *cloudpan.PanClient
+		panClient  *cloudpan.PanClient
 		targetPath string
-		familyId int64
+		familyId   int64
 
 		// UploadFileId 上传文件请求ID
 		uploadFileId string
@@ -38,6 +39,15 @@ type (
 		fileCommitUrl string
 		// 请求的X-Request-ID
 		xRequestId string
+	}
+
+	UploadedFileMeta struct {
+		Path    string `json:"path,omitempty"`    // 本地路径
+		Size    int64  `json:"length,omitempty"`  // 文件大小
+		MD5     string `json:"md5,omitempty"`     // 文件的 md5
+		ModTime int64  `json:"modtime,omitempty"` // 修改日期
+		FileID  int64  `json:"id,omitempty"`      //文件、目录ID
+		Rev     int64  `json:"rev,omitempty"`     //文件版本
 	}
 
 	EmptyReaderLen64 struct {
@@ -56,7 +66,7 @@ func NewPanUpload(panClient *cloudpan.PanClient, targetPath, uploadUrl, commitUr
 	return &PanUpload{
 		panClient:     panClient,
 		targetPath:    targetPath,
-		familyId: familyId,
+		familyId:      familyId,
 		uploadFileId:  uploadFileId,
 		fileUploadUrl: uploadUrl,
 		fileCommitUrl: commitUrl,
@@ -80,7 +90,7 @@ func (pu *PanUpload) UploadFile(ctx context.Context, partseq int, partOffset int
 	var respErr *uploader.MultiError
 	fileRange := &cloudpan.AppFileUploadRange{
 		Offset: partOffset,
-		Len: partEnd - partOffset,
+		Len:    partEnd - partOffset,
 	}
 	var apiError *apierror.ApiError
 	uploadFunc := func(httpMethod, fullUrl string, headers map[string]string) (resp *http.Response, err error) {
