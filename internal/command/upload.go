@@ -269,7 +269,7 @@ func RunUpload(localPaths []string, savePath string, opt *UploadOptions) {
 	}
 	close(Done)
 	wg.Wait()
-	fmt.Println("Upload Ok!")
+	logger.Verboseln("Upload Ok!")
 }
 
 func RunRapidUpload(familyId int64, isOverwrite bool, panFilePath string, md5Str string, length int64) {
