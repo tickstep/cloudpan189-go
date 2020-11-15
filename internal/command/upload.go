@@ -22,6 +22,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/tickstep/library-go/logger"
+
+	"github.com/urfave/cli"
+
 	"github.com/tickstep/cloudpan189-go/cmder/cmdutil"
 
 	"github.com/oleiade/lane"
@@ -55,6 +59,36 @@ type (
 		FamilyId      int64
 	}
 )
+
+var UploadFlags = []cli.Flag{
+	cli.IntFlag{
+		Name:  "p",
+		Usage: "本次操作文件上传并发数量，即可以同时并发上传多少个文件。0代表跟从配置文件设置",
+		Value: 0,
+	},
+	cli.IntFlag{
+		Name:  "retry",
+		Usage: "上传失败最大重试次数",
+		Value: DefaultUploadMaxRetry,
+	},
+	cli.BoolFlag{
+		Name:  "np",
+		Usage: "no progress 不展示下载进度条",
+	},
+	cli.BoolFlag{
+		Name:  "ow",
+		Usage: "overwrite, 覆盖已存在的同名文件，注意已存在的文件会被移到回收站",
+	},
+	cli.BoolFlag{
+		Name:  "norapid",
+		Usage: "不检测秒传",
+	},
+	cli.StringFlag{
+		Name:  "familyId",
+		Usage: "家庭云ID",
+		Value: "",
+	},
+}
 
 // RunUpload 执行文件上传
 func RunUpload(localPaths []string, savePath string, opt *UploadOptions) {
@@ -149,11 +183,32 @@ func RunUpload(localPaths []string, savePath string, opt *UploadOptions) {
 
 	for _, curPath := range localPaths {
 		var walkFunc filepath.WalkFunc
+		var db *panupload.FolderSyncDb
+		curPath = filepath.Clean(curPath)
 		localPathDir := filepath.Dir(curPath)
 
 		// 避免去除文件名开头的"."
 		if localPathDir == "." {
 			localPathDir = ""
+		}
+
+		if fi, err := os.Stat(curPath); err == nil && fi.IsDir() {
+			//使用绝对路径避免异常
+			dbpath, err := filepath.Abs(curPath)
+			if err != nil {
+				dbpath = curPath
+			}
+			dbpath += string(os.PathSeparator) + ".ecloud"
+			if di, err := os.Stat(dbpath); err == nil && di.IsDir() {
+				db, err = panupload.OpenSyncDb(dbpath+string(os.PathSeparator)+"db", "ecloud")
+				if db != nil {
+					defer func(syncDb *panupload.FolderSyncDb) {
+						db.Close()
+					}(db)
+				} else {
+					fmt.Println(err)
+				}
+			}
 		}
 
 		walkFunc = func(file string, fi os.FileInfo, err error) error {
@@ -162,6 +217,9 @@ func RunUpload(localPaths []string, savePath string, opt *UploadOptions) {
 			}
 
 			if fi.IsDir() { // 忽略目录
+				if fi.Name() == ".ecloud" {
+					return filepath.SkipDir
+				}
 				return nil
 			}
 
@@ -177,9 +235,18 @@ func RunUpload(localPaths []string, savePath string, opt *UploadOptions) {
 				subSavePath = cmdutil.ConvertToUnixPathSeparator(subSavePath)
 			}
 
+			subSavePath = path.Clean(savePath + cloudpan.PathSeparator + subSavePath)
+
+			if db != nil {
+				if test := db.Get(subSavePath); test != nil && test.Size == fi.Size() && test.ModTime == fi.ModTime().Unix() {
+					logger.Verbosef("文件未修改跳过:%s\n", file)
+					return nil
+				}
+			}
+
 			taskinfo := executor.Append(&panupload.UploadTaskUnit{
 				LocalFileChecksum: localfile.NewLocalFileEntity(file),
-				SavePath:          path.Clean(savePath + cloudpan.PathSeparator + subSavePath),
+				SavePath:          subSavePath,
 				FamilyId:          opt.FamilyId,
 				PanClient:         activeUser.PanClient(),
 				UploadingDatabase: uploadDatabase,
@@ -190,14 +257,14 @@ func RunUpload(localPaths []string, savePath string, opt *UploadOptions) {
 				UploadStatistic:   statistic,
 				ShowProgress:      opt.ShowProgress,
 				IsOverwrite:       opt.IsOverwrite,
+				FolderSyncDb:      db,
 			}, opt.MaxRetry)
-			fmt.Printf("[%s] 加入上传队列: %s\n", taskinfo.Id(), file)
+
+			fmt.Printf("%s [%s] 加入上传队列: %s\n", time.Now().Format("2006-01-02 15:04:05"), taskinfo.Id(), file)
 			return nil
 		}
-		err := filepath.Walk(curPath, walkFunc)
-		if err != nil {
+		if err := filepath.Walk(curPath, walkFunc); err != nil {
 			fmt.Printf("警告: 遍历错误: %s\n", err)
-			continue
 		}
 	}
 	close(Done)

@@ -15,6 +15,17 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"path"
+	"path/filepath"
+	"runtime"
+	"sort"
+	"strconv"
+	"strings"
+	"sync"
+	"time"
+	"unicode"
+
 	"github.com/peterh/liner"
 	"github.com/tickstep/cloudpan189-api/cloudpan"
 	"github.com/tickstep/cloudpan189-go/cmder/cmdliner"
@@ -31,16 +42,6 @@ import (
 	"github.com/tickstep/library-go/getip"
 	"github.com/tickstep/library-go/logger"
 	"github.com/urfave/cli"
-	"os"
-	"path"
-	"path/filepath"
-	"runtime"
-	"sort"
-	"strconv"
-	"strings"
-	"sync"
-	"time"
-	"unicode"
 )
 
 const (
@@ -76,6 +77,7 @@ var (
 		}
 		return nil
 	}
+
 	saveFunc = func(c *cli.Context) error {
 		saveConfigMutex.Lock()
 		defer saveConfigMutex.Unlock()
@@ -141,7 +143,7 @@ func checkLoginExpiredAndRelogin() {
 func parseFamilyId(c *cli.Context) int64 {
 	familyId := config.Config.ActiveUser().ActiveFamilyId
 	if c.IsSet("familyId") {
-		fid,errfi := strconv.ParseInt(c.String("familyId"), 10, 64)
+		fid, errfi := strconv.ParseInt(c.String("familyId"), 10, 64)
 		if errfi != nil {
 			familyId = 0
 		} else {
@@ -219,7 +221,7 @@ func main() {
 				acceptCompleteFileCommands = []string{
 					"cd", "cp", "xcp", "download", "ls", "mkdir", "mv", "pwd", "rename", "rm", "share", "upload", "login", "loglist", "logout",
 					"clear", "quit", "exit", "quota", "who", "sign", "update", "who", "su", "config",
-					"family", "export", "import",
+					"family", "export", "import", "backup",
 				}
 				closed = strings.LastIndex(line, " ") == len(line)-1
 			)
@@ -253,8 +255,8 @@ func main() {
 			}
 
 			var (
-				activeUser  = config.Config.ActiveUser()
-				runeFunc    = unicode.IsSpace
+				activeUser = config.Config.ActiveUser()
+				runeFunc   = unicode.IsSpace
 				//cmdRuneFunc = func(r rune) bool {
 				//	switch r {
 				//	case '\'', '"':
@@ -619,7 +621,7 @@ func main() {
 				inputData := c.Args().Get(0)
 				targetFamilyId := int64(-1)
 				if inputData != "" && len(inputData) > 0 {
-					targetFamilyId,_ = strconv.ParseInt(inputData, 10, 0)
+					targetFamilyId, _ = strconv.ParseInt(inputData, 10, 0)
 				}
 				command.RunSwitchFamilyList(targetFamilyId)
 				return nil
@@ -755,7 +757,7 @@ func main() {
 					return nil
 				}
 				var (
-					orderBy cloudpan.OrderBy = cloudpan.OrderByName
+					orderBy   cloudpan.OrderBy   = cloudpan.OrderByName
 					orderSort cloudpan.OrderSort = cloudpan.OrderAsc
 				)
 
@@ -974,15 +976,15 @@ func main() {
 			},
 			Flags: []cli.Flag{
 				cli.StringFlag{
-					Name:  "familyId",
-					Usage: "家庭云ID",
-					Value: "",
+					Name:     "familyId",
+					Usage:    "家庭云ID",
+					Value:    "",
 					Required: false,
 				},
 				cli.StringFlag{
-					Name:  "source",
-					Usage: "文件源，person-个人云，family-家庭云",
-					Value: "",
+					Name:     "source",
+					Usage:    "文件源，person-个人云，family-家庭云",
+					Value:    "",
 					Required: false,
 				},
 			},
@@ -1075,10 +1077,10 @@ func main() {
 			},
 			Subcommands: []cli.Command{
 				{
-					Name:        "set",
-					Aliases:     []string{"s"},
-					Usage:       "设置分享文件/目录",
-					UsageText:   app.Name + " share set <文件/目录1> <文件/目录2> ...",
+					Name:      "set",
+					Aliases:   []string{"s"},
+					Usage:     "设置分享文件/目录",
+					UsageText: app.Name + " share set <文件/目录1> <文件/目录2> ...",
 					Description: `
 目前只支持创建私密链接.
 示例:
@@ -1156,9 +1158,9 @@ func main() {
 					},
 				},
 				{
-					Name:        "save",
-					Usage:       "转存分享的全部文件到指定文件夹",
-					UsageText:   app.Name + " share save [save_dir_path] \"[share_url]\"",
+					Name:      "save",
+					Usage:     "转存分享的全部文件到指定文件夹",
+					UsageText: app.Name + " share save [save_dir_path] \"[share_url]\"",
 					Description: `转存分享的全部文件到指定文件夹
 示例:
     将 https://cloud.189.cn/t/RzUNre7nq2Uf 分享链接里面的全部文件转存到 /我的文档 这个网盘目录里面
@@ -1179,7 +1181,6 @@ func main() {
 					},
 				},
 			},
-
 		},
 		// 上传文件/目录 upload
 		{
@@ -1229,35 +1230,7 @@ func main() {
 				})
 				return nil
 			},
-			Flags: []cli.Flag{
-				cli.IntFlag{
-					Name:  "p",
-					Usage: "本次操作文件上传并发数量，即可以同时并发上传多少个文件。0代表跟从配置文件设置",
-					Value: 0,
-				},
-				cli.IntFlag{
-					Name:  "retry",
-					Usage: "上传失败最大重试次数",
-					Value: command.DefaultUploadMaxRetry,
-				},
-				cli.BoolFlag{
-					Name:  "np",
-					Usage: "no progress 不展示下载进度条",
-				},
-				cli.BoolFlag{
-					Name:  "ow",
-					Usage: "overwrite, 覆盖已存在的同名文件，注意已存在的文件会被移到回收站",
-				},
-				cli.BoolFlag{
-					Name:  "norapid",
-					Usage: "不检测秒传",
-				},
-				cli.StringFlag{
-					Name:  "familyId",
-					Usage: "家庭云ID",
-					Value: "",
-				},
-			},
+			Flags: command.UploadFlags,
 		},
 		{
 			Name:      "rapidupload",
@@ -1286,13 +1259,13 @@ func main() {
 			},
 			Flags: []cli.Flag{
 				cli.StringFlag{
-					Name:  "md5",
-					Usage: "文件的 md5 值",
+					Name:     "md5",
+					Usage:    "文件的 md5 值",
 					Required: true,
 				},
 				cli.Int64Flag{
-					Name:  "size",
-					Usage: "文件的大小",
+					Name:     "size",
+					Usage:    "文件的大小",
 					Required: true,
 				},
 				cli.BoolFlag{
@@ -1418,6 +1391,7 @@ func main() {
 				},
 			},
 		},
+		command.CmdBackup(),
 		// 导出文件/目录元数据 export
 		{
 			Name:      "export",
@@ -1880,9 +1854,9 @@ func main() {
 		},
 		// 退出程序 quit
 		{
-			Name:    "quit",
-			Aliases: []string{"exit"},
-			Usage:   "退出程序",
+			Name:        "quit",
+			Aliases:     []string{"exit"},
+			Usage:       "退出程序",
 			Description: "退出程序",
 			Category:    "其他",
 			Action: func(c *cli.Context) error {

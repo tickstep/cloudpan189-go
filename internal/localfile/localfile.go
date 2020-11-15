@@ -16,11 +16,12 @@ package localfile
 import (
 	"crypto/md5"
 	"encoding/hex"
-	"github.com/tickstep/library-go/cachepool"
-	"github.com/tickstep/library-go/converter"
 	"hash/crc32"
 	"io"
 	"os"
+
+	"github.com/tickstep/library-go/cachepool"
+	"github.com/tickstep/library-go/converter"
 )
 
 const (
@@ -39,32 +40,32 @@ const (
 type (
 	// LocalFileMeta 本地文件元信息
 	LocalFileMeta struct {
-		Path     string `json:"path"`     // 本地路径
-		Length   int64  `json:"length"`   // 文件大小
-		MD5      string `json:"md5"`      // 文件的 md5
-		CRC32    uint32 `json:"crc32"`    // 文件的 crc32
-		ModTime  int64  `json:"modtime"`  // 修改日期
+		Path    string `json:"path,omitempty"`   // 本地路径
+		Length  int64  `json:"length,omitempty"` // 文件大小
+		MD5     string `json:"md5,omitempty"`    // 文件的 md5
+		CRC32   uint32 `json:"crc32,omitempty"`  // 文件的 crc32
+		ModTime int64  `json:"modtime"`          // 修改日期
 
 		// ParentFolderId 存储云盘的目录ID
-		ParentFolderId string `json:"parent_folder_id"`
+		ParentFolderId string `json:"parent_folder_id,omitempty"`
 		// UploadFileId 上传文件请求ID
-		UploadFileId string `json:"upload_file_id"`
+		UploadFileId string `json:"upload_file_id,omitempty"`
 		// FileUploadUrl 上传文件数据的URL路径
-		FileUploadUrl string `json:"file_upload_url"`
+		FileUploadUrl string `json:"file_upload_url,omitempty"`
 		// FileCommitUrl 上传文件完成后确认路径
-		FileCommitUrl string `json:"file_commit_url"`
+		FileCommitUrl string `json:"file_commit_url,omitempty"`
 		// FileDataExists 文件是否已存在云盘中，0-未存在，1-已存在
-		FileDataExists int `json:"file_data_exists"`
+		FileDataExists int `json:"file_data_exists,omitempty"`
 		// 请求的X-Request-ID
-		XRequestId string `json:"x_request_id"`
+		XRequestId string `json:"x_request_id,omitempty"`
 	}
 
 	// LocalFileEntity 校验本地文件
 	LocalFileEntity struct {
 		LocalFileMeta
-		bufSize   int
-		buf       []byte
-		file      *os.File // 文件
+		bufSize int
+		buf     []byte
+		file    *os.File // 文件
 	}
 )
 
@@ -77,7 +78,7 @@ func NewLocalFileEntityWithBufSize(localPath string, bufSize int) *LocalFileEnti
 		LocalFileMeta: LocalFileMeta{
 			Path: localPath,
 		},
-		bufSize:   bufSize,
+		bufSize: bufSize,
 	}
 }
 
