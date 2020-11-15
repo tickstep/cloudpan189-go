@@ -1391,7 +1391,6 @@ func main() {
 				},
 			},
 		},
-		command.CmdBackup(),
 		// 导出文件/目录元数据 export
 		{
 			Name:      "export",
