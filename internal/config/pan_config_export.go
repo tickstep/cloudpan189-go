@@ -14,13 +14,14 @@
 package config
 
 import (
+	"os"
+	"strconv"
+	"strings"
+
 	"github.com/olekukonko/tablewriter"
 	"github.com/tickstep/cloudpan189-go/cmder/cmdtable"
 	"github.com/tickstep/library-go/converter"
 	"github.com/tickstep/library-go/requester"
-	"os"
-	"strconv"
-	"strings"
 )
 
 // SetProxy 设置代理
@@ -34,7 +35,6 @@ func (c *PanConfig) SetLocalAddrs(localAddrs string) {
 	c.LocalAddrs = localAddrs
 	requester.SetLocalTCPAddrList(strings.Split(localAddrs, ",")...)
 }
-
 
 // SetCacheSizeByStr 设置cache_size
 func (c *PanConfig) SetCacheSizeByStr(sizeStr string) error {
@@ -66,7 +66,6 @@ func (c *PanConfig) SetMaxUploadRateByStr(sizeStr string) error {
 	return nil
 }
 
-
 // PrintTable 输出表格
 func (c *PanConfig) PrintTable() {
 	tb := cmdtable.NewTable(os.Stdout)
@@ -83,6 +82,7 @@ func (c *PanConfig) PrintTable() {
 		[]string{"savedir", c.SaveDir, "", "下载文件的储存目录"},
 		[]string{"proxy", c.Proxy, "", "设置代理, 支持 http/socks5 代理，例如：http://127.0.0.1:8888"},
 		[]string{"local_addrs", c.LocalAddrs, "", "设置本地网卡地址, 多个地址用逗号隔开"},
+		[]string{"sync_db_type", strconv.Itoa(c.SyncDBType), "1 ~ 2", "数据同步或备份时本地使用数据库类型\n1：sqlite 2:nutsdb，注非法的值也是默认使用sqlite"},
 	})
 	tb.Render()
 }
