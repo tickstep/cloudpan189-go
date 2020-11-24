@@ -78,6 +78,8 @@ func (db *nutsDB) Next(prefix string) (*UploadedFileMeta, error) {
 			}
 			if of >= db.next[prefix] {
 				db.next[prefix] = of + 1
+			} else {
+				db.next[prefix]++
 			}
 			//值为空是已删除的继续查找下一个
 			if len(ent[0].Value) > 0 {

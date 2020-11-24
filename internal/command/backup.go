@@ -108,8 +108,8 @@ func (c *backupFunc) DelRemoteFileFromDB(familyId int64, localDir string, savePa
 	for ent, err := db.First(savePath); err == nil; ent, err = db.Next(savePath) {
 		testPath := strings.TrimPrefix(ent.Path, savePath)
 		testPath = filepath.Join(localPathDir, testPath)
-
 		_, err := os.Stat(testPath)
+		logger.Verboseln("检测:", testPath, err)
 		if err != nil && os.IsNotExist(err) { //本地文件不存在，删除网盘文件
 			logger.Verboseln("删除文件", ent.Path)
 			var parentId string
