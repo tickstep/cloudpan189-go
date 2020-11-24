@@ -14,7 +14,7 @@ require (
 	github.com/tickstep/cloudpan189-api v0.0.3
 	github.com/tickstep/library-go v0.0.2
 	github.com/urfave/cli v1.21.1-0.20190817182405-23c83030263f
-	github.com/xujiajun/nutsdb v0.5.0
+	github.com/xujiajun/nutsdb v0.5.1-0.20200830145825-432dd3d0c873
 	golang.org/x/sys v0.0.0-20200202164722-d101bd2416d5 // indirect
 )
 

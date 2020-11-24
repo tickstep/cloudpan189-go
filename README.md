@@ -29,6 +29,7 @@
   * [列出目录](#列出目录)
   * [下载文件/目录](#下载文件目录)
   * [上传文件/目录](#上传文件目录)
+  * [备份文件/目录](#备份文件目录)  
   * [手动秒传文件](#手动秒传文件)
   * [创建目录](#创建目录)
   * [删除文件/目录](#删除文件目录)
@@ -323,6 +324,30 @@ cloudpan189-go upload C:/Users/Administrator/Desktop/1.mp4 C:/Users/Administrato
 
 # 将本地的 C:\Users\Administrator\Desktop 整个目录上传到网盘 /视频 目录
 cloudpan189-go upload C:/Users/Administrator/Desktop /视频
+```
+
+## 备份文件/目录
+
+备份功能一般用于NAS等系统，日常只进行增量备份操作，默认情况下本地删除不影响网盘文件。
+
+比如在手机上备分照片目录，就可以使用这个功能定时备份，备份完成后本地文件可安全删除。
+
+基本用法和`upload`命令一样，增加了额外的`--delete` 选项用于同步删除操作。
+
+和`upload`相比由于增加了本地数据库，可以快速判断文件是否有更新等，大大减少了API的调用，操作速度更快。
+
+```
+cloudpan189-go backup <本地目录1> <目录2> <目录3> ... <目标目录>
+注：
+1. 默认使用sqlite数据库，可以通过config命令切换。
+2. 默认不删除网盘文件，可添加--delete参数进行同步删除。
+```
+
+### 例子:
+```
+# 将本地的 C:\Users\Administrator\Desktop 备份到网盘 /test 目录
+# 注意区别反斜杠 "\" 和 斜杠 "/" !!!
+cloudpan189-go backup C:/Users/Administrator/Desktop /test
 ```
 
 ## 手动秒传上传文件

@@ -45,7 +45,7 @@ type (
 		SavePath          string // 保存路径
 		FamilyId          int64
 		FolderCreateMutex *sync.Mutex
-		FolderSyncDb      *FolderSyncDb //文件备份状态数据库
+		FolderSyncDb      SyncDb //文件备份状态数据库
 
 		PanClient         *cloudpan.PanClient
 		UploadingDatabase *UploadingDatabase // 数据库
@@ -146,10 +146,11 @@ func (utu *UploadTaskUnit) rapidUpload() (isContinue bool, result *taskframework
 	fmt.Printf("[%s] 检测秒传中, 请稍候...\n", utu.taskInfo.Id())
 	if utu.LocalFileChecksum.FileDataExists == 1 {
 		var er *apierror.ApiError
+		var ret *cloudpan.AppUploadFileCommitResult
 		if utu.FamilyId > 0 {
-			_, er = utu.PanClient.AppFamilyUploadFileCommit(utu.FamilyId, utu.LocalFileChecksum.FileCommitUrl, utu.LocalFileChecksum.UploadFileId, utu.LocalFileChecksum.XRequestId)
+			ret, er = utu.PanClient.AppFamilyUploadFileCommit(utu.FamilyId, utu.LocalFileChecksum.FileCommitUrl, utu.LocalFileChecksum.UploadFileId, utu.LocalFileChecksum.XRequestId)
 		} else {
-			_, er = utu.PanClient.AppUploadFileCommit(utu.LocalFileChecksum.FileCommitUrl, utu.LocalFileChecksum.UploadFileId, utu.LocalFileChecksum.XRequestId)
+			ret, er = utu.PanClient.AppUploadFileCommit(utu.LocalFileChecksum.FileCommitUrl, utu.LocalFileChecksum.UploadFileId, utu.LocalFileChecksum.XRequestId)
 		}
 		if er != nil {
 			result.ResultMessage = "秒传失败"
@@ -158,6 +159,7 @@ func (utu *UploadTaskUnit) rapidUpload() (isContinue bool, result *taskframework
 		} else {
 			fmt.Printf("[%s] 秒传成功, 保存到网盘路径: %s\n\n", utu.taskInfo.Id(), utu.SavePath)
 			result.Succeed = true
+			result.Extra = ret
 			return false, result
 		}
 	} else {
@@ -263,11 +265,24 @@ func (utu *UploadTaskUnit) OnSuccess(lastRunResult *taskframework.TaskUnitRunRes
 	if utu.FolderSyncDb == nil || lastRunResult == ResultLocalFileNotUpdated { //不需要更新数据库
 		return
 	}
-	utu.FolderSyncDb.Put(utu.SavePath, &UploadedFileMeta{
+	ufm := &UploadedFileMeta{
 		MD5:     utu.LocalFileChecksum.MD5,
 		ModTime: utu.LocalFileChecksum.ModTime,
 		Size:    utu.LocalFileChecksum.Length,
-	})
+	}
+	ufo, ok := lastRunResult.Extra.(*cloudpan.AppUploadFileCommitResult)
+	if !ok {
+		efi, _ := utu.PanClient.AppFileInfoByPath(utu.FamilyId, utu.SavePath)
+		if efi != nil {
+			ufm.FileID = efi.FileId
+			ufm.IsFolder = efi.IsFolder
+			ufm.Rev = efi.Rev
+		}
+	} else {
+		ufm.FileID = ufo.Id
+		ufm.Rev = ufo.Rev
+	}
+	utu.FolderSyncDb.Put(utu.SavePath, ufm)
 }
 
 func (utu *UploadTaskUnit) OnFailed(lastRunResult *taskframework.TaskUnitRunResult) {
@@ -319,7 +334,7 @@ func (utu *UploadTaskUnit) Run() (result *taskframework.TaskUnitRunResult) {
 	var appCreateUploadFileParam *cloudpan.AppCreateUploadFileParam
 	var md5Str string
 	var saveFilePath string
-	var testFileMeta *UploadedFileMeta = &UploadedFileMeta{}
+	var testFileMeta = &UploadedFileMeta{}
 
 	switch utu.Step {
 	case StepUploadPrepareUpload:
@@ -347,11 +362,19 @@ StepUploadPrepareUpload:
 	utu.FolderCreateMutex.Lock()
 	saveFilePath = path.Dir(utu.SavePath)
 	if saveFilePath != "/" {
-		rs, apierr = utu.PanClient.AppMkdirRecursive(utu.FamilyId, "", "", 0, strings.Split(path.Clean(saveFilePath), "/"))
-		if apierr != nil || rs.FileId == "" {
-			result.Err = apierr
-			result.ResultMessage = "创建云盘文件夹失败"
-			return
+		//同步功能先尝试从数据库获取
+		if utu.FolderSyncDb != nil {
+			if test := utu.FolderSyncDb.Get(saveFilePath); test.FileID != "" && test.IsFolder {
+				rs = &cloudpan.AppMkdirResult{FileId: test.FileID, Rev: test.Rev}
+			}
+		}
+		if rs == nil {
+			rs, apierr = utu.PanClient.AppMkdirRecursive(utu.FamilyId, "", "", 0, strings.Split(path.Clean(saveFilePath), "/"))
+			if apierr != nil || rs.FileId == "" {
+				result.Err = apierr
+				result.ResultMessage = "创建云盘文件夹失败"
+				return
+			}
 		}
 	} else {
 		rs = &cloudpan.AppMkdirResult{}

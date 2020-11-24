@@ -194,6 +194,7 @@ func main() {
 			return
 		}
 
+		os.Setenv(config.EnvVerbose, c.String("verbose"))
 		isCli = true
 		logger.Verbosef("VERBOSE: 这是一条调试信息\n\n")
 
@@ -1182,6 +1183,7 @@ func main() {
 				},
 			},
 		},
+		command.CmdBackup(),
 		// 上传文件/目录 upload
 		{
 			Name:      "upload",
@@ -1630,6 +1632,9 @@ func main() {
 						if c.IsSet("max_download_load") {
 							config.Config.MaxDownloadLoad = c.Int("max_download_load")
 						}
+						if c.IsSet("sync_db_type") {
+							config.Config.SyncDBType = c.Int("sync_db_type")
+						}
 						if c.IsSet("max_download_rate") {
 							err := config.Config.SetMaxDownloadRateByStr(c.String("max_download_rate"))
 							if err != nil {
@@ -1681,6 +1686,10 @@ func main() {
 						cli.IntFlag{
 							Name:  "max_download_load",
 							Usage: "同时进行下载文件的最大数量",
+						},
+						cli.IntFlag{
+							Name:  "sync_db_type",
+							Usage: "同步或备份使用的数据库类型(default:1) 1: sqlite 2:nutsdb",
 						},
 						cli.StringFlag{
 							Name:  "max_download_rate",
@@ -1873,12 +1882,20 @@ func main() {
 			Category:    "debug",
 			Before:      reloadFn,
 			Action: func(c *cli.Context) error {
+				os.Setenv(config.EnvVerbose, c.String("verbose"))
+				fmt.Println("显示调试日志", logger.IsVerbose)
 				return nil
 			},
 			Flags: []cli.Flag{
 				cli.StringFlag{
 					Name:  "param",
 					Usage: "参数",
+				},
+				cli.BoolFlag{
+					Name:        "verbose",
+					Destination: &logger.IsVerbose,
+					EnvVar:      config.EnvVerbose,
+					Usage:       "显示调试信息",
 				},
 			},
 		},
