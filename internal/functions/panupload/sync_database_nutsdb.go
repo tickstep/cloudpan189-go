@@ -12,7 +12,13 @@ import (
 type nutsDB struct {
 	db     *nutsdb.DB
 	bucket string
-	next   map[string]int
+	next   nutsDBScan
+}
+
+type nutsDBScan struct {
+	entries nutsdb.Entries
+	off     int
+	size    int
 }
 
 func openNutsDb(file string, bucket string) (SyncDb, error) {
@@ -24,7 +30,7 @@ func openNutsDb(file string, bucket string) (SyncDb, error) {
 		return nil, err
 	}
 	logger.Verboseln("open nutsDb ok")
-	return &nutsDB{db: db, bucket: bucket, next: make(map[string]int)}, nil
+	return &nutsDB{db: db, bucket: bucket, next: nutsDBScan{}}, nil
 }
 
 func (db *nutsDB) Get(key string) (data *UploadedFileMeta) {
@@ -64,32 +70,33 @@ func (db *nutsDB) DelWithPrefix(prefix string) error {
 }
 
 func (db *nutsDB) First(prefix string) (*UploadedFileMeta, error) {
-	db.next[prefix] = 0
+	db.db.View(func(tx *nutsdb.Tx) error {
+		entries, _, err := tx.PrefixScan(db.bucket, []byte(prefix), 0, 0xffffffff)
+		if err != nil {
+			return err
+		}
+		db.next.entries = entries
+		db.next.off = 0
+		db.next.size = len(entries)
+		return nil
+	})
 	return db.Next(prefix)
 }
 
 func (db *nutsDB) Next(prefix string) (*UploadedFileMeta, error) {
 	data := &UploadedFileMeta{}
-	err := db.db.View(func(tx *nutsdb.Tx) error {
-		for { //循环读取直到找到符合条件的记录
-			ent, of, err := tx.PrefixScan(db.bucket, []byte(prefix), db.next[prefix], 1)
-			if err != nil {
-				return err
-			}
-			if of >= db.next[prefix] {
-				db.next[prefix] = of + 1
-			} else {
-				db.next[prefix]++
-			}
-			//值为空是已删除的继续查找下一个
-			if len(ent[0].Value) > 0 {
-				err = jsoniter.Unmarshal(ent[0].Value, &data)
-				data.Path = string(ent[0].Key)
-				return nil
-			}
+	for { //循环读取直到找到符合条件的记录
+		if db.next.off >= db.next.size {
+			return nil, nutsdb.ErrPrefixScansNoResult
 		}
-	})
-	return data, err
+		ent := db.next.entries[db.next.off]
+		db.next.off++
+		if len(ent.Value) > 0 {
+			jsoniter.Unmarshal(ent.Value, &data)
+			data.Path = string(ent.Key)
+			return data, nil
+		}
+	}
 }
 
 func (db *nutsDB) Put(key string, value *UploadedFileMeta) error {
