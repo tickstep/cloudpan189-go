@@ -46,6 +46,7 @@ type (
 		Path     string `json:"path,omitempty"`     // 本地路径
 		MD5      string `json:"md5,omitempty"`      // 文件的 md5
 		FileID   string `json:"id,omitempty"`       //文件、目录ID
+		ParentId string `json:"parentId,omitempty"` //父文件夹ID
 		Rev      string `json:"rev,omitempty"`      //文件版本
 		Size     int64  `json:"length,omitempty"`   // 文件大小
 		ModTime  int64  `json:"modtime,omitempty"`  // 修改日期

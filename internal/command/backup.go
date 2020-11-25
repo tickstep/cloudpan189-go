@@ -102,7 +102,7 @@ func (c *backupFunc) DelRemoteFileFromDB(familyId int64, localDir string, savePa
 
 	db, err := OpenSyncDb(dbpath + string(os.PathSeparator) + "db")
 	if err != nil {
-		fmt.Println("数据库打开失败！", err)
+		fmt.Println("同步数据库打开失败！", err)
 		return
 	}
 	for ent, err := db.First(savePath); err == nil; ent, err = db.Next(savePath) {
@@ -111,16 +111,28 @@ func (c *backupFunc) DelRemoteFileFromDB(familyId int64, localDir string, savePa
 		_, err := os.Stat(testPath)
 		logger.Verboseln("检测:", testPath, err)
 		if err != nil && os.IsNotExist(err) { //本地文件不存在，删除网盘文件
-			logger.Verboseln("删除文件", ent.Path)
-			var parentId string
-			if test := db.Get(path.Dir(ent.Path)); test != nil && test.IsFolder && test.FileID != "" {
-				parentId = test.FileID
+			var err *apierror.ApiError
+			logger.Verboseln("删除远程文件", ent.Path)
+			if ent.ParentId == "" {
+				if test := db.Get(path.Dir(ent.Path)); test != nil && test.IsFolder && test.FileID != "" {
+					ent.ParentId = test.FileID
+				}
 			}
-			if ent.FileID == "" {
-				efi, _ := c.Client.AppFileInfoByPath(familyId, ent.Path)
-				if efi != nil && efi.FileId != "" {
+
+			if ent.FileID == "" || ent.ParentId == "" {
+				efi, err := c.Client.AppGetBasicFileInfo(&cloudpan.AppGetFileInfoParam{
+					FileId:   ent.FileID,
+					FilePath: ent.Path,
+				})
+				//网盘上不存在这个文件或目录，只需要清理数据库
+				if err != nil && err.Code == apierror.ApiCodeFileNotFoundCode {
+					db.DelWithPrefix(ent.Path)
+					logger.Verboseln("删除数据库记录", ent.Path)
+					continue
+				}
+				if efi != nil {
 					ent.FileID = efi.FileId
-					parentId = efi.ParentId
+					ent.ParentId = efi.ParentId
 				}
 			}
 
@@ -128,31 +140,21 @@ func (c *backupFunc) DelRemoteFileFromDB(familyId int64, localDir string, savePa
 				continue
 			}
 
-			if parentId == "" {
-				efi, _ := c.Client.AppFileInfoById(familyId, ent.FileID)
-				if efi != nil && efi.FileId != "" {
-					ent.FileID = efi.FileId
-					parentId = efi.ParentId
-				}
-			}
-
 			var taskId string
-			var err *apierror.ApiError
 
-			infoList := cloudpan.BatchTaskInfoList{}
 			infoItem := &cloudpan.BatchTaskInfo{
 				FileId:      ent.FileID,
 				FileName:    path.Base(ent.Path),
 				IsFolder:    0,
-				SrcParentId: parentId,
+				SrcParentId: ent.ParentId,
 			}
 			if ent.IsFolder {
 				infoItem.IsFolder = 1
 			}
-			infoList = append(infoList, infoItem)
+
 			delParam := &cloudpan.BatchTaskParam{
 				TypeFlag:  cloudpan.BatchTaskTypeDelete,
-				TaskInfos: infoList,
+				TaskInfos: cloudpan.BatchTaskInfoList{infoItem},
 			}
 
 			if familyId > 0 {

@@ -206,7 +206,8 @@ func RunUpload(localPaths []string, savePath string, opt *UploadOptions) {
 						db.Close()
 					}(db)
 				} else {
-					fmt.Println(err)
+					fmt.Println(curPath, "同步数据库打开失败,跳过该目录的备份", err)
+					continue
 				}
 			}
 		}
@@ -252,13 +253,13 @@ func RunUpload(localPaths []string, savePath string, opt *UploadOptions) {
 				if ufm = db.Get(path.Dir(subSavePath)); ufm.IsFolder == true && ufm.FileID != "" {
 					rs, err := panClient.AppMkdir(opt.FamilyId, ufm.FileID, fi.Name())
 					if err == nil && rs != nil && rs.FileId != "" {
-						db.Put(subSavePath, &panupload.UploadedFileMeta{FileID: rs.FileId, IsFolder: true, ModTime: fi.ModTime().Unix(), Rev: rs.Rev})
+						db.Put(subSavePath, &panupload.UploadedFileMeta{FileID: rs.FileId, IsFolder: true, ModTime: fi.ModTime().Unix(), Rev: rs.Rev, ParentId: rs.ParentId})
 						return nil
 					}
 				}
 				rs, err := panClient.AppMkdirRecursive(opt.FamilyId, "", "", 0, strings.Split(path.Clean(subSavePath), "/"))
 				if err == nil && rs != nil && rs.FileId != "" {
-					db.Put(subSavePath, &panupload.UploadedFileMeta{FileID: rs.FileId, IsFolder: true, ModTime: fi.ModTime().Unix(), Rev: rs.Rev})
+					db.Put(subSavePath, &panupload.UploadedFileMeta{FileID: rs.FileId, IsFolder: true, ModTime: fi.ModTime().Unix(), Rev: rs.Rev, ParentId: rs.ParentId})
 					return nil
 				}
 				fmt.Println(subSavePath, "创建云盘文件夹失败", err)

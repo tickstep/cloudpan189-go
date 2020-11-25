@@ -270,18 +270,23 @@ func (utu *UploadTaskUnit) OnSuccess(lastRunResult *taskframework.TaskUnitRunRes
 		ModTime: utu.LocalFileChecksum.ModTime,
 		Size:    utu.LocalFileChecksum.Length,
 	}
-	ufo, ok := lastRunResult.Extra.(*cloudpan.AppUploadFileCommitResult)
-	if !ok {
-		efi, _ := utu.PanClient.AppFileInfoByPath(utu.FamilyId, utu.SavePath)
-		if efi != nil {
-			ufm.FileID = efi.FileId
-			ufm.IsFolder = efi.IsFolder
-			ufm.Rev = efi.Rev
-		}
-	} else {
+	switch ufo := lastRunResult.Extra.(type) {
+	case *cloudpan.AppUploadFileCommitResult:
 		ufm.FileID = ufo.Id
 		ufm.Rev = ufo.Rev
+	case *cloudpan.AppFileEntity:
+		ufm.FileID = ufo.FileId
+		ufm.Rev = ufo.Rev
+		ufm.ParentId = ufo.ParentId
+	default:
+		efi, _ := utu.PanClient.AppGetBasicFileInfo(&cloudpan.AppGetFileInfoParam{FilePath: utu.SavePath, FamilyId: utu.FamilyId})
+		if efi != nil {
+			ufm.FileID = efi.FileId
+			ufm.Rev = efi.Rev
+			ufm.ParentId = efi.ParentId
+		}
 	}
+
 	utu.FolderSyncDb.Put(utu.SavePath, ufm)
 }
 
@@ -398,7 +403,9 @@ StepUploadPrepareUpload:
 		}
 		if efi != nil && efi.FileId != "" {
 			if efi.FileMd5 == strings.ToUpper(utu.LocalFileChecksum.MD5) {
-				return ResultUpdateLocalDatabase
+				result.Succeed = true
+				result.Extra = efi
+				return
 			}
 			// existed, delete it
 			infoList := cloudpan.BatchTaskInfoList{}
