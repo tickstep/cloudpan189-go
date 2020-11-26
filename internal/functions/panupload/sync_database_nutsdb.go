@@ -110,6 +110,5 @@ func (db *nutsDB) Put(key string, value *UploadedFileMeta) error {
 }
 
 func (db *nutsDB) Close() error {
-	db.db.Merge()
 	return db.db.Close()
 }

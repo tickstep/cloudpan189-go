@@ -61,7 +61,10 @@ func CmdBackup() cli.Command {
 		Action:    cmd.Backup,
 		Flags: append(UploadFlags, cli.BoolFlag{
 			Name:  "delete",
-			Usage: "delete 从网盘中删除本地不存在的文件(默认不删除)",
+			Usage: "通过本地数据库记录同步删除网盘文件",
+		}, cli.BoolFlag{
+			Name:  "sync",
+			Usage: "本地同步到网盘（会同步删除网盘文件）",
 		}),
 	}
 }
@@ -83,104 +86,193 @@ func OpenSyncDb(path string) (panupload.SyncDb, error) {
 	return panupload.OpenSyncDb(config.Config.SyncDBType, path, "ecloud")
 }
 
-//根据数据库记录删除本地目录不存在的网盘文件
-func (c *backupFunc) DelRemoteFileFromDB(familyId int64, localDir string, savePath string) {
-	//先转换为绝对路径，避免出现异常
-	localPathDir, err := filepath.Abs(localDir)
-	if err == nil {
-		localDir = localPathDir
-	}
+//删除本地不存在的网盘文件 默认使用本地数据库判断，如果 flagSync 为 true 则遍历网盘文件列表进宪判断（速度较慢）。
+func (c *backupFunc) DelRemoteFileFromDB(familyId int64, localDir string, savePath string, flagSync bool) {
 
-	localPathDir = filepath.Dir(localDir)
+	localPathDir := filepath.Dir(localDir)
 
 	dbpath := filepath.Join(localDir, ".ecloud")
-
-	//数据库目录不存在不需要处理
-	if di, err := os.Stat(dbpath); err != nil && !di.IsDir() {
-		return
-	}
 
 	db, err := OpenSyncDb(dbpath + string(os.PathSeparator) + "db")
 	if err != nil {
 		fmt.Println("同步数据库打开失败！", err)
 		return
 	}
-	for ent, err := db.First(savePath); err == nil; ent, err = db.Next(savePath) {
+
+	defer db.Close()
+
+	//判断本地文件是否存在，如果存在返回 true 否则删除数据库相关记录和网盘上的文件。
+	isLocalFileExist := func(ent *panupload.UploadedFileMeta) (isExists bool) {
 		testPath := strings.TrimPrefix(ent.Path, savePath)
 		testPath = filepath.Join(localPathDir, testPath)
-		_, err := os.Stat(testPath)
-		logger.Verboseln("检测:", testPath, err)
-		if err != nil && os.IsNotExist(err) { //本地文件不存在，删除网盘文件
-			var err *apierror.ApiError
-			logger.Verboseln("删除远程文件", ent.Path)
-			if ent.ParentId == "" {
-				if test := db.Get(path.Dir(ent.Path)); test != nil && test.IsFolder && test.FileID != "" {
-					ent.ParentId = test.FileID
-				}
+		logger.Verboseln("检测:", testPath)
+
+		//为防止误删，只有当 err 是文件不存在的时候才进行删队处理。
+		if fi, err := os.Stat(testPath); err == nil || !os.IsNotExist(err) {
+			//使用sync功能时没有传时间参数进来，为方便对比回写数据库需补上时间。
+			if fi != nil {
+				ent.ModTime = fi.ModTime().Unix()
+			}
+			return true
+		}
+
+		var err *apierror.ApiError
+
+		if ent.ParentId == "" {
+			if test := db.Get(path.Dir(ent.Path)); test != nil && test.IsFolder && test.FileID != "" {
+				ent.ParentId = test.FileID
+			}
+		}
+
+		if ent.FileID == "" || ent.ParentId == "" {
+			efi, err := c.Client.AppGetBasicFileInfo(&cloudpan.AppGetFileInfoParam{
+				FileId:   ent.FileID,
+				FilePath: ent.Path,
+			})
+			//网盘上不存在这个文件或目录，只需要清理数据库
+			if err != nil && err.Code == apierror.ApiCodeFileNotFoundCode {
+				db.DelWithPrefix(ent.Path)
+				logger.Verboseln("删除数据库记录", ent.Path)
+				return
+			}
+			if efi != nil {
+				ent.FileID = efi.FileId
+				ent.ParentId = efi.ParentId
+			}
+		}
+
+		if ent.FileID == "" {
+			return
+		}
+
+		var taskId string
+
+		infoItem := &cloudpan.BatchTaskInfo{
+			FileId:      ent.FileID,
+			FileName:    path.Base(ent.Path),
+			IsFolder:    0,
+			SrcParentId: ent.ParentId,
+		}
+		if ent.IsFolder {
+			infoItem.IsFolder = 1
+		}
+
+		delParam := &cloudpan.BatchTaskParam{
+			TypeFlag:  cloudpan.BatchTaskTypeDelete,
+			TaskInfos: cloudpan.BatchTaskInfoList{infoItem},
+		}
+
+		if familyId > 0 {
+			taskId, err = c.Client.AppCreateBatchTask(familyId, delParam)
+		} else {
+			taskId, err = c.Client.CreateBatchTask(delParam)
+		}
+		if err != nil || taskId == "" {
+			fmt.Println("删除网盘文件或目录失败", ent.Path, err)
+		} else {
+			res, _ := c.Client.CheckBatchTask(cloudpan.BatchTaskTypeDelete, taskId)
+			db.DelWithPrefix(ent.Path)
+			logger.Verboseln("删除网盘文件和数据库记录", ent.Path, res.TaskStatus == 4)
+		}
+		return
+	}
+
+	//根据数据库记录删除不存在的文件
+	if !flagSync {
+		for ent, err := db.First(savePath); err == nil; ent, err = db.Next(savePath) {
+			isLocalFileExist(ent)
+		}
+	}
+
+	pahBasePath := path.Join(savePath, filepath.Base(localDir))
+
+	parent := db.Get(pahBasePath)
+	if parent.FileID == "" {
+		efi, err := c.Client.AppGetBasicFileInfo(&cloudpan.AppGetFileInfoParam{
+			FilePath: savePath,
+		})
+		if err != nil {
+			return
+		}
+		parent.FileID = efi.FileId
+	}
+
+	var syncFunc func(curPath, parentID string)
+	syncFunc = func(curPath, parentID string) {
+		param := cloudpan.NewAppFileListParam()
+		param.FileId = parentID
+		param.FamilyId = familyId
+		fileResult, err := c.Client.AppGetAllFileList(param)
+		if err != nil {
+			return
+		}
+		if fileResult == nil || fileResult.FileList == nil || len(fileResult.FileList) == 0 {
+			return
+		}
+		for _, fileEntity := range fileResult.FileList {
+			ufm := &panupload.UploadedFileMeta{
+				FileID:   fileEntity.FileId,
+				ParentId: fileEntity.ParentId,
+				Size:     fileEntity.FileSize,
+				IsFolder: fileEntity.IsFolder,
+				Rev:      fileEntity.Rev,
+				Path:     path.Join(curPath, fileEntity.FileName),
+				MD5:      strings.ToLower(fileEntity.FileMd5),
 			}
 
-			if ent.FileID == "" || ent.ParentId == "" {
-				efi, err := c.Client.AppGetBasicFileInfo(&cloudpan.AppGetFileInfoParam{
-					FileId:   ent.FileID,
-					FilePath: ent.Path,
-				})
-				//网盘上不存在这个文件或目录，只需要清理数据库
-				if err != nil && err.Code == apierror.ApiCodeFileNotFoundCode {
-					db.DelWithPrefix(ent.Path)
-					logger.Verboseln("删除数据库记录", ent.Path)
-					continue
-				}
-				if efi != nil {
-					ent.FileID = efi.FileId
-					ent.ParentId = efi.ParentId
-				}
-			}
-
-			if ent.FileID == "" {
+			if !isLocalFileExist(ufm) {
 				continue
 			}
 
-			var taskId string
-
-			infoItem := &cloudpan.BatchTaskInfo{
-				FileId:      ent.FileID,
-				FileName:    path.Base(ent.Path),
-				IsFolder:    0,
-				SrcParentId: ent.ParentId,
-			}
-			if ent.IsFolder {
-				infoItem.IsFolder = 1
+			dbInfo := db.Get(ufm.Path)
+			if dbInfo.FileID != ufm.FileID || dbInfo.Size != ufm.Size || dbInfo.MD5 != ufm.MD5 {
+				db.Put(fileEntity.Path, ufm)
 			}
 
-			delParam := &cloudpan.BatchTaskParam{
-				TypeFlag:  cloudpan.BatchTaskTypeDelete,
-				TaskInfos: cloudpan.BatchTaskInfoList{infoItem},
-			}
-
-			if familyId > 0 {
-				taskId, err = c.Client.AppCreateBatchTask(familyId, delParam)
-			} else {
-				taskId, err = c.Client.CreateBatchTask(delParam)
-			}
-			if err != nil || taskId == "" {
-				fmt.Println("删除网盘文件或目录失败", ent.Path)
-			} else {
-				db.DelWithPrefix(ent.Path)
-				logger.Verboseln("删除网盘文件和数据库记录", testPath, "=>", ent.Path, taskId)
+			if ufm.IsFolder {
+				syncFunc(ufm.Path, ufm.FileID)
 			}
 		}
 	}
-	db.Close()
+
+	syncFunc(pahBasePath, parent.FileID)
+}
+
+func (c *backupFunc) checkPath(localdir string) (string, error) {
+	fullPath, err := filepath.Abs(localdir)
+	if err != nil {
+		fullPath = localdir
+	}
+
+	if fi, err := os.Stat(fullPath); err != nil && !fi.IsDir() {
+		return fullPath, os.ErrInvalid
+	}
+
+	dbpath := filepath.Join(fullPath, ".ecloud")
+	//数据库目录判断
+	fi, err := os.Stat(dbpath)
+
+	if err != nil {
+		if os.IsNotExist(err) {
+			err = os.Mkdir(dbpath, 0644)
+		}
+		if err != nil {
+			return fullPath, fmt.Errorf("数据库目录[%s]创建失败，跳过处理: %s", dbpath, err)
+		}
+	}
+
+	if fi != nil && !fi.IsDir() {
+		return fullPath, os.ErrPermission
+	}
+
+	return fullPath, nil
 }
 
 func (c *backupFunc) Backup(cli *cli.Context) error {
 	subArgs := cli.Args()
-	localpaths := subArgs[:cli.NArg()-1]
-	for _, p := range localpaths { //预创建需要的目录
-		if fi, err := os.Stat(p); err == nil && fi.IsDir() {
-			os.Mkdir(filepath.Join(p, ".ecloud"), 0644)
-		}
-	}
+	localpaths := make([]string, 0)
+	flagSync := cli.Bool("sync")
+	flagDelete := cli.Bool("delete")
 
 	opt := &UploadOptions{
 		AllParallel:   cli.Int("p"),
@@ -193,21 +285,35 @@ func (c *backupFunc) Backup(cli *cli.Context) error {
 		FamilyId:      parseFamilyId(cli),
 	}
 
-	savePath := GetActiveUser().PathJoin(opt.FamilyId, subArgs[cli.NArg()-1])
+	localCount := cli.NArg() - 1
+	savePath := GetActiveUser().PathJoin(opt.FamilyId, subArgs[localCount])
+
+	wg := sync.WaitGroup{}
+	wg.Add(localCount)
+	for _, p := range subArgs[:localCount] {
+		go func(p string) {
+			defer wg.Done()
+			fullPath, err := c.checkPath(p)
+			switch err {
+			case nil:
+				if flagSync || flagDelete {
+					c.DelRemoteFileFromDB(opt.FamilyId, fullPath, savePath, flagSync)
+				}
+			case os.ErrInvalid:
+			default:
+				return
+			}
+			localpaths = append(localpaths, fullPath)
+		}(p)
+	}
+
+	wg.Wait()
+
+	if len(localpaths) == 0 {
+		return nil
+	}
 
 	RunUpload(localpaths, savePath, opt)
-	//根据数据库记录进行同步删除操作
-	if cli.Bool("delete") {
-		wg := sync.WaitGroup{}
-		wg.Add(len(localpaths))
-		for _, curPath := range localpaths {
-			go func(localdir string) {
-				c.DelRemoteFileFromDB(opt.FamilyId, localdir, savePath)
-				wg.Done()
-			}(curPath)
-		}
-		wg.Wait()
-	}
 
 	return nil
 }
