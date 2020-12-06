@@ -15,17 +15,18 @@ package config
 
 import (
 	"fmt"
-	"github.com/json-iterator/go"
-	"github.com/tickstep/cloudpan189-api/cloudpan"
-	"github.com/tickstep/cloudpan189-go/cmder/cmdutil"
-	"github.com/tickstep/cloudpan189-go/cmder/cmdutil/jsonhelper"
-	"github.com/tickstep/library-go/logger"
-	"github.com/tickstep/library-go/requester"
 	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
 	"sync"
+
+	jsoniter "github.com/json-iterator/go"
+	"github.com/tickstep/cloudpan189-api/cloudpan"
+	"github.com/tickstep/cloudpan189-go/cmder/cmdutil"
+	"github.com/tickstep/cloudpan189-go/cmder/cmdutil/jsonhelper"
+	"github.com/tickstep/library-go/logger"
+	"github.com/tickstep/library-go/requester"
 )
 
 const (
@@ -51,8 +52,8 @@ var (
 
 type UpdateCheckInfo struct {
 	PreferUpdateSrv string `json:"preferUpdateSrv"` // 优先更新服务器，github | tickstep
-	LatestVer string `json:"latestVer"` // 最后检测到的版本
-	CheckTime int64 `json:"checkTime"` // 最后检测的时间戳，单位为秒
+	LatestVer       string `json:"latestVer"`       // 最后检测到的版本
+	CheckTime       int64  `json:"checkTime"`       // 最后检测的时间戳，单位为秒
 }
 
 // PanConfig 配置详情
@@ -60,20 +61,22 @@ type PanConfig struct {
 	ConfigVer string `json:"configVer"`
 	ActiveUID uint64 `json:"activeUID"`
 
-	UserList  PanUserList `json:"userList"`
+	UserList PanUserList `json:"userList"`
 
-	CacheSize           int `json:"cacheSize"`          // 下载缓存
-	MaxDownloadParallel int `json:"maxDownloadParallel"`        // 最大下载并发量
-	MaxUploadParallel   int `json:"maxUploadParallel"` // 最大上传并发量，即同时上传文件最大数量
-	MaxDownloadLoad     int `json:"maxDownloadLoad"`   // 同时进行下载文件的最大数量
+	CacheSize           int `json:"cacheSize"`           // 下载缓存
+	MaxDownloadParallel int `json:"maxDownloadParallel"` // 最大下载并发量
+	MaxUploadParallel   int `json:"maxUploadParallel"`   // 最大上传并发量，即同时上传文件最大数量
+	MaxDownloadLoad     int `json:"maxDownloadLoad"`     // 同时进行下载文件的最大数量
 
 	MaxDownloadRate int64 `json:"maxDownloadRate"` // 限制最大下载速度，单位 B/s, 即字节/每秒
 	MaxUploadRate   int64 `json:"maxUploadRate"`   // 限制最大上传速度，单位 B/s, 即字节/每秒
 
-	SaveDir        string `json:"saveDir"` // 下载储存路径
+	SaveDir string `json:"saveDir"` // 下载储存路径
 
-	Proxy       string `json:"proxy"`        // 代理
-	LocalAddrs  string `json:"localAddrs"`  // 本地网卡地址
+	SyncDBType int `json:"syncDbType"` //数据同步或备份时本地使用数据库类型 1:sqlite 2:nutsdb，默认是sqlite
+
+	Proxy           string          `json:"proxy"`      // 代理
+	LocalAddrs      string          `json:"localAddrs"` // 本地网卡地址
 	UpdateCheckInfo UpdateCheckInfo `json:"updateCheckInfo"`
 
 	configFilePath string
@@ -86,6 +89,7 @@ type PanConfig struct {
 func NewConfig(configFilePath string) *PanConfig {
 	c := &PanConfig{
 		configFilePath: configFilePath,
+		SyncDBType:     1,
 	}
 	return c
 }

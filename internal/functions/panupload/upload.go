@@ -42,12 +42,15 @@ type (
 	}
 
 	UploadedFileMeta struct {
-		Path    string `json:"path,omitempty"`    // 本地路径
-		Size    int64  `json:"length,omitempty"`  // 文件大小
-		MD5     string `json:"md5,omitempty"`     // 文件的 md5
-		ModTime int64  `json:"modtime,omitempty"` // 修改日期
-		FileID  int64  `json:"id,omitempty"`      //文件、目录ID
-		Rev     int64  `json:"rev,omitempty"`     //文件版本
+		IsFolder     bool   `json:"isFolder,omitempty"` // 是否目录
+		Path         string `json:"-"`                  // 本地路径，不记录到数据库
+		MD5          string `json:"md5,omitempty"`      // 文件的 md5
+		FileID       string `json:"id,omitempty"`       //文件、目录ID
+		ParentId     string `json:"parentId,omitempty"` //父文件夹ID
+		Rev          string `json:"rev,omitempty"`      //文件版本
+		Size         int64  `json:"length,omitempty"`   // 文件大小
+		ModTime      int64  `json:"modtime,omitempty"`  // 修改日期
+		LastSyncTime int64  `json:"synctime,omitempty"` //最后同步时间
 	}
 
 	EmptyReaderLen64 struct {

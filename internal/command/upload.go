@@ -73,7 +73,7 @@ var UploadFlags = []cli.Flag{
 	},
 	cli.BoolFlag{
 		Name:  "np",
-		Usage: "no progress 不展示下载进度条",
+		Usage: "no progress 不展示上传进度条",
 	},
 	cli.BoolFlag{
 		Name:  "ow",
@@ -183,7 +183,7 @@ func RunUpload(localPaths []string, savePath string, opt *UploadOptions) {
 
 	for _, curPath := range localPaths {
 		var walkFunc filepath.WalkFunc
-		var db *panupload.FolderSyncDb
+		var db panupload.SyncDb
 		curPath = filepath.Clean(curPath)
 		localPathDir := filepath.Dir(curPath)
 
@@ -200,13 +200,14 @@ func RunUpload(localPaths []string, savePath string, opt *UploadOptions) {
 			}
 			dbpath += string(os.PathSeparator) + ".ecloud"
 			if di, err := os.Stat(dbpath); err == nil && di.IsDir() {
-				db, err = panupload.OpenSyncDb(dbpath+string(os.PathSeparator)+"db", "ecloud")
+				db, err = panupload.OpenSyncDb(config.Config.SyncDBType, dbpath+string(os.PathSeparator)+"db", "ecloud")
 				if db != nil {
-					defer func(syncDb *panupload.FolderSyncDb) {
+					defer func(syncDb panupload.SyncDb) {
 						db.Close()
 					}(db)
 				} else {
-					fmt.Println(err)
+					fmt.Println(curPath, "同步数据库打开失败,跳过该目录的备份", err)
+					continue
 				}
 			}
 		}
@@ -214,13 +215,6 @@ func RunUpload(localPaths []string, savePath string, opt *UploadOptions) {
 		walkFunc = func(file string, fi os.FileInfo, err error) error {
 			if err != nil {
 				return err
-			}
-
-			if fi.IsDir() { // 忽略目录
-				if fi.Name() == ".ecloud" {
-					return filepath.SkipDir
-				}
-				return nil
 			}
 
 			if fi.Mode()&os.ModeSymlink != 0 { // 读取 symbol link
@@ -236,12 +230,40 @@ func RunUpload(localPaths []string, savePath string, opt *UploadOptions) {
 			}
 
 			subSavePath = path.Clean(savePath + cloudpan.PathSeparator + subSavePath)
+			var ufm *panupload.UploadedFileMeta
 
 			if db != nil {
-				if test := db.Get(subSavePath); test != nil && test.Size == fi.Size() && test.ModTime == fi.ModTime().Unix() {
+				if ufm = db.Get(subSavePath); ufm.Size == fi.Size() && ufm.ModTime == fi.ModTime().Unix() {
 					logger.Verbosef("文件未修改跳过:%s\n", file)
 					return nil
 				}
+			}
+
+			if fi.IsDir() { //目录处理
+				if strings.HasPrefix(fi.Name(), ".ecloud") {
+					return filepath.SkipDir
+				}
+				//不存在同步数据库时跳过
+				if db == nil || ufm.FileID != "" {
+					return nil
+				}
+				panClient := activeUser.PanClient()
+				fmt.Println(subSavePath, "云盘文件夹预创建")
+				//首先尝试直接创建文件夹
+				if ufm = db.Get(path.Dir(subSavePath)); ufm.IsFolder == true && ufm.FileID != "" {
+					rs, err := panClient.AppMkdir(opt.FamilyId, ufm.FileID, fi.Name())
+					if err == nil && rs != nil && rs.FileId != "" {
+						db.Put(subSavePath, &panupload.UploadedFileMeta{FileID: rs.FileId, IsFolder: true, ModTime: fi.ModTime().Unix(), Rev: rs.Rev, ParentId: rs.ParentId})
+						return nil
+					}
+				}
+				rs, err := panClient.AppMkdirRecursive(opt.FamilyId, "", "", 0, strings.Split(path.Clean(subSavePath), "/"))
+				if err == nil && rs != nil && rs.FileId != "" {
+					db.Put(subSavePath, &panupload.UploadedFileMeta{FileID: rs.FileId, IsFolder: true, ModTime: fi.ModTime().Unix(), Rev: rs.Rev, ParentId: rs.ParentId})
+					return nil
+				}
+				fmt.Println(subSavePath, "创建云盘文件夹失败", err)
+				return filepath.SkipDir
 			}
 
 			taskinfo := executor.Append(&panupload.UploadTaskUnit{

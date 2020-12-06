@@ -1,4 +1,4 @@
-// Copyright (c) 2020 tickstep.
+// Copyright (c) 2020 tickstep & chenall
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,15 +15,16 @@ package panupload
 
 import (
 	"errors"
+	"os"
+	"path/filepath"
+	"strings"
+	"time"
+
 	"github.com/tickstep/cloudpan189-go/internal/config"
 	"github.com/tickstep/cloudpan189-go/internal/file/uploader"
 	"github.com/tickstep/cloudpan189-go/internal/localfile"
 	"github.com/tickstep/library-go/converter"
 	"github.com/tickstep/library-go/jsonhelper"
-	"os"
-	"path/filepath"
-	"strings"
-	"time"
 )
 
 type (
