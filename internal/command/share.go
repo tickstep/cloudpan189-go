@@ -15,32 +15,44 @@ package command
 
 import (
 	"fmt"
-	"github.com/tickstep/cloudpan189-api/cloudpan"
-	"github.com/tickstep/cloudpan189-go/cmder/cmdtable"
-	"github.com/tickstep/library-go/text"
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/tickstep/cloudpan189-api/cloudpan"
+	"github.com/tickstep/cloudpan189-go/cmder/cmdtable"
+	"github.com/tickstep/library-go/text"
 )
 
 // RunShareSet 执行分享
-func RunShareSet(paths []string, expiredTime cloudpan.ShareExpiredTime) {
+func RunShareSet(paths []string, expiredTime cloudpan.ShareExpiredTime, shareMode cloudpan.ShareMode) {
 	fileList, _, err := GetFileInfoByPaths(paths[:len(paths)]...)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	for _, fi := range fileList {
-		r, err := GetActivePanClient().SharePrivate(fi.FileId, expiredTime)
-		if err != nil {
-			fmt.Printf("创建分享链接失败: %s - %s\n", fi.Path, err)
-			continue
+	if shareMode == 1 {
+		for _, fi := range fileList {
+			r, err := GetActivePanClient().SharePrivate(fi.FileId, expiredTime)
+			if err != nil {
+				fmt.Printf("创建分享链接失败: %s - %s\n", fi.Path, err)
+				continue
+			}
+			fmt.Printf("路径: %s\n链接: %s（访问码：%s）\n", fi.Path, r.ShortShareUrl, r.AccessCode)
 		}
-		fmt.Printf("路径: %s 链接: %s（访问码：%s）\n",fi.Path, r.ShortShareUrl, r.AccessCode)
+	} else {
+		for _, fi := range fileList {
+			r, err := GetActivePanClient().SharePublic(fi.FileId, expiredTime)
+			if err != nil {
+				fmt.Printf("创建分享链接失败: %s - %s\n", fi.Path, err)
+				continue
+			}
+			fmt.Printf("路径: %s\n链接: %s\n", fi.Path, r.ShortShareUrl)
+		}
 	}
-}
 
+}
 
 // RunShareList 执行列出分享列表
 func RunShareList(page int) {
@@ -117,8 +129,8 @@ func RunShareSave(shareUrl, savePanDirPath string) {
 	}
 
 	savePanDirPath = activeUser.PathJoin(0, savePanDirPath)
-	if savePanDirPath[len(savePanDirPath) - 1] == '/' {
-		savePanDirPath = text.Substr(savePanDirPath, 0, len(savePanDirPath) - 1)
+	if savePanDirPath[len(savePanDirPath)-1] == '/' {
+		savePanDirPath = text.Substr(savePanDirPath, 0, len(savePanDirPath)-1)
 	}
 	fi, apier := activeUser.PanClient().FileInfoByPath(savePanDirPath)
 	if apier != nil {

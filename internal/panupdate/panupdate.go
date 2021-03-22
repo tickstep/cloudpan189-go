@@ -116,7 +116,7 @@ func GetLatestReleaseInfo(showPrompt bool) *ReleaseInfo {
 	client.SetTimeout(time.Duration(0) * time.Second)
 	client.SetKeepAlive(true)
 
-	// check ticstep srv
+	// check tickstep srv
 	var tsReleaseInfo *ReleaseInfo = nil
 	for idx := 0; idx < 3; idx++ {
 		tsReleaseInfo = getReleaseFromTicstep(client, showPrompt)
@@ -138,6 +138,7 @@ func GetLatestReleaseInfo(showPrompt bool) *ReleaseInfo {
 
 	var releaseInfo *ReleaseInfo = nil
 	if config.Config.UpdateCheckInfo.PreferUpdateSrv == "tickstep" {
+		// theoretically, tickstep server will be more faster at mainland
 		releaseInfo = tsReleaseInfo
 	} else {
 		releaseInfo = ghReleaseInfo

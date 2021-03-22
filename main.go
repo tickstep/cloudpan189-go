@@ -1083,7 +1083,6 @@ func main() {
 					Usage:     "设置分享文件/目录",
 					UsageText: app.Name + " share set <文件/目录1> <文件/目录2> ...",
 					Description: `
-目前只支持创建私密链接.
 示例:
 
     创建文件 1.mp4 的分享链接 
@@ -1116,13 +1115,26 @@ func main() {
 								et = cloudpan.ShareExpiredTimeForever
 							}
 						}
-						command.RunShareSet(c.Args(), et)
+						sm := cloudpan.ShareModePrivate
+						if c.IsSet("mode") {
+							op := c.String("mode")
+							if op == "1" {
+								sm = cloudpan.ShareModePrivate
+							} else {
+								sm = cloudpan.ShareModePublic
+							}
+						}
+						command.RunShareSet(c.Args(), et, sm)
 						return nil
 					},
 					Flags: []cli.Flag{
 						cli.StringFlag{
 							Name:  "time",
 							Usage: "有效期，0-永久，1-1天，2-7天",
+						},
+						cli.StringFlag{
+							Name:  "mode",
+							Usage: "有效期，1-私密分享，2-公开分享",
 						},
 					},
 				},
