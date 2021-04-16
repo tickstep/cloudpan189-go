@@ -635,7 +635,7 @@ cli交互模式下, 运行命令 `config set -max_download_parallel 2` 将下载
 当需要定位问题，或者提交issue的时候抓取log，则需要开启debug日志。步骤如下：
 
 ### 第一步
-Linux&MacOS
+Linux&MacOS   
 命令行运行
 ```
 export CLOUD189_VERBOSE=1
