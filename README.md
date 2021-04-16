@@ -53,6 +53,8 @@
   * [5. 下载文件](#5-下载文件)
   * [6. 设置下载最大并发量](#6-设置下载最大并发量)
   * [7. 退出程序](#7-退出程序)
+- [常见问题Q&A](#常见问题Q&A)  
+  * [1. 如何开启Debug调试日志](#1-如何开启Debug调试日志)
 - [交流反馈](#交流反馈)
 - [鸣谢](#鸣谢)
 
@@ -626,6 +628,27 @@ cli交互模式下, 运行命令 `config set -max_download_parallel 2` 将下载
 ## 7 退出程序
 
 运行命令 `quit` 或 `exit` 或 组合键 `Ctrl+C`
+
+# 常见问题Q&A
+
+## 1 如何开启Debug调试日志
+当需要定位问题，或者提交issue的时候抓取log，则需要开启debug日志。步骤如下：
+
+### 第一步
+Linux&MacOS
+命令行运行
+```
+export CLOUD189_VERBOSE=1
+```
+
+Windows
+不同版本会有些许不一样，请自行查询具体方法
+设置示意图如下：
+![](assets/images/win10-env-debug-config.png)
+
+### 第二步
+打开cloudpan189-go命令行程序，任何云盘命令都有类似如下日志输出
+![](assets/images/debug-log-screenshot.png)
 
 
 # 交流反馈
