@@ -641,7 +641,7 @@ Linux&MacOS
 export CLOUD189_VERBOSE=1
 ```
 
-Windows
+Windows   
 不同版本会有些许不一样，请自行查询具体方法
 设置示意图如下：
 ![](assets/images/win10-env-debug-config.png)
