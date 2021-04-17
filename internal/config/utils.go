@@ -20,6 +20,7 @@ import (
 	"github.com/tickstep/library-go/converter"
 	"github.com/tickstep/library-go/crypto"
 	"github.com/tickstep/library-go/ids"
+	"github.com/tickstep/library-go/logger"
 	"strconv"
 	"strings"
 )
@@ -90,10 +91,19 @@ func EncryptString(text string) string {
 
 // DecryptString 解密
 func DecryptString(text string) string {
+	defer func() {
+		if err := recover(); err != nil {
+			logger.Verboseln("decrypt string failed, maybe the key has been changed")
+		}
+	}()
+
 	if text == "" {
 		return ""
 	}
 	d, _  := hex.DecodeString(text)
+
+	// use the machine unique id as the key
+	// but in some OS, this key will be changed if you reinstall the OS
 	key := []byte(ids.GetUniqueId("cloudpan189", 16))
 	r, e := crypto.DecryptAES(d, key)
 	if e != nil {
