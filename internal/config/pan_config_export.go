@@ -82,7 +82,6 @@ func (c *PanConfig) PrintTable() {
 		[]string{"savedir", c.SaveDir, "", "下载文件的储存目录"},
 		[]string{"proxy", c.Proxy, "", "设置代理, 支持 http/socks5 代理，例如：http://127.0.0.1:8888"},
 		[]string{"local_addrs", c.LocalAddrs, "", "设置本地网卡地址, 多个地址用逗号隔开"},
-		[]string{"sync_db_type", strconv.Itoa(c.SyncDBType), "1 ~ 2", "数据同步或备份时本地使用数据库类型\n1：sqlite 2:nutsdb，注非法的值也是默认使用sqlite"},
 	})
 	tb.Render()
 }

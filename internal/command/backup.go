@@ -83,7 +83,7 @@ func (c *backupFunc) Before(cli *cli.Context) error {
 }
 
 func OpenSyncDb(path string) (panupload.SyncDb, error) {
-	return panupload.OpenSyncDb(config.Config.SyncDBType, path, "ecloud")
+	return panupload.OpenSyncDb(path, "ecloud")
 }
 
 //删除本地不存在的网盘文件 默认使用本地数据库判断，如果 flagSync 为 true 则遍历网盘文件列表进宪判断（速度较慢）。
