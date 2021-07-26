@@ -36,19 +36,9 @@ type autoCleanInfo struct {
 	SyncTime int64
 }
 
-type SyncDBType uint8
+func OpenSyncDb(file string, bucket string) (SyncDb, error) {
+	// todo: mkdir
 
-const (
-	DB_SQLITE SyncDBType = 1
-	DB_NUTSDB SyncDBType = 2
-)
-
-func OpenSyncDb(t int, file string, bucket string) (SyncDb, error) {
-	switch SyncDBType(t) {
-	case DB_SQLITE:
-	case DB_NUTSDB:
-		return openNutsDb(file, bucket)
-	}
 	return openSQLiteDB(file, bucket)
 }
 

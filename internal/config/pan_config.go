@@ -73,8 +73,6 @@ type PanConfig struct {
 
 	SaveDir string `json:"saveDir"` // 下载储存路径
 
-	SyncDBType int `json:"syncDbType"` //数据同步或备份时本地使用数据库类型 1:sqlite 2:nutsdb，默认是sqlite
-
 	Proxy           string          `json:"proxy"`      // 代理
 	LocalAddrs      string          `json:"localAddrs"` // 本地网卡地址
 	UpdateCheckInfo UpdateCheckInfo `json:"updateCheckInfo"`
@@ -89,7 +87,6 @@ type PanConfig struct {
 func NewConfig(configFilePath string) *PanConfig {
 	c := &PanConfig{
 		configFilePath: configFilePath,
-		SyncDBType:     1,
 	}
 	return c
 }

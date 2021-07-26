@@ -200,7 +200,7 @@ func RunUpload(localPaths []string, savePath string, opt *UploadOptions) {
 			}
 			dbpath += string(os.PathSeparator) + ".ecloud"
 			if di, err := os.Stat(dbpath); err == nil && di.IsDir() {
-				db, err = panupload.OpenSyncDb(config.Config.SyncDBType, dbpath+string(os.PathSeparator)+"db", "ecloud")
+				db, err = panupload.OpenSyncDb(dbpath+string(os.PathSeparator)+"db", "ecloud")
 				if db != nil {
 					defer func(syncDb panupload.SyncDb) {
 						db.Close()
