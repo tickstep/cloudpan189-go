@@ -37,9 +37,7 @@ type autoCleanInfo struct {
 }
 
 func OpenSyncDb(file string, bucket string) (SyncDb, error) {
-	// todo: mkdir
-
-	return openSQLiteDB(file, bucket)
+	return openBoltDb(file, bucket)
 }
 
 type dbTableField struct {
