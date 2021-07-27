@@ -25,14 +25,19 @@ import (
 type boltDB struct {
 	db        *bolt.DB
 	bucket    string
-	next      map[string]*bolt.Cursor
+	next      map[string]*boltDBScan
 	cleanInfo *autoCleanInfo
 }
 
 type boltDBScan struct {
-	entries bolt.Info
+	entries []*boltKV
 	off     int
 	size    int
+}
+
+type boltKV struct {
+	k []byte
+	v []byte
 }
 
 func openBoltDb(file string, bucket string) (SyncDb, error) {
@@ -42,7 +47,7 @@ func openBoltDb(file string, bucket string) (SyncDb, error) {
 		return nil, err
 	}
 	logger.Verboseln("open boltDB ok")
-	return &boltDB{db: db, bucket: bucket, next: make(map[string]*bolt.Cursor)}, nil
+	return &boltDB{db: db, bucket: bucket, next: make(map[string]*boltDBScan)}, nil
 }
 
 func (db *boltDB) Get(key string) (data *UploadedFileMeta) {
@@ -110,9 +115,22 @@ func (db *boltDB) First(prefix string) (*UploadedFileMeta, error) {
 			return nil
 		}
 		c := b.Cursor()
-		if k, _ := c.Seek([]byte(prefix)); k != nil && bytes.HasPrefix(k, []byte(prefix)) {
-			db.next[prefix] = c
+		db.next[prefix] = &boltDBScan{
+			entries: []*boltKV{},
+			off:     0,
+			size:    0,
 		}
+		for k, v := c.Seek([]byte(prefix)); k != nil && bytes.HasPrefix(k, []byte(prefix)); k, v = c.Next() {
+			//fmt.Printf("key=%s, value=%s\n", k, v)
+			if len(k) > 0 {
+				db.next[prefix].entries = append(db.next[prefix].entries, &boltKV{
+					k: k,
+					v: v,
+				})
+			}
+		}
+		db.next[prefix].off = 0
+		db.next[prefix].size = len(db.next[prefix].entries)
 		return nil
 	})
 	return db.Next(prefix)
@@ -121,10 +139,14 @@ func (db *boltDB) First(prefix string) (*UploadedFileMeta, error) {
 func (db *boltDB) Next(prefix string) (*UploadedFileMeta, error) {
 	data := &UploadedFileMeta{}
 	if _,ok := db.next[prefix]; ok {
-		k, v := db.next[prefix].Next()
-		if len(v) > 0 {
-			jsoniter.Unmarshal(v, &data)
-			data.Path = string(k)
+		if db.next[prefix].off >= db.next[prefix].size {
+			return nil, fmt.Errorf("no any more record")
+		}
+		kv := db.next[prefix].entries[db.next[prefix].off]
+		db.next[prefix].off++
+		if kv != nil {
+			jsoniter.Unmarshal(kv.v, &data)
+			data.Path = string(kv.k)
 			return data, nil
 		}
 	}
@@ -143,7 +165,10 @@ func (db *boltDB) Put(key string, value *UploadedFileMeta) error {
 		}
 		b := tx.Bucket([]byte(db.bucket))
 		if b == nil {
-			return nil
+			b,err = tx.CreateBucket([]byte(db.bucket))
+			if err != nil {
+				return err
+			}
 		}
 		return b.Put([]byte(key), data)
 	})
@@ -153,5 +178,8 @@ func (db *boltDB) Close() error {
 	if db.cleanInfo != nil {
 		db.clean()
 	}
-	return db.db.Close()
+	if db.db != nil {
+		return db.db.Close()
+	}
+	return nil
 }

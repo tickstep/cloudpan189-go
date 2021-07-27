@@ -20,17 +20,11 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
-
 	"github.com/tickstep/cloudpan189-api/cloudpan/apierror"
-
 	"github.com/tickstep/library-go/logger"
-
 	"github.com/tickstep/cloudpan189-api/cloudpan"
-
 	"github.com/tickstep/cloudpan189-go/internal/functions/panupload"
-
 	"github.com/urfave/cli"
-
 	"github.com/tickstep/cloudpan189-go/internal/config"
 )
 
@@ -86,7 +80,7 @@ func OpenSyncDb(path string) (panupload.SyncDb, error) {
 	return panupload.OpenSyncDb(path, "ecloud")
 }
 
-//删除本地不存在的网盘文件 默认使用本地数据库判断，如果 flagSync 为 true 则遍历网盘文件列表进宪判断（速度较慢）。
+// 删除那些本地不存在而网盘存在的网盘文件 默认使用本地数据库判断，如果 flagSync 为 true 则遍历网盘文件列表进行判断（速度较慢）。
 func (c *backupFunc) DelRemoteFileFromDB(familyId int64, localDir string, savePath string, flagSync bool) {
 	var db panupload.SyncDb
 	var err error
@@ -108,7 +102,7 @@ func (c *backupFunc) DelRemoteFileFromDB(familyId int64, localDir string, savePa
 		testPath = filepath.Join(localDir, testPath)
 		logger.Verboseln("同步删除检测:", testPath, ent.Path)
 
-		//为防止误删，只有当 err 是文件不存在的时候才进行删队处理。
+		//为防止误删，只有当 err 是文件不存在的时候才进行删除处理。
 		if fi, err := os.Stat(testPath); err == nil || !os.IsNotExist(err) {
 			//使用sync功能时没有传时间参数进来，为方便对比回写数据库需补上时间。
 			if fi != nil {
@@ -177,7 +171,7 @@ func (c *backupFunc) DelRemoteFileFromDB(familyId int64, localDir string, savePa
 		return
 	}
 
-	//根据数据库记录删除不存在的文件
+	// 根据数据库记录删除不存在的文件
 	if !flagSync {
 		for ent, err := db.First(savePath); err == nil; ent, err = db.Next(savePath) {
 			isLocalFileExist(ent)

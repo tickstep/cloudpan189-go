@@ -16,6 +16,7 @@ package localfile
 import (
 	"crypto/md5"
 	"encoding/hex"
+	"github.com/tickstep/cloudpan189-api/cloudpan"
 	"hash/crc32"
 	"io"
 	"os"
@@ -208,6 +209,11 @@ func (lfc *LocalFileEntity) Sum(checkSumFlag int) (err error) {
 			func(sum interface{}) {
 				if sum != nil {
 					lfc.MD5 = hex.EncodeToString(sum.([]byte))
+				}
+
+				// zero size file
+				if lfc.Length == 0 {
+					lfc.MD5 = cloudpan.DefaultEmptyFileMd5
 				}
 			},
 		)
