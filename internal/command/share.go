@@ -18,6 +18,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/tickstep/cloudpan189-api/cloudpan"
 	"github.com/tickstep/cloudpan189-go/cmder/cmdtable"
@@ -72,7 +73,8 @@ func RunShareList(page int) {
 	tb := cmdtable.NewTable(os.Stdout)
 	tb.SetHeader([]string{"#", "ShARE_ID", "分享链接", "访问码", "文件名", "FILE_ID", "分享时间"})
 	for k, record := range records.Data {
-		tb.Append([]string{strconv.Itoa(k), strconv.FormatInt(record.ShareId, 10), record.AccessURL, record.AccessCode, record.FileName, record.FileId, record.ShareTime})
+		tm := time.Unix(record.ShareTime / 1000, 0)
+		tb.Append([]string{strconv.Itoa(k), strconv.FormatInt(record.ShareId, 10), record.AccessURL, record.AccessCode, record.FileName, record.FileId, tm.Format("2006-01-02 15:04:05")})
 	}
 	tb.Render()
 }
