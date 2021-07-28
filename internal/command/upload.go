@@ -385,7 +385,7 @@ func RunRapidUpload(familyId int64, isOverwrite bool, panFilePath string, md5Str
 		r, apierr = panClient.AppCreateUploadFile(appCreateUploadFileParam)
 	}
 	if apierr != nil {
-		fmt.Println("创建上传任务失败")
+		fmt.Println("创建上传任务失败：", apierr.Error())
 		return
 	}
 

@@ -196,11 +196,7 @@ func processOneImport(familyId int64, isOverwrite bool, dirMap map[string]*dirFi
 		r, apierr = panClient.AppCreateUploadFile(appCreateUploadFileParam)
 	}
 	if apierr != nil {
-		if apierr.Code == apierror.UserDayFlowOverLimited {
-			fmt.Println("创建上传任务失败: " + apierr.Error())
-			return false, true
-		}
-		fmt.Println("创建上传任务失败")
+		fmt.Println("创建上传任务失败：", apierr.Error())
 		return false, true
 	}
 

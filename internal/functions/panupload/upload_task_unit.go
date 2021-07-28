@@ -464,7 +464,7 @@ StepUploadPrepareUpload:
 	}
 	if apierr != nil {
 		result.Err = apierr
-		result.ResultMessage = "创建上传任务失败"
+		result.ResultMessage = "创建上传任务失败：" + apierr.Error()
 		return
 	}
 
