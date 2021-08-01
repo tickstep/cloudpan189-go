@@ -271,6 +271,7 @@ cloudpan189-go d <网盘文件或目录的路径1> <文件或目录2> <文件或
   -l value        指定同时进行下载文件的数量 (default: 0)
   --retry value   下载失败最大重试次数 (default: 3)
   --nocheck       下载文件完成后不校验文件
+  --exn value     指定排除的文件夹或者文件的名称，只支持正则表达式。支持排除多个名称，每一个名称就是一个exn参数
 ```
 
 
@@ -312,6 +313,20 @@ cloudpan189-go upload C:/Users/Administrator/Desktop/1.mp4 C:/Users/Administrato
 
 # 将本地的 C:\Users\Administrator\Desktop 整个目录上传到网盘 /视频 目录
 cloudpan189-go upload C:/Users/Administrator/Desktop /视频
+
+## 下面演示文件或者文件夹排除功能
+
+# 将本地的 C:\Users\Administrator\Video 整个目录上传到网盘 /视频 目录，但是排除所有的.jpg文件
+cloudpan189-go upload -exn "\.jpg$" C:/Users/Administrator/Video /视频
+
+# 将本地的 C:\Users\Administrator\Video 整个目录上传到网盘 /视频 目录，但是排除所有的.jpg文件和.mp3文件，每一个排除项就是一个exn参数
+cloudpan189-go upload -exn "\.jpg$" -exn "\.mp3$" C:/Users/Administrator/Video /视频
+
+以下是典型的排除特定文件或者文件夹的例子，注意：参数值必须是正则表达式
+排除@eadir文件或者文件夹：-exn "^@eadir$"
+排除.jpg文件：-exn "\.jpg$"
+排除.号开头的文件：-exn "^\."
+排除 myfile.txt 文件：-exn "^myfile.txt$"
 ```
 
 ## 备份文件/目录
