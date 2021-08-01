@@ -1241,6 +1241,7 @@ func main() {
 					ShowProgress:  !c.Bool("np"),
 					IsOverwrite:   c.Bool("ow"),
 					FamilyId:      parseFamilyId(c),
+					ExcludeNames: c.StringSlice("exn"),
 				})
 				return nil
 			},

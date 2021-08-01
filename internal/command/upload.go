@@ -15,9 +15,11 @@ package command
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -57,6 +59,7 @@ type (
 		ShowProgress  bool
 		IsOverwrite   bool // 覆盖已存在的文件，如果同名文件已存在则移到回收站里
 		FamilyId      int64
+		ExcludeNames []string // 排除的文件名，包括文件夹和文件。即这些文件/文件夹不进行上传，支持正则表达式
 	}
 )
 
@@ -87,6 +90,11 @@ var UploadFlags = []cli.Flag{
 		Name:  "familyId",
 		Usage: "家庭云ID",
 		Value: "",
+	},
+	cli.StringSliceFlag{
+		Name:  "exn",
+		Usage: "excludeNames，指定排除的文件夹或者文件的名称，只支持正则表达式。支持排除多个名称，每一个名称就是一个exn参数",
+		Value: nil,
 	},
 }
 
@@ -181,11 +189,18 @@ func RunUpload(localPaths []string, savePath string, opt *UploadOptions) {
 		}
 	}()
 
+	// 遍历指定的文件并创建上传任务
 	for _, curPath := range localPaths {
 		var walkFunc filepath.WalkFunc
 		var db panupload.SyncDb
 		curPath = filepath.Clean(curPath)
 		localPathDir := filepath.Dir(curPath)
+
+		// 是否排除上传
+		if isExcludeFile(curPath, opt) {
+			fmt.Printf("排除文件: %s\n", curPath)
+			continue
+		}
 
 		// 避免去除文件名开头的"."
 		if localPathDir == "." {
@@ -217,8 +232,14 @@ func RunUpload(localPaths []string, savePath string, opt *UploadOptions) {
 				return err
 			}
 
+			// 是否排除上传
+			if isExcludeFile(file, opt) {
+				fmt.Printf("排除文件: %s\n", file)
+				return filepath.SkipDir
+			}
+
 			if fi.Mode()&os.ModeSymlink != 0 { // 读取 symbol link
-				err = filepath.Walk(file+string(os.PathSeparator), walkFunc)
+				err = WalkAllFile(file+string(os.PathSeparator), walkFunc)
 				return err
 			}
 
@@ -239,7 +260,7 @@ func RunUpload(localPaths []string, savePath string, opt *UploadOptions) {
 				}
 			}
 
-			if fi.IsDir() { //目录处理
+			if fi.IsDir() { // 备份目录处理
 				if strings.HasPrefix(fi.Name(), ".ecloud") {
 					return filepath.SkipDir
 				}
@@ -285,13 +306,68 @@ func RunUpload(localPaths []string, savePath string, opt *UploadOptions) {
 			fmt.Printf("%s [%s] 加入上传队列: %s\n", time.Now().Format("2006-01-02 15:04:05"), taskinfo.Id(), file)
 			return nil
 		}
-		if err := filepath.Walk(curPath, walkFunc); err != nil {
+		if err := WalkAllFile(curPath, walkFunc); err != nil {
 			fmt.Printf("警告: 遍历错误: %s\n", err)
 		}
 	}
 	close(Done)
 	wg.Wait()
 	logger.Verboseln("Upload Ok!")
+}
+
+// 是否是排除上传的文件
+func isExcludeFile(filePath string, opt *UploadOptions) bool {
+	if opt == nil || len(opt.ExcludeNames) == 0{
+		return false
+	}
+
+	for _,pattern := range opt.ExcludeNames {
+		fileName := path.Base(filePath)
+
+		m,_ := regexp.MatchString(pattern, fileName)
+		if m {
+			return true
+		}
+	}
+	return false
+}
+
+func WalkAllFile(dirPath string, walkFn filepath.WalkFunc) error {
+	info, err := os.Lstat(dirPath)
+	if err != nil {
+		err = walkFn(dirPath, nil, err)
+	} else {
+		err = walkAllFile(dirPath, info, walkFn)
+	}
+	return err
+}
+
+func walkAllFile(dirPath string, info os.FileInfo, walkFn filepath.WalkFunc) error {
+	if !info.IsDir() {
+		return walkFn(dirPath, info, nil)
+	}
+
+	files, err := ioutil.ReadDir(dirPath)
+	if err != nil {
+		return walkFn(dirPath, nil, err)
+	}
+	for _, fi := range files {
+		subFilePath := dirPath + "/" + fi.Name()
+		err := walkFn(subFilePath, fi, err)
+		if err != nil && err != filepath.SkipDir {
+			return err
+		}
+		if fi.IsDir() {
+			if err == filepath.SkipDir {
+				continue
+			}
+			err := walkAllFile(subFilePath, fi, walkFn)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 func RunRapidUpload(familyId int64, isOverwrite bool, panFilePath string, md5Str string, length int64) {
