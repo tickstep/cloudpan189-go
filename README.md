@@ -579,11 +579,11 @@ export CLOUD189_VERBOSE=1
 Windows   
 不同版本会有些许不一样，请自行查询具体方法   
 设置示意图如下：
-![](assets/images/win10-env-debug-config.png)
+![](./assets/images/win10-env-debug-config.png)
 
 ### 第二步
 打开cloudpan189-go命令行程序，任何云盘命令都有类似如下日志输出
-![](assets/images/debug-log-screenshot.png)
+![](./assets/images/debug-log-screenshot.png)
 
 
 # 交流反馈
