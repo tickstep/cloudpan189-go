@@ -267,6 +267,9 @@ func (c *PanConfig) ActiveUser() *PanUser {
 		if c.UserList == nil {
 			return nil
 		}
+		if c.ActiveUID == 0 {
+			return nil
+		}
 		for _, u := range c.UserList {
 			if u.UID == c.ActiveUID {
 				if u.PanClient() == nil {

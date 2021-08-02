@@ -71,7 +71,7 @@ func init() {
 func checkLoginExpiredAndRelogin() {
 	cmder.ReloadConfigFunc(nil)
 	activeUser := config.Config.ActiveUser()
-	if activeUser == nil {
+	if activeUser == nil || activeUser.UID != 0 {
 		// maybe expired, try to login
 		cmder.TryLogin()
 	}
