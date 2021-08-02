@@ -114,8 +114,6 @@ func DecryptFile(method string, key []byte, filePath string, isGzip bool) (decry
 		return
 	}
 
-	defer cipherFile.Close()
-
 	var plainReader io.Reader
 	switch method {
 	case "aes-128-ctr":
@@ -161,7 +159,8 @@ func DecryptFile(method string, key []byte, filePath string, isGzip bool) (decry
 		return
 	}
 
-	defer decryptedTmpFile.Close()
+	decryptedTmpFile.Close()
+	cipherFile.Close()
 
 	if isGzip {
 		err = archive.GZIPUnompressFile(decryptedTmpFilePath)
