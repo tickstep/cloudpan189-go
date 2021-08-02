@@ -73,7 +73,7 @@ RicePack() {
   return # 已取消web功能
 }
 
-touch ./vendor/golang.org/x/sys/windows/windows.s
+#touch ./vendor/golang.org/x/sys/windows/windows.s
 
 # Android
 #export NDK_INSTALL=/Users/tickstep/Applications/android/android-ndk-toolchains
