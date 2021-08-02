@@ -13,21 +13,21 @@
 // limitations under the License.
 package command
 
-import "C"
+//import "C"
 import (
 	"fmt"
+	"github.com/tickstep/cloudpan189-api/cloudpan"
+	"github.com/tickstep/cloudpan189-api/cloudpan/apierror"
 	"github.com/tickstep/cloudpan189-go/cmder"
 	"github.com/tickstep/cloudpan189-go/internal/config"
+	"github.com/tickstep/cloudpan189-go/internal/functions/panupload"
+	"github.com/tickstep/library-go/logger"
+	"github.com/urfave/cli"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
 	"sync"
-	"github.com/tickstep/cloudpan189-api/cloudpan/apierror"
-	"github.com/tickstep/library-go/logger"
-	"github.com/tickstep/cloudpan189-api/cloudpan"
-	"github.com/tickstep/cloudpan189-go/internal/functions/panupload"
-	"github.com/urfave/cli"
 )
 
 func CmdBackup() cli.Command {
