@@ -196,7 +196,7 @@ func main() {
 
 		os.Setenv(config.EnvVerbose, c.String("verbose"))
 		isCli = true
-		logger.Verbosef("VERBOSE: 这是一条调试信息\n\n")
+		logger.Verbosef("提示: 你已经开启VERBOSE调试日志\n\n")
 
 		var (
 			line = cmdliner.NewLiner()
