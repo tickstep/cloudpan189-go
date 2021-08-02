@@ -43,6 +43,27 @@ func CmdBackup() cli.Command {
 3. 强制同名覆盖。
 
 注：只备份(上传)新的文件（同名覆盖），不处理删除操作。
+
+  示例:
+    1. 将本地的 C:\Users\Administrator\Video 整个目录备份到网盘 /视频 目录
+    注意区别反斜杠 "\" 和 斜杠 "/" !!!
+    cloudpan189-go backup C:/Users/Administrator/Video /视频
+
+    2. 将本地的 C:\Users\Administrator\Video 整个目录备份到网盘 /视频 目录，但是排除所有的.jpg文件
+    cloudpan189-go backup -exn "\.jpg$" C:/Users/Administrator/Video /视频
+
+    3. 将本地的 C:\Users\Administrator\Video 整个目录备份到网盘 /视频 目录，但是排除所有的.jpg文件和.mp3文件，每一个排除项就是一个exn参数
+    cloudpan189-go backup -exn "\.jpg$" -exn "\.mp3$" C:/Users/Administrator/Video /视频
+
+    4. 将本地的 C:\Users\Administrator\Video 整个目录备份到网盘 /视频 目录，但是排除所有的 @eadir 文件夹
+    cloudpan189-go backup -exn "^@eadir$" C:/Users/Administrator/Video /视频
+
+  参考：
+    以下是典型的排除特定文件或者文件夹的例子，注意：参数值必须是正则表达式。在正则表达式中，^表示匹配开头，$表示匹配结尾。
+    1)排除@eadir文件或者文件夹：-exn "^@eadir$"
+    2)排除.jpg文件：-exn "\.jpg$"
+    3)排除.号开头的文件：-exn "^\."
+    4)排除 myfile.txt 文件：-exn "^myfile.txt$"
 `,
 		Usage:     "备份文件或目录",
 		UsageText: "backup <文件/目录路径1> <文件/目录2> <文件/目录3> ... <目标目录>",
@@ -250,24 +271,30 @@ func checkPath(localdir string) (string, error) {
 	return fullPath, nil
 }
 
-func Backup(cli *cli.Context) error {
-	subArgs := cli.Args()
-	localpaths := make([]string, 0)
-	flagSync := cli.Bool("sync")
-	flagDelete := cli.Bool("delete")
-
-	opt := &UploadOptions{
-		AllParallel:   cli.Int("p"),
-		Parallel:      1, // 天翼云盘一个文件只支持单线程上传
-		MaxRetry:      cli.Int("retry"),
-		NoRapidUpload: cli.Bool("norapid"),
-		NoSplitFile:   true, // 天翼云盘不支持分片并发上传，只支持单线程上传，支持断点续传
-		ShowProgress:  !cli.Bool("np"),
-		IsOverwrite:   true,
-		FamilyId:      parseFamilyId(cli),
+func Backup(c *cli.Context) error {
+	if c.NArg() < 2 {
+		cli.ShowCommandHelp(c, c.Command.Name)
+		return nil
 	}
 
-	localCount := cli.NArg() - 1
+	subArgs := c.Args()
+	localpaths := make([]string, 0)
+	flagSync := c.Bool("sync")
+	flagDelete := c.Bool("delete")
+
+	opt := &UploadOptions{
+		AllParallel:   c.Int("p"),
+		Parallel:      1, // 天翼云盘一个文件只支持单线程上传
+		MaxRetry:      c.Int("retry"),
+		NoRapidUpload: c.Bool("norapid"),
+		NoSplitFile:   true, // 天翼云盘不支持分片并发上传，只支持单线程上传，支持断点续传
+		ShowProgress:  !c.Bool("np"),
+		IsOverwrite:   true,
+		FamilyId:      parseFamilyId(c),
+		ExcludeNames: c.StringSlice("exn"),
+	}
+
+	localCount := c.NArg() - 1
 	savePath := GetActiveUser().PathJoin(opt.FamilyId, subArgs[localCount])
 
 	wg := sync.WaitGroup{}
