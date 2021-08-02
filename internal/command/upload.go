@@ -94,7 +94,7 @@ var UploadFlags = []cli.Flag{
 	},
 	cli.StringSliceFlag{
 		Name:  "exn",
-		Usage: "excludeNames，指定排除的文件夹或者文件的名称，只支持正则表达式。支持排除多个名称，每一个名称就是一个exn参数",
+		Usage: "exclude name，指定排除的文件夹或者文件的名称，只支持正则表达式。支持同时排除多个名称，每一个名称就是一个exn参数",
 		Value: nil,
 	},
 }
@@ -106,25 +106,40 @@ func CmdUpload() cli.Command {
 		Usage:     "上传文件/目录",
 		UsageText: cmder.App().Name + " upload <本地文件/目录的路径1> <文件/目录2> <文件/目录3> ... <目标目录>",
 		Description: `
-	上传默认采用分片上传的方式, 上传的文件将会保存到, <目标目录>.
+	上传指定的文件夹或者文件，上传的文件将会保存到 <目标目录>.
 
-	示例:
+  示例:
+    1. 将本地的 C:\Users\Administrator\Desktop\1.mp4 上传到网盘 /视频 目录
+    注意区别反斜杠 "\" 和 斜杠 "/" !!!
+    cloudpan189-go upload C:/Users/Administrator/Desktop/1.mp4 /视频
 
-	1. 将本地的 C:\Users\Administrator\Desktop\1.mp4 上传到网盘 /视频 目录
-	注意区别反斜杠 "\" 和 斜杠 "/" !!!
-	cloudpan189-go upload C:/Users/Administrator/Desktop/1.mp4 /视频
+    2. 将本地的 C:\Users\Administrator\Desktop\1.mp4 和 C:\Users\Administrator\Desktop\2.mp4 上传到网盘 /视频 目录
+    cloudpan189-go upload C:/Users/Administrator/Desktop/1.mp4 C:/Users/Administrator/Desktop/2.mp4 /视频
 
-	2. 将本地的 C:\Users\Administrator\Desktop\1.mp4 和 C:\Users\Administrator\Desktop\2.mp4 上传到网盘 /视频 目录
-	cloudpan189-go upload C:/Users/Administrator/Desktop/1.mp4 C:/Users/Administrator/Desktop/2.mp4 /视频
+    3. 将本地的 C:\Users\Administrator\Desktop 整个目录上传到网盘 /视频 目录
+    cloudpan189-go upload C:/Users/Administrator/Desktop /视频
 
-	3. 将本地的 C:\Users\Administrator\Desktop 整个目录上传到网盘 /视频 目录
-	cloudpan189-go upload C:/Users/Administrator/Desktop /视频
-
-	4. 使用相对路径
-	cloudpan189-go upload 1.mp4 /视频
+    4. 使用相对路径
+    cloudpan189-go upload 1.mp4 /视频
 
     5. 覆盖上传，已存在的同名文件会被移到回收站
-	cloudpan189-go upload -ow 1.mp4 /视频
+    cloudpan189-go upload -ow 1.mp4 /视频
+
+    6. 将本地的 C:\Users\Administrator\Video 整个目录上传到网盘 /视频 目录，但是排除所有的.jpg文件
+    cloudpan189-go upload -exn "\.jpg$" C:/Users/Administrator/Video /视频
+
+    7. 将本地的 C:\Users\Administrator\Video 整个目录上传到网盘 /视频 目录，但是排除所有的.jpg文件和.mp3文件，每一个排除项就是一个exn参数
+    cloudpan189-go upload -exn "\.jpg$" -exn "\.mp3$" C:/Users/Administrator/Video /视频
+
+    8. 将本地的 C:\Users\Administrator\Video 整个目录上传到网盘 /视频 目录，但是排除所有的 @eadir 文件夹
+    cloudpan189-go upload -exn "^@eadir$" C:/Users/Administrator/Video /视频
+
+  参考：
+    以下是典型的排除特定文件或者文件夹的例子，注意：参数值必须是正则表达式。在正则表达式中，^表示匹配开头，$表示匹配结尾。
+    1)排除@eadir文件或者文件夹：-exn "^@eadir$"
+    2)排除.jpg文件：-exn "\.jpg$"
+    3)排除.号开头的文件：-exn "^\."
+    4)排除 myfile.txt 文件：-exn "^myfile.txt$"
 `,
 		Category: "天翼云盘",
 		Before:   cmder.ReloadConfigFunc,
