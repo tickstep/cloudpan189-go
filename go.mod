@@ -12,11 +12,11 @@ require (
 	github.com/peterh/liner v1.1.1-0.20190305032635-6f820f8f90ce
 	github.com/tickstep/bolt v1.3.3
 	github.com/tickstep/cloudpan189-api v0.0.5
-	github.com/tickstep/library-go v0.0.4
+	github.com/tickstep/library-go v0.0.5
 	github.com/urfave/cli v1.21.1-0.20190817182405-23c83030263f
 	golang.org/x/sys v0.0.0-20200202164722-d101bd2416d5 // indirect
 )
 
 //replace github.com/tickstep/bolt => /Users/tickstep/Documents/Workspace/go/projects/bolt
-replace github.com/tickstep/library-go => D:/smb/feny/goprojects/library-go
+//replace github.com/tickstep/library-go => /Users/tickstep/Documents/Workspace/go/projects/library-go
 //replace github.com/tickstep/cloudpan189-api => /Users/tickstep/Documents/Workspace/go/projects/cloudpan189-api

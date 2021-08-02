@@ -66,6 +66,8 @@ github.com/tickstep/library-go v0.0.3 h1:j6C2qIYMC33Re/qa3cYS49DSMalgjtLR4KqGi6d
 github.com/tickstep/library-go v0.0.3/go.mod h1:egoK/RvOJ3Qs2tHpkq374CWjhNjI91JSCCG1GrhDYSw=
 github.com/tickstep/library-go v0.0.4 h1:wNR48yDlaikxdJokL/NYX0J4ul8NN+TmBfXjxO2kfNw=
 github.com/tickstep/library-go v0.0.4/go.mod h1:egoK/RvOJ3Qs2tHpkq374CWjhNjI91JSCCG1GrhDYSw=
+github.com/tickstep/library-go v0.0.5 h1:MBb1tsvs4Wi67zy0E9eobVWLgsfPRLsqKAEdSEi3LBE=
+github.com/tickstep/library-go v0.0.5/go.mod h1:egoK/RvOJ3Qs2tHpkq374CWjhNjI91JSCCG1GrhDYSw=
 github.com/urfave/cli v1.21.1-0.20190817182405-23c83030263f h1:xKDKjIsL76VUyHcA0G4Qe1cIAUB/nrq6Pt8D411bd1g=
 github.com/urfave/cli v1.21.1-0.20190817182405-23c83030263f/go.mod h1:qXyCeJubPqsgeiLd3kvHOGHHSrQcNdjZ2ScXIcVZK/I=
 github.com/xujiajun/gorouter v1.2.0/go.mod h1:yJrIta+bTNpBM/2UT8hLOaEAFckO+m/qmR3luMIQygM=
