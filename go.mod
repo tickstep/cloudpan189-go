@@ -18,5 +18,5 @@ require (
 )
 
 //replace github.com/tickstep/bolt => /Users/tickstep/Documents/Workspace/go/projects/bolt
-//replace github.com/tickstep/library-go => /Users/tickstep/Documents/Workspace/go/projects/library-go
+replace github.com/tickstep/library-go => D:/smb/feny/goprojects/library-go
 //replace github.com/tickstep/cloudpan189-api => /Users/tickstep/Documents/Workspace/go/projects/cloudpan189-api

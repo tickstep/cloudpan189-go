@@ -423,6 +423,11 @@ func (der *Downloader) Execute() error {
 	if err == nil { // 成功
 		cmdutil.Trigger(der.onSuccessEvent)
 		der.removeInstanceState() // 移除断点续传文件
+	} else {
+		if err == ErrNoWokers && der.fileInfo.FileSize == 0 {
+			cmdutil.Trigger(der.onSuccessEvent)
+			der.removeInstanceState() // 移除断点续传文件
+		}
 	}
 
 	// 执行结束

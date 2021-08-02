@@ -284,6 +284,12 @@ func (wer *Worker) Execute() {
 		}
 	}
 
+	// zero size file
+	if wer.totalSize == 0 {
+		wer.status.statusCode = StatusCodeSuccessed
+		return
+	}
+
 	workerCancelCtx, workerCancelFunc := context.WithCancel(context.Background())
 	wer.workerCancelFunc = workerCancelFunc
 	resetCtx, resetFunc := context.WithCancel(context.Background())

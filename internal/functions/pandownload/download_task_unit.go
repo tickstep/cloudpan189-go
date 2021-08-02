@@ -189,19 +189,25 @@ func (dtu *DownloadTaskUnit) download() (err error) {
 	fmt.Print("\n")
 
 	if err != nil {
-		// 下载发生错误
-		// 下载失败, 删去空文件
-		if info, infoErr := file.Stat(); infoErr == nil {
-			if info.Size() == 0 {
-				// 空文件, 应该删除
-				dtu.verboseInfof("[%s] remove empty file: %s\n", dtu.taskInfo.Id(), dtu.SavePath)
-				removeErr := os.Remove(dtu.SavePath)
-				if removeErr != nil {
-					dtu.verboseInfof("[%s] remove file error: %s\n", dtu.taskInfo.Id(), removeErr)
+		// check zero size file
+		if err == downloader.ErrNoWokers && dtu.fileInfo.FileSize == 0 {
+			// success for 0 size file
+			dtu.verboseInfof("download success for zero size file")
+		} else {
+			// 下载发生错误
+			// 下载失败, 删去空文件
+			if info, infoErr := file.Stat(); infoErr == nil {
+				if info.Size() == 0 {
+					// 空文件, 应该删除
+					dtu.verboseInfof("[%s] remove empty file: %s\n", dtu.taskInfo.Id(), dtu.SavePath)
+					removeErr := os.Remove(dtu.SavePath)
+					if removeErr != nil {
+						dtu.verboseInfof("[%s] remove file error: %s\n", dtu.taskInfo.Id(), removeErr)
+					}
 				}
 			}
+			return err
 		}
-		return err
 	}
 
 	// 下载成功
