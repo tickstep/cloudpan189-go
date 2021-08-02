@@ -18,9 +18,52 @@ import (
 	"github.com/tickstep/cloudpan189-api/cloudpan"
 	"github.com/tickstep/cloudpan189-api/cloudpan/apierror"
 	"github.com/tickstep/cloudpan189-api/cloudpan/apiutil"
+	"github.com/tickstep/cloudpan189-go/cmder"
+	"github.com/tickstep/cloudpan189-go/internal/config"
+	"github.com/urfave/cli"
 	"path"
 	"strings"
 )
+
+func CmdRename() cli.Command {
+	return cli.Command{
+		Name:  "rename",
+		Usage: "重命名文件",
+		UsageText: `重命名文件:
+	cloudpan189-go rename <旧文件/目录名> <新文件/目录名>`,
+		Description: `
+	示例:
+
+	将文件 1.mp4 重命名为 2.mp4
+	cloudpan189-go rename 1.mp4 2.mp4
+
+	将文件 /test/1.mp4 重命名为 /test/2.mp4
+	要求必须是同一个文件目录内
+	cloudpan189-go rename /test/1.mp4 /test/2.mp4
+`,
+		Category: "天翼云盘",
+		Before:   cmder.ReloadConfigFunc,
+		Action: func(c *cli.Context) error {
+			if c.NArg() != 2 {
+				cli.ShowCommandHelp(c, c.Command.Name)
+				return nil
+			}
+			if config.Config.ActiveUser() == nil {
+				fmt.Println("未登录账号")
+				return nil
+			}
+			RunRename(parseFamilyId(c), c.Args().Get(0), c.Args().Get(1))
+			return nil
+		},
+		Flags: []cli.Flag{
+			cli.StringFlag{
+				Name:  "familyId",
+				Usage: "家庭云ID",
+				Value: "",
+			},
+		},
+	}
+}
 
 func RunRename(familyId int64, oldName string, newName string) {
 	if oldName == "" {

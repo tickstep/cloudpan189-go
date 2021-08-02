@@ -17,11 +17,40 @@ import (
 	"fmt"
 	"github.com/olekukonko/tablewriter"
 	"github.com/tickstep/cloudpan189-api/cloudpan"
+	"github.com/tickstep/cloudpan189-go/cmder"
 	"github.com/tickstep/cloudpan189-go/cmder/cmdtable"
 	"github.com/tickstep/cloudpan189-go/internal/config"
+	"github.com/urfave/cli"
 	"strconv"
 	"strings"
 )
+
+func CmdFamily() cli.Command {
+	return cli.Command{
+		Name:  "family",
+		Usage: "切换云工作模式（家庭云/个人云）",
+		Description: `
+	切换已登录的天翼帐号的云工作模式（家庭云/个人云）
+	如果运行该条命令没有提供参数, 程序将会列出所有的家庭云, 供选择切换.
+
+	示例:
+	cloudpan189-go family
+	cloudpan189-go family <familyId>
+`,
+		Category: "天翼云盘账号",
+		Before:   cmder.ReloadConfigFunc,
+		After:    cmder.SaveConfigFunc,
+		Action: func(c *cli.Context) error {
+			inputData := c.Args().Get(0)
+			targetFamilyId := int64(-1)
+			if inputData != "" && len(inputData) > 0 {
+				targetFamilyId, _ = strconv.ParseInt(inputData, 10, 0)
+			}
+			RunSwitchFamilyList(targetFamilyId)
+			return nil
+		},
+	}
+}
 
 func RunSwitchFamilyList(targetFamilyId int64)  {
 	currentFamilyId := config.Config.ActiveUser().ActiveFamilyId

@@ -17,10 +17,12 @@ import (
 	"fmt"
 	"github.com/olekukonko/tablewriter"
 	"github.com/tickstep/cloudpan189-api/cloudpan"
+	"github.com/tickstep/cloudpan189-go/cmder"
 	"github.com/tickstep/cloudpan189-go/cmder/cmdtable"
 	"github.com/tickstep/cloudpan189-go/internal/config"
 	"github.com/tickstep/library-go/converter"
 	"github.com/tickstep/library-go/text"
+	"github.com/urfave/cli"
 	"os"
 	"strconv"
 )
@@ -42,6 +44,101 @@ const (
 	opLs int = iota
 	opSearch
 )
+
+func CmdLs() cli.Command {
+	return cli.Command{
+		Name:      "ls",
+		Aliases:   []string{"l", "ll"},
+		Usage:     "列出目录",
+		UsageText: cmder.App().Name + " ls <目录>",
+		Description: `
+	列出当前工作目录内的文件和目录, 或指定目录内的文件和目录
+
+	示例:
+
+	列出 我的资源 内的文件和目录
+	cloudpan189-go ls 我的资源
+
+	绝对路径
+	cloudpan189-go ls /我的资源
+
+	降序排序
+	cloudpan189-go ls -desc 我的资源
+
+	按文件大小降序排序
+	cloudpan189-go ls -size -desc 我的资源
+`,
+		Category: "天翼云盘",
+		Before:   cmder.ReloadConfigFunc,
+		Action: func(c *cli.Context) error {
+			if config.Config.ActiveUser() == nil {
+				fmt.Println("未登录账号")
+				return nil
+			}
+			var (
+				orderBy   cloudpan.OrderBy   = cloudpan.OrderByName
+				orderSort cloudpan.OrderSort = cloudpan.OrderAsc
+			)
+
+			switch {
+			case c.IsSet("asc"):
+				orderSort = cloudpan.OrderAsc
+			case c.IsSet("desc"):
+				orderSort = cloudpan.OrderDesc
+			default:
+				orderSort = cloudpan.OrderAsc
+			}
+
+			switch {
+			case c.IsSet("time"):
+				orderBy = cloudpan.OrderByTime
+			case c.IsSet("name"):
+				orderBy = cloudpan.OrderByName
+			case c.IsSet("size"):
+				orderBy = cloudpan.OrderBySize
+			default:
+				orderBy = cloudpan.OrderByTime
+			}
+
+			RunLs(parseFamilyId(c), c.Args().Get(0), &LsOptions{
+				Total: c.Bool("l") || c.Parent().Args().Get(0) == "ll",
+			}, orderBy, orderSort)
+
+			return nil
+		},
+		Flags: []cli.Flag{
+			cli.BoolFlag{
+				Name:  "l",
+				Usage: "详细显示",
+			},
+			cli.BoolFlag{
+				Name:  "asc",
+				Usage: "升序排序",
+			},
+			cli.BoolFlag{
+				Name:  "desc",
+				Usage: "降序排序",
+			},
+			cli.BoolFlag{
+				Name:  "time",
+				Usage: "根据时间排序",
+			},
+			cli.BoolFlag{
+				Name:  "name",
+				Usage: "根据文件名排序",
+			},
+			cli.BoolFlag{
+				Name:  "size",
+				Usage: "根据大小排序",
+			},
+			cli.StringFlag{
+				Name:  "familyId",
+				Usage: "家庭云ID",
+				Value: "",
+			},
+		},
+	}
+}
 
 func RunLs(familyId int64, targetPath string, lsOptions *LsOptions, orderBy cloudpan.OrderBy, orderSort cloudpan.OrderSort)  {
 	activeUser := config.Config.ActiveUser()

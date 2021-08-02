@@ -16,7 +16,28 @@ package command
 import (
 	"fmt"
 	"github.com/tickstep/cloudpan189-api/cloudpan"
+	"github.com/tickstep/cloudpan189-go/cmder"
+	"github.com/tickstep/cloudpan189-go/internal/config"
+	"github.com/urfave/cli"
 )
+
+func CmdSign() cli.Command {
+	return cli.Command{
+		Name:        "sign",
+		Usage:       "用户签到",
+		Description: "当前帐号进行签到",
+		Category:    "天翼云盘账号",
+		Before:      cmder.ReloadConfigFunc,
+		Action: func(c *cli.Context) error {
+			if config.Config.ActiveUser() == nil {
+				fmt.Println("未登录账号")
+				return nil
+			}
+			RunUserSign()
+			return nil
+		},
+	}
+}
 
 func RunUserSign() {
 	activeUser := GetActiveUser()

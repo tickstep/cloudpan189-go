@@ -16,79 +16,118 @@ package command
 import (
 	"fmt"
 	"github.com/tickstep/cloudpan189-api/cloudpan"
-	"github.com/tickstep/cloudpan189-api/cloudpan/apierror"
-	"github.com/tickstep/cloudpan189-go/cmder/cmdliner"
-	"github.com/tickstep/library-go/logger"
+	"github.com/tickstep/cloudpan189-go/cmder"
+	"github.com/tickstep/cloudpan189-go/internal/config"
 	_ "github.com/tickstep/library-go/requester"
+	"github.com/urfave/cli"
 )
 
-func RunLogin(username, password string) (usernameStr, passwordStr string, webToken cloudpan.WebLoginToken, appToken cloudpan.AppLoginToken, error error) {
-	line := cmdliner.NewLiner()
-	defer line.Close()
 
-	if username == "" {
-		username, error = line.State.Prompt("请输入用户名(手机号/邮箱/别名), 回车键提交 > ")
-		if error != nil {
-			return
-		}
-	}
+func CmdLogin() cli.Command {
+	return cli.Command{
+		Name:  "login",
+		Usage: "登录天翼云盘账号",
+		Description: `
+	示例:
+		cloudpan189-go login
+		cloudpan189-go login -username=tickstep -password=123xxx
 
-	if password == "" {
-		// liner 的 PasswordPrompt 不安全, 拆行之后密码就会显示出来了
-		fmt.Printf("请输入密码(输入的密码无回显, 确认输入完成, 回车提交即可) > ")
-		password, error = line.State.PasswordPrompt("")
-		if error != nil {
-			return
-		}
-	}
-
-	// app login
-	atoken, apperr := cloudpan.AppLogin(username, password)
-	if apperr != nil {
-		fmt.Println("APP登录失败：", apperr)
-		return "", "", webToken, appToken, fmt.Errorf("登录失败")
-	}
-
-	// web cookie
-	wtoken := &cloudpan.WebLoginToken{}
-	cookieLoginUser := cloudpan.RefreshCookieToken(atoken.SessionKey)
-	if cookieLoginUser != "" {
-		logger.Verboseln("get COOKIE_LOGIN_USER by session key")
-		wtoken.CookieLoginUser = cookieLoginUser
-	} else {
-		// try login directly
-		wtoken, apperr = cloudpan.Login(username, password)
-		if apperr != nil {
-			if apperr.Code == apierror.ApiCodeNeedCaptchaCode {
-				for i := 0; i < 10; i++ {
-					// 需要认证码
-					savePath, apiErr := cloudpan.GetCaptchaImage()
-					if apiErr != nil {
-						fmt.Errorf("获取认证码错误")
-						return "", "", webToken, appToken, apiErr
-					}
-					fmt.Printf("打开以下路径, 以查看验证码\n%s\n\n", savePath)
-					vcode, err := line.State.Prompt("请输入验证码 > ")
-					if err != nil {
-						return "", "", webToken, appToken, err
-					}
-					wtoken, apiErr = cloudpan.LoginWithCaptcha(username, password, vcode)
-					if apiErr != nil {
-						return "", "", webToken, appToken, apiErr
-					} else {
-						return
-					}
+	常规登录:
+		按提示一步一步来即可.
+`,
+		Category: "天翼云盘账号",
+		Before:   cmder.ReloadConfigFunc, // 每次进行登录动作的时候需要调用刷新配置
+		After:    cmder.SaveConfigFunc, // 登录完成需要调用保存配置
+		Action: func(c *cli.Context) error {
+			appToken := cloudpan.AppLoginToken{}
+			webToken := cloudpan.WebLoginToken{}
+			username := ""
+			passowrd := ""
+			if c.IsSet("COOKIE_LOGIN_USER") {
+				webToken.CookieLoginUser = c.String("COOKIE_LOGIN_USER")
+			} else if c.NArg() == 0 {
+				var err error
+				username, passowrd, webToken, appToken, err = RunLogin(c.String("username"), c.String("password"))
+				if err != nil {
+					fmt.Println(err)
+					return err
 				}
-
 			} else {
-				return "", "", webToken, appToken, fmt.Errorf("登录失败")
+				cli.ShowCommandHelp(c, c.Command.Name)
+				return nil
 			}
-		}
+			cloudUser, _ := config.SetupUserByCookie(&webToken, &appToken)
+			// save username / password
+			cloudUser.LoginUserName = config.EncryptString(username)
+			cloudUser.LoginUserPassword = config.EncryptString(passowrd)
+			config.Config.SetActiveUser(cloudUser)
+			fmt.Println("天翼帐号登录成功: ", cloudUser.Nickname)
+			return nil
+		},
+		// 命令的附加options参数说明，使用 help login 命令即可查看
+		Flags: []cli.Flag{
+			cli.StringFlag{
+				Name:  "username",
+				Usage: "登录天翼帐号的用户名(手机号/邮箱/别名)",
+			},
+			cli.StringFlag{
+				Name:  "password",
+				Usage: "登录天翼帐号的用户密码",
+			},
+			// 暂不支持
+			// cloudpan189-go login -COOKIE_LOGIN_USER=8B12CBBCE89CA8DFC3445985B63B511B5E7EC7...
+			//cli.StringFlag{
+			//	Name:  "COOKIE_LOGIN_USER",
+			//	Usage: "使用 COOKIE_LOGIN_USER cookie来登录帐号",
+			//},
+		},
 	}
+}
 
-	webToken = *wtoken
-	appToken = *atoken
-	usernameStr = username
-	passwordStr = password
-	return
+func CmdLogout() cli.Command {
+	return cli.Command{
+		Name:        "logout",
+		Usage:       "退出天翼帐号",
+		Description: "退出当前登录的帐号",
+		Category:    "天翼云盘账号",
+		Before:      cmder.ReloadConfigFunc,
+		After:       cmder.SaveConfigFunc,
+		Action: func(c *cli.Context) error {
+			if config.Config.NumLogins() == 0 {
+				fmt.Println("未设置任何帐号, 不能退出")
+				return nil
+			}
+
+			var (
+				confirm    string
+				activeUser = config.Config.ActiveUser()
+			)
+
+			if !c.Bool("y") {
+				fmt.Printf("确认退出当前帐号: %s ? (y/n) > ", activeUser.Nickname)
+				_, err := fmt.Scanln(&confirm)
+				if err != nil || (confirm != "y" && confirm != "Y") {
+					return err
+				}
+			}
+
+			deletedUser, err := config.Config.DeleteUser(activeUser.UID)
+			if err != nil {
+				fmt.Printf("退出用户 %s, 失败, 错误: %s\n", activeUser.Nickname, err)
+			}
+
+			fmt.Printf("退出用户成功: %s\n", deletedUser.Nickname)
+			return nil
+		},
+		Flags: []cli.Flag{
+			cli.BoolFlag{
+				Name:  "y",
+				Usage: "确认退出帐号",
+			},
+		},
+	}
+}
+
+func RunLogin(username, password string) (usernameStr, passwordStr string, webToken cloudpan.WebLoginToken, appToken cloudpan.AppLoginToken, error error) {
+	return cmder.DoLoginHelper(username, password)
 }

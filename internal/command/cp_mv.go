@@ -16,10 +16,90 @@ package command
 import (
 	"fmt"
 	"github.com/tickstep/cloudpan189-api/cloudpan"
+	"github.com/tickstep/cloudpan189-go/cmder"
+	"github.com/tickstep/cloudpan189-go/internal/config"
 	"github.com/tickstep/library-go/logger"
+	"github.com/urfave/cli"
 	"path"
 	"time"
 )
+
+func CmdCp() cli.Command {
+	return cli.Command{
+		Name:  "cp",
+		Usage: "拷贝文件/目录",
+		UsageText: cmder.App().Name + ` cp <文件/目录> <目标文件/目录>
+	cloudpan189-go cp <文件/目录1> <文件/目录2> <文件/目录3> ... <目标目录>`,
+		Description: `
+	注意: 拷贝多个文件和目录时, 请确保每一个文件和目录都存在, 否则拷贝操作会失败.
+
+	示例:
+
+	将 /我的资源/1.mp4 复制到 根目录 /
+	cloudpan189-go cp /我的资源/1.mp4 /
+
+	将 /我的资源/1.mp4 和 /我的资源/2.mp4 复制到 根目录 /
+	cloudpan189-go cp /我的资源/1.mp4 /我的资源/2.mp4 /
+`,
+		Category: "天翼云盘",
+		Before:   cmder.ReloadConfigFunc,
+		Action: func(c *cli.Context) error {
+			if c.NArg() <= 1 {
+				cli.ShowCommandHelp(c, c.Command.Name)
+				return nil
+			}
+			if config.Config.ActiveUser() == nil {
+				fmt.Println("未登录账号")
+				return nil
+			}
+			if IsFamilyCloud(config.Config.ActiveUser().ActiveFamilyId) {
+				fmt.Println("家庭云不支持复制操作")
+				return nil
+			}
+			RunCopy(c.Args()...)
+			return nil
+		},
+	}
+}
+
+func CmdMv() cli.Command {
+	return cli.Command{
+		Name:  "mv",
+		Usage: "移动文件/目录",
+		UsageText: `移动:
+	cloudpan189-go mv <文件/目录1> <文件/目录2> <文件/目录3> ... <目标目录>`,
+		Description: `
+	注意: 移动多个文件和目录时, 请确保每一个文件和目录都存在, 否则移动操作会失败.
+
+	示例:
+
+	将 /我的资源/1.mp4 移动到 根目录 /
+	cloudpan189-go mv /我的资源/1.mp4 /
+`,
+		Category: "天翼云盘",
+		Before:   cmder.ReloadConfigFunc,
+		Action: func(c *cli.Context) error {
+			if c.NArg() <= 1 {
+				cli.ShowCommandHelp(c, c.Command.Name)
+				return nil
+			}
+			if config.Config.ActiveUser() == nil {
+				fmt.Println("未登录账号")
+				return nil
+			}
+
+			RunMove(parseFamilyId(c), c.Args()...)
+			return nil
+		},
+		Flags: []cli.Flag{
+			cli.StringFlag{
+				Name:  "familyId",
+				Usage: "家庭云ID",
+				Value: "",
+			},
+		},
+	}
+}
 
 // RunCopy 执行复制文件/目录
 func RunCopy(paths ...string) {

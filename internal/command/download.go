@@ -17,6 +17,7 @@ import (
 	"fmt"
 	"github.com/tickstep/cloudpan189-api/cloudpan"
 	"github.com/tickstep/cloudpan189-api/cloudpan/apierror"
+	"github.com/tickstep/cloudpan189-go/cmder"
 	"github.com/tickstep/cloudpan189-go/cmder/cmdtable"
 	"github.com/tickstep/cloudpan189-go/internal/config"
 	"github.com/tickstep/cloudpan189-go/internal/file/downloader"
@@ -24,6 +25,7 @@ import (
 	"github.com/tickstep/cloudpan189-go/internal/taskframework"
 	"github.com/tickstep/library-go/converter"
 	"github.com/tickstep/cloudpan189-go/library/requester/transfer"
+	"github.com/urfave/cli"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -57,6 +59,120 @@ var (
 	// DownloadCacheSize 默认每个线程下载缓存大小
 	DownloadCacheSize = 64 * converter.KB
 )
+
+func CmdDownload() cli.Command {
+	return cli.Command{
+		Name:      "download",
+		Aliases:   []string{"d"},
+		Usage:     "下载文件/目录",
+		UsageText: cmder.App().Name + " download <文件/目录路径1> <文件/目录2> <文件/目录3> ...",
+		Description: `
+	下载的文件默认保存到, 程序所在目录的 download/ 目录.
+	通过 cloudpan189-go config set -savedir <savedir>, 自定义保存的目录.
+	支持多个文件或目录下载.
+	自动跳过下载重名的文件!
+
+	示例:
+
+	设置保存目录, 保存到 D:\Downloads
+	注意区别反斜杠 "\" 和 斜杠 "/" !!!
+	cloudpan189-go config set -savedir D:\\Downloads
+	或者
+	cloudpan189-go config set -savedir D:/Downloads
+
+	下载 /我的资源/1.mp4
+	cloudpan189-go d /我的资源/1.mp4
+
+	下载 /我的资源 整个目录!!
+	cloudpan189-go d /我的资源
+
+    下载 /我的资源/1.mp4 并保存下载的文件到本地的 d:/panfile
+	cloudpan189-go d --saveto d:/panfile /我的资源/1.mp4
+`,
+		Category: "天翼云盘",
+		Before:   cmder.ReloadConfigFunc,
+		Action: func(c *cli.Context) error {
+			if c.NArg() == 0 {
+				cli.ShowCommandHelp(c, c.Command.Name)
+				return nil
+			}
+
+			// 处理saveTo
+			var (
+				saveTo string
+			)
+			if c.Bool("save") {
+				saveTo = "."
+			} else if c.String("saveto") != "" {
+				saveTo = filepath.Clean(c.String("saveto"))
+			}
+
+			do := &DownloadOptions{
+				IsPrintStatus:        c.Bool("status"),
+				IsExecutedPermission: c.Bool("x"),
+				IsOverwrite:          c.Bool("ow"),
+				SaveTo:               saveTo,
+				Parallel:             c.Int("p"),
+				Load:                 c.Int("l"),
+				MaxRetry:             c.Int("retry"),
+				NoCheck:              c.Bool("nocheck"),
+				ShowProgress:         !c.Bool("np"),
+				FamilyId:             parseFamilyId(c),
+			}
+
+			RunDownload(c.Args(), do)
+			return nil
+		},
+		Flags: []cli.Flag{
+			cli.BoolFlag{
+				Name:  "ow",
+				Usage: "overwrite, 覆盖已存在的文件",
+			},
+			cli.BoolFlag{
+				Name:  "status",
+				Usage: "输出所有线程的工作状态",
+			},
+			cli.BoolFlag{
+				Name:  "save",
+				Usage: "将下载的文件直接保存到当前工作目录",
+			},
+			cli.StringFlag{
+				Name:  "saveto",
+				Usage: "将下载的文件直接保存到指定的目录",
+			},
+			cli.BoolFlag{
+				Name:  "x",
+				Usage: "为文件加上执行权限, (windows系统无效)",
+			},
+			cli.IntFlag{
+				Name:  "p",
+				Usage: "指定下载线程数",
+			},
+			cli.IntFlag{
+				Name:  "l",
+				Usage: "指定同时进行下载文件的数量",
+			},
+			cli.IntFlag{
+				Name:  "retry",
+				Usage: "下载失败最大重试次数",
+				Value: pandownload.DefaultDownloadMaxRetry,
+			},
+			cli.BoolFlag{
+				Name:  "nocheck",
+				Usage: "下载文件完成后不校验文件",
+			},
+			cli.BoolFlag{
+				Name:  "np",
+				Usage: "no progress 不展示下载进度条",
+			},
+			cli.StringFlag{
+				Name:  "familyId",
+				Usage: "家庭云ID",
+				Value: "",
+			},
+		},
+	}
+}
 
 func downloadPrintFormat(load int) string {
 	if load <= 1 {

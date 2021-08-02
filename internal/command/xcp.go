@@ -17,6 +17,9 @@ import (
 	"fmt"
 	"github.com/tickstep/cloudpan189-api/cloudpan"
 	"github.com/tickstep/cloudpan189-api/cloudpan/apierror"
+	"github.com/tickstep/cloudpan189-go/cmder"
+	"github.com/tickstep/cloudpan189-go/internal/config"
+	"github.com/urfave/cli"
 )
 
 type (
@@ -30,6 +33,73 @@ const (
 	// 家庭云文件
 	FamilyCloud FileSourceType = "family"
 )
+
+func CmdXcp() cli.Command {
+	return cli.Command{
+		Name:  "xcp",
+		Usage: "转存拷贝文件/目录，个人云和家庭云之间转存文件",
+		UsageText: cmder.App().Name + ` xcp <文件/目录>
+	cloudpan189-go xcp <文件/目录1> <文件/目录2> <文件/目录3>`,
+		Description: `
+	注意: 拷贝多个文件和目录时, 请确保每一个文件和目录都存在, 否则拷贝操作会失败. 同样需要保证目标云不存在对应的文件，否则也会操作失败。
+
+	示例:
+
+	当前程序工作在个人云模式下，将 /个人云目录/1.mp4 转存复制到 家庭云根目录中
+	cloudpan189-go xcp /个人云目录/1.mp4
+
+	当前程序工作在家庭云模式下，将 /家庭云目录/1.mp4 和 /家庭云目录/2.mp4 转存复制到 个人云 /来自家庭共享 目录中
+	cloudpan189-go xcp /家庭云目录/1.mp4 /家庭云目录/2.mp4
+`,
+		Category: "天翼云盘",
+		Before:   cmder.ReloadConfigFunc,
+		Action: func(c *cli.Context) error {
+			if c.NArg() <= 0 {
+				cli.ShowCommandHelp(c, c.Command.Name)
+				return nil
+			}
+			if config.Config.ActiveUser() == nil {
+				fmt.Println("未登录账号")
+				return nil
+			}
+			familyId := parseFamilyId(c)
+			fileSource := PersonCloud
+			if c.IsSet("source") {
+				sourceStr := c.String("source")
+				if sourceStr == "person" {
+					fileSource = PersonCloud
+				} else if sourceStr == "family" {
+					fileSource = FamilyCloud
+				} else {
+					fmt.Println("不支持的参数")
+					return nil
+				}
+			} else {
+				if IsFamilyCloud(config.Config.ActiveUser().ActiveFamilyId) {
+					fileSource = FamilyCloud
+				} else {
+					fileSource = PersonCloud
+				}
+			}
+			RunXCopy(fileSource, familyId, c.Args()...)
+			return nil
+		},
+		Flags: []cli.Flag{
+			cli.StringFlag{
+				Name:     "familyId",
+				Usage:    "家庭云ID",
+				Value:    "",
+				Required: false,
+			},
+			cli.StringFlag{
+				Name:     "source",
+				Usage:    "文件源，person-个人云，family-家庭云",
+				Value:    "",
+				Required: false,
+			},
+		},
+	}
+}
 
 // RunXCopy 执行移动文件/目录
 func RunXCopy(source FileSourceType, familyId int64, paths ...string) {

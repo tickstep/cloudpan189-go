@@ -17,9 +17,41 @@ import (
 	"fmt"
 	"github.com/tickstep/cloudpan189-api/cloudpan"
 	"github.com/tickstep/cloudpan189-api/cloudpan/apierror"
+	"github.com/tickstep/cloudpan189-go/cmder"
+	"github.com/tickstep/cloudpan189-go/internal/config"
+	"github.com/urfave/cli"
 	"path"
 	"strings"
 )
+
+func CmdMkdir() cli.Command {
+	return cli.Command{
+		Name:      "mkdir",
+		Usage:     "创建目录",
+		UsageText: cmder.App().Name + " mkdir <目录>",
+		Category:  "天翼云盘",
+		Before:    cmder.ReloadConfigFunc,
+		Action: func(c *cli.Context) error {
+			if c.NArg() == 0 {
+				cli.ShowCommandHelp(c, c.Command.Name)
+				return nil
+			}
+			if config.Config.ActiveUser() == nil {
+				fmt.Println("未登录账号")
+				return nil
+			}
+			RunMkdir(parseFamilyId(c), c.Args().Get(0))
+			return nil
+		},
+		Flags: []cli.Flag{
+			cli.StringFlag{
+				Name:  "familyId",
+				Usage: "家庭云ID",
+				Value: "",
+			},
+		},
+	}
+}
 
 func RunMkdir(familyId int64, name string) {
 	activeUser := GetActiveUser()

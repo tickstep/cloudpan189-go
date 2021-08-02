@@ -18,12 +18,15 @@ import (
 	"fmt"
 	"github.com/tickstep/cloudpan189-api/cloudpan"
 	"github.com/tickstep/cloudpan189-api/cloudpan/apierror"
+	"github.com/tickstep/cloudpan189-go/cmder"
 	"github.com/tickstep/cloudpan189-go/internal/config"
 	"github.com/tickstep/library-go/logger"
+	"github.com/urfave/cli"
 	"io/ioutil"
 	"log"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 	"time"
 )
@@ -38,6 +41,66 @@ type (
 const (
 	DefaultSaveToPanPath = "/cloudpan189-go"
 )
+
+func CmdImport() cli.Command {
+	return cli.Command{
+		Name:      "import",
+		Usage:     "导入文件",
+		UsageText: cmder.App().Name + " export <本地元数据文件路径>",
+		Description: `
+    导入文件中记录的元数据文件到网盘。保存到网盘的文件会使用文件元数据记录的路径位置，如果没有指定云盘目录(saveto)则默认导入到目录 cloudpan189-go 中。
+    导入的文件可以使用 export 命令获得。
+    
+    导入文件每一行是一个文件元数据，样例如下：
+    {"md5":"3F9EEEBC4E583574D9D64A75E5061E56","size":6365224,"path":"/test/file.dmg"}
+    
+    注意：导入文件依赖秒传功能，即会消耗你每日上传文件的限额，如果你导入的文件过多达到每日限额，则剩余的文件无法在当日完成导入。
+    
+	示例:
+
+    导入文件 /Users/tickstep/Downloads/export_files.txt
+    cloudpan189-go import /Users/tickstep/Downloads/export_files.txt
+
+    导入文件 /Users/tickstep/Downloads/export_files.txt 并保存到目录 /my2020 中
+    cloudpan189-go import -saveto=/my2020 /Users/tickstep/Downloads/export_files.txt
+
+    导入文件 /Users/tickstep/Downloads/export_files.txt 并保存到网盘根目录 / 中
+    cloudpan189-go import -saveto=/ /Users/tickstep/Downloads/export_files.txt
+`,
+		Category: "天翼云盘",
+		Before:   cmder.ReloadConfigFunc,
+		Action: func(c *cli.Context) error {
+			if c.NArg() < 1 {
+				cli.ShowCommandHelp(c, c.Command.Name)
+				return nil
+			}
+
+			saveTo := ""
+			if c.String("saveto") != "" {
+				saveTo = filepath.Clean(c.String("saveto"))
+			}
+
+			subArgs := c.Args()
+			RunImportFiles(parseFamilyId(c), c.Bool("ow"), saveTo, subArgs[0])
+			return nil
+		},
+		Flags: []cli.Flag{
+			cli.BoolFlag{
+				Name:  "ow",
+				Usage: "overwrite, 覆盖已存在的网盘文件",
+			},
+			cli.StringFlag{
+				Name:  "familyId",
+				Usage: "家庭云ID",
+				Value: "",
+			},
+			cli.StringFlag{
+				Name:  "saveto",
+				Usage: "将文件保存到指定的目录",
+			},
+		},
+	}
+}
 
 func RunImportFiles(familyId int64, overwrite bool, panSavePath, localFilePath string) {
 	lfi,_ := os.Stat(localFilePath)

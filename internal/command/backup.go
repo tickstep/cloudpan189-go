@@ -13,8 +13,11 @@
 // limitations under the License.
 package command
 
+import "C"
 import (
 	"fmt"
+	"github.com/tickstep/cloudpan189-go/cmder"
+	"github.com/tickstep/cloudpan189-go/internal/config"
 	"os"
 	"path"
 	"path/filepath"
@@ -25,16 +28,9 @@ import (
 	"github.com/tickstep/cloudpan189-api/cloudpan"
 	"github.com/tickstep/cloudpan189-go/internal/functions/panupload"
 	"github.com/urfave/cli"
-	"github.com/tickstep/cloudpan189-go/internal/config"
 )
 
-type backupFunc struct {
-	User   *config.PanUser
-	Client *cloudpan.PanClient
-}
-
 func CmdBackup() cli.Command {
-	cmd := &backupFunc{}
 	return cli.Command{
 		Name: "backup",
 		Description: `备份指定 <文件/目录> 到云盘 <目标目录> 中
@@ -51,8 +47,8 @@ func CmdBackup() cli.Command {
 		Usage:     "备份文件或目录",
 		UsageText: "backup <文件/目录路径1> <文件/目录2> <文件/目录3> ... <目标目录>",
 		Category:  "天翼云盘",
-		Before:    cmd.Before,
-		Action:    cmd.Backup,
+		Before:    cmder.ReloadConfigFunc,
+		Action:    Backup,
 		Flags: append(UploadFlags, cli.BoolFlag{
 			Name:  "delete",
 			Usage: "通过本地数据库记录同步删除网盘文件",
@@ -63,25 +59,13 @@ func CmdBackup() cli.Command {
 	}
 }
 
-func (c *backupFunc) Before(cli *cli.Context) error {
-	if cli.NArg() < 2 {
-		return ErrBadArgs
-	}
-	User := config.Config.ActiveUser()
-	if User == nil {
-		return ErrNotLogined
-	}
-	c.User = User
-	c.Client = User.PanClient()
-	return nil
-}
-
 func OpenSyncDb(path string) (panupload.SyncDb, error) {
 	return panupload.OpenSyncDb(path, "ecloud")
 }
 
 // 删除那些本地不存在而网盘存在的网盘文件 默认使用本地数据库判断，如果 flagSync 为 true 则遍历网盘文件列表进行判断（速度较慢）。
-func (c *backupFunc) DelRemoteFileFromDB(familyId int64, localDir string, savePath string, flagSync bool) {
+func DelRemoteFileFromDB(familyId int64, localDir string, savePath string, flagSync bool) {
+	activeUser := config.Config.ActiveUser()
 	var db panupload.SyncDb
 	var err error
 	dbpath := filepath.Join(localDir, ".ecloud")
@@ -120,7 +104,7 @@ func (c *backupFunc) DelRemoteFileFromDB(familyId int64, localDir string, savePa
 		}
 
 		if ent.FileID == "" || ent.ParentId == "" {
-			efi, err := c.Client.AppGetBasicFileInfo(&cloudpan.AppGetFileInfoParam{
+			efi, err := activeUser.PanClient().AppGetBasicFileInfo(&cloudpan.AppGetFileInfoParam{
 				FileId:   ent.FileID,
 				FilePath: ent.Path,
 			})
@@ -158,9 +142,9 @@ func (c *backupFunc) DelRemoteFileFromDB(familyId int64, localDir string, savePa
 		}
 
 		if familyId > 0 {
-			taskId, err = c.Client.AppCreateBatchTask(familyId, delParam)
+			taskId, err = activeUser.PanClient().AppCreateBatchTask(familyId, delParam)
 		} else {
-			taskId, err = c.Client.CreateBatchTask(delParam)
+			taskId, err = activeUser.PanClient().CreateBatchTask(delParam)
 		}
 		if err != nil || taskId == "" {
 			fmt.Println("删除网盘文件或目录失败", ent.Path, err)
@@ -182,7 +166,7 @@ func (c *backupFunc) DelRemoteFileFromDB(familyId int64, localDir string, savePa
 	parent := db.Get(savePath)
 
 	if parent.FileID == "" {
-		efi, err := c.Client.AppGetBasicFileInfo(&cloudpan.AppGetFileInfoParam{
+		efi, err := activeUser.PanClient().AppGetBasicFileInfo(&cloudpan.AppGetFileInfoParam{
 			FilePath: savePath,
 		})
 		if err != nil {
@@ -197,7 +181,7 @@ func (c *backupFunc) DelRemoteFileFromDB(familyId int64, localDir string, savePa
 		param := cloudpan.NewAppFileListParam()
 		param.FileId = parentID
 		param.FamilyId = familyId
-		fileResult, err := c.Client.AppGetAllFileList(param)
+		fileResult, err := activeUser.PanClient().AppGetAllFileList(param)
 		if err != nil {
 			return
 		}
@@ -236,7 +220,7 @@ func (c *backupFunc) DelRemoteFileFromDB(familyId int64, localDir string, savePa
 	syncFunc(savePath, parent.FileID)
 }
 
-func (c *backupFunc) checkPath(localdir string) (string, error) {
+func checkPath(localdir string) (string, error) {
 	fullPath, err := filepath.Abs(localdir)
 	if err != nil {
 		fullPath = localdir
@@ -266,7 +250,7 @@ func (c *backupFunc) checkPath(localdir string) (string, error) {
 	return fullPath, nil
 }
 
-func (c *backupFunc) Backup(cli *cli.Context) error {
+func Backup(cli *cli.Context) error {
 	subArgs := cli.Args()
 	localpaths := make([]string, 0)
 	flagSync := cli.Bool("sync")
@@ -291,11 +275,11 @@ func (c *backupFunc) Backup(cli *cli.Context) error {
 	for _, p := range subArgs[:localCount] {
 		go func(p string) {
 			defer wg.Done()
-			fullPath, err := c.checkPath(p)
+			fullPath, err := checkPath(p)
 			switch err {
 			case nil:
 				if flagSync || flagDelete {
-					c.DelRemoteFileFromDB(opt.FamilyId, fullPath, savePath, flagSync)
+					DelRemoteFileFromDB(opt.FamilyId, fullPath, savePath, flagSync)
 				}
 			case os.ErrInvalid:
 			default:

@@ -16,13 +16,60 @@ package command
 import (
 	"fmt"
 	"github.com/tickstep/cloudpan189-api/cloudpan"
+	"github.com/tickstep/cloudpan189-go/cmder"
 	"github.com/tickstep/cloudpan189-go/cmder/cmdtable"
+	"github.com/tickstep/cloudpan189-go/internal/config"
 	"github.com/tickstep/library-go/logger"
+	"github.com/urfave/cli"
 	"os"
 	"path"
 	"strconv"
 	"time"
 )
+
+func CmdRm() cli.Command {
+	return cli.Command{
+		Name:      "rm",
+		Usage:     "删除文件/目录",
+		UsageText: cmder.App().Name + " rm <文件/目录的路径1> <文件/目录2> <文件/目录3> ...",
+		Description: `
+	注意: 删除多个文件和目录时, 请确保每一个文件和目录都存在, 否则删除操作会失败.
+	被删除的文件或目录可在网盘文件回收站找回.
+
+	示例:
+
+	删除 /我的资源/1.mp4
+	cloudpan189-go rm /我的资源/1.mp4
+
+	删除 /我的资源/1.mp4 和 /我的资源/2.mp4
+	cloudpan189-go rm /我的资源/1.mp4 /我的资源/2.mp4
+
+	删除 /我的资源 整个目录 !!
+	cloudpan189-go rm /我的资源
+`,
+		Category: "天翼云盘",
+		Before:   cmder.ReloadConfigFunc,
+		Action: func(c *cli.Context) error {
+			if c.NArg() == 0 {
+				cli.ShowCommandHelp(c, c.Command.Name)
+				return nil
+			}
+			if config.Config.ActiveUser() == nil {
+				fmt.Println("未登录账号")
+				return nil
+			}
+			RunRemove(parseFamilyId(c), c.Args()...)
+			return nil
+		},
+		Flags: []cli.Flag{
+			cli.StringFlag{
+				Name:  "familyId",
+				Usage: "家庭云ID",
+				Value: "",
+			},
+		},
+	}
+}
 
 // RunRemove 执行 批量删除文件/目录
 func RunRemove(familyId int64, paths ...string) {

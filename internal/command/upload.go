@@ -15,6 +15,7 @@ package command
 
 import (
 	"fmt"
+	"github.com/tickstep/cloudpan189-go/cmder"
 	"io/ioutil"
 	"os"
 	"path"
@@ -96,6 +97,109 @@ var UploadFlags = []cli.Flag{
 		Usage: "excludeNames，指定排除的文件夹或者文件的名称，只支持正则表达式。支持排除多个名称，每一个名称就是一个exn参数",
 		Value: nil,
 	},
+}
+
+func CmdUpload() cli.Command {
+	return cli.Command{
+		Name:      "upload",
+		Aliases:   []string{"u"},
+		Usage:     "上传文件/目录",
+		UsageText: cmder.App().Name + " upload <本地文件/目录的路径1> <文件/目录2> <文件/目录3> ... <目标目录>",
+		Description: `
+	上传默认采用分片上传的方式, 上传的文件将会保存到, <目标目录>.
+
+	示例:
+
+	1. 将本地的 C:\Users\Administrator\Desktop\1.mp4 上传到网盘 /视频 目录
+	注意区别反斜杠 "\" 和 斜杠 "/" !!!
+	cloudpan189-go upload C:/Users/Administrator/Desktop/1.mp4 /视频
+
+	2. 将本地的 C:\Users\Administrator\Desktop\1.mp4 和 C:\Users\Administrator\Desktop\2.mp4 上传到网盘 /视频 目录
+	cloudpan189-go upload C:/Users/Administrator/Desktop/1.mp4 C:/Users/Administrator/Desktop/2.mp4 /视频
+
+	3. 将本地的 C:\Users\Administrator\Desktop 整个目录上传到网盘 /视频 目录
+	cloudpan189-go upload C:/Users/Administrator/Desktop /视频
+
+	4. 使用相对路径
+	cloudpan189-go upload 1.mp4 /视频
+
+    5. 覆盖上传，已存在的同名文件会被移到回收站
+	cloudpan189-go upload -ow 1.mp4 /视频
+`,
+		Category: "天翼云盘",
+		Before:   cmder.ReloadConfigFunc,
+		Action: func(c *cli.Context) error {
+			if c.NArg() < 2 {
+				cli.ShowCommandHelp(c, c.Command.Name)
+				return nil
+			}
+
+			subArgs := c.Args()
+			RunUpload(subArgs[:c.NArg()-1], subArgs[c.NArg()-1], &UploadOptions{
+				AllParallel:   c.Int("p"),
+				Parallel:      1, // 天翼云盘一个文件只支持单线程上传
+				MaxRetry:      c.Int("retry"),
+				NoRapidUpload: c.Bool("norapid"),
+				NoSplitFile:   true, // 天翼云盘不支持分片并发上传，只支持单线程上传，支持断点续传
+				ShowProgress:  !c.Bool("np"),
+				IsOverwrite:   c.Bool("ow"),
+				FamilyId:      parseFamilyId(c),
+				ExcludeNames: c.StringSlice("exn"),
+			})
+			return nil
+		},
+		Flags: UploadFlags,
+	}
+}
+
+func CmdRapidUpload() cli.Command {
+	return cli.Command{
+		Name:      "rapidupload",
+		Aliases:   []string{"ru"},
+		Usage:     "手动秒传文件",
+		UsageText: cmder.App().Name + " rapidupload -size=<文件的大小> -md5=<文件的md5值> <保存的网盘路径, 需包含文件名>",
+		Description: `
+	使用此功能秒传文件, 前提是知道文件的大小, md5, 且网盘中存在一模一样的文件.
+	上传的文件将会保存到网盘的目标目录.
+
+	示例:
+
+	1. 如果秒传成功, 则保存到网盘路径 /test/file.txt
+	cloudpan189-go rapidupload -size=56276137 -md5=fbe082d80e90f90f0fb1f94adbbcfa7f /test/file.txt
+`,
+		Category: "天翼云盘",
+		Before:   cmder.ReloadConfigFunc,
+		Action: func(c *cli.Context) error {
+			if c.NArg() <= 0 || !c.IsSet("md5") || !c.IsSet("size") {
+				cli.ShowCommandHelp(c, c.Command.Name)
+				return nil
+			}
+
+			RunRapidUpload(parseFamilyId(c), c.Bool("ow"), c.Args().Get(0), c.String("md5"), c.Int64("size"))
+			return nil
+		},
+		Flags: []cli.Flag{
+			cli.StringFlag{
+				Name:     "md5",
+				Usage:    "文件的 md5 值",
+				Required: true,
+			},
+			cli.Int64Flag{
+				Name:     "size",
+				Usage:    "文件的大小",
+				Required: true,
+			},
+			cli.BoolFlag{
+				Name:  "ow",
+				Usage: "overwrite, 覆盖已存在的文件",
+			},
+			cli.StringFlag{
+				Name:  "familyId",
+				Usage: "家庭云ID",
+				Value: "",
+			},
+		},
+	}
 }
 
 // RunUpload 执行文件上传
