@@ -257,7 +257,7 @@ func checkPath(localdir string) (string, error) {
 
 	if err != nil {
 		if os.IsNotExist(err) {
-			err = os.Mkdir(dbpath, 0644)
+			err = os.Mkdir(dbpath, 0755)
 		}
 		if err != nil {
 			return fullPath, fmt.Errorf("数据库目录[%s]创建失败，跳过处理: %s", dbpath, err)
