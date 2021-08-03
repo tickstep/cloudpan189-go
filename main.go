@@ -373,6 +373,7 @@ func main() {
 		// 上传文件/目录 upload
 		command.CmdUpload(),
 
+		// 手动秒传
 		command.CmdRapidUpload(),
 
 		// 下载文件/目录 download
