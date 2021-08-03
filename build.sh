@@ -1,5 +1,9 @@
 #!/bin/sh
 
+# how to use
+# for macOS & linux, run this command in shell
+# ./build.sh v0.1.0
+
 name="cloudpan189-go"
 version=$1
 
