@@ -317,7 +317,7 @@ func (utu *UploadTaskUnit) Run() (result *taskframework.TaskUnitRunResult) {
 	timeStart := time.Now()
 	result = &taskframework.TaskUnitRunResult{}
 
-	logger.Verbosef("[%s] 准备上传: %s=>%s\n", utu.taskInfo.Id(), utu.LocalFileChecksum.Path, utu.SavePath)
+	fmt.Printf("[%s] 准备上传: %s=>%s\n", utu.taskInfo.Id(), utu.LocalFileChecksum.Path, utu.SavePath)
 
 	defer func() {
 		var msg string
