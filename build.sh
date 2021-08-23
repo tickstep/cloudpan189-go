@@ -89,10 +89,12 @@ RicePack() {
 # OS X / macOS
 Build $name-$version"-darwin-macos-amd64" darwin amd64
 # Build $name-$version"-darwin-macos-386" darwin 386
+Build $name-$version"-darwin-macos-arm64" darwin arm64
 
 # Windows
 Build $name-$version"-windows-x86" windows 386
 Build $name-$version"-windows-x64" windows amd64
+Build $name-$version"-windows-arm" windows arm
 
 # Linux
 Build $name-$version"-linux-386" linux 386
