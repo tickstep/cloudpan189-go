@@ -14,9 +14,11 @@ set version=%1
 REM ============= build action ================
 call :build_task %name%-%version%-windows-x86 windows 386
 call :build_task %name%-%version%-windows-x64 windows amd64
+call :build_task %name%-%version%-windows-arm windows arm
 call :build_task %name%-%version%-linux-386 linux 386
 call :build_task %name%-%version%-linux-amd64 linux amd64
 call :build_task %name%-%version%-darwin-macos-amd64 darwin amd64
+call :build_task %name%-%version%-darwin-macos-arm64 darwin arm64
 
 goto:EOF
 
