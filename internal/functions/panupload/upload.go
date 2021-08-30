@@ -17,6 +17,7 @@ import (
 	"context"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/tickstep/cloudpan189-api/cloudpan"
 	"github.com/tickstep/cloudpan189-api/cloudpan/apierror"
@@ -142,6 +143,7 @@ func (pu *PanUpload) UploadFile(ctx context.Context, partseq int, partOffset int
 }
 
 func (pu *PanUpload) CommitFile() (cerr error) {
+	time.Sleep(time.Duration(500) * time.Millisecond)
 	pu.lazyInit()
 	var er *apierror.ApiError
 	if pu.familyId > 0 {
