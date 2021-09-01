@@ -429,9 +429,9 @@ func RunUpload(localPaths []string, savePath string, opt *UploadOptions) {
 			fmt.Printf("警告: 遍历错误: %s\n", err)
 		}
 	}
+	time.Sleep(500 * time.Millisecond)
 	close(Done)
 	wg.Wait()
-	logger.Verboseln("Upload Ok!")
 }
 
 // 是否是排除上传的文件

@@ -18,6 +18,7 @@ import (
 	"github.com/oleiade/lane"
 	"github.com/tickstep/cloudpan189-go/internal/waitgroup"
 	"strconv"
+	"sync"
 	"time"
 )
 
@@ -26,6 +27,7 @@ type (
 		incr     *incremental.Int // 任务id生成
 		deque    *lane.Deque      // 队列
 		parallel int              // 任务的最大并发量
+		locker   sync.Mutex
 
 		// 是否统计失败队列
 		IsFailedDeque bool
@@ -65,10 +67,12 @@ func (te *TaskExecutor) Append(unit TaskUnit, maxRetry int) *TaskInfo {
 		maxRetry: maxRetry,
 	}
 	unit.SetTaskInfo(taskInfo)
+	te.locker.Lock()
 	te.deque.Append(&TaskInfoItem{
 		Info: taskInfo,
 		Unit: unit,
 	})
+	te.locker.Unlock()
 	return taskInfo
 }
 
@@ -92,7 +96,9 @@ func (te *TaskExecutor) Execute() {
 	for {
 		wg := waitgroup.NewWaitGroup(te.parallel)
 		for {
+			te.locker.Lock()
 			e := te.deque.Shift()
+			te.locker.Unlock()
 			if e == nil { // 任务为空
 				break
 			}
@@ -140,7 +146,9 @@ func (te *TaskExecutor) Execute() {
 					task.Unit.OnComplete(result)
 
 					time.Sleep(task.Unit.RetryWait()) // 等待
+					te.locker.Lock()
 					te.deque.Append(task)             // 重新加入队列末尾
+					te.locker.Unlock()
 					return
 				}
 

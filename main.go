@@ -46,7 +46,7 @@ const (
 
 var (
 	// Version 版本号
-	Version = "v0.1.0"
+	Version = "v0.1.1-dev"
 
 	historyFilePath = filepath.Join(config.GetConfigDir(), "cloud189_command_history.txt")
 
