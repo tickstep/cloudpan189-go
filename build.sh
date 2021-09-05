@@ -50,6 +50,19 @@ AndroidBuild() {
   Pack $1 $2
 }
 
+IOSBuild() {
+  default_golang
+  echo "Building $1..."
+  mkdir -p "$output/$1"
+  cd "$output/$1"
+  export CC=/usr/local/go/misc/ios/clangwrap.sh GOOS=ios GOARCH=arm64 GOARM=7 CGO_ENABLED=1
+  $go build -ldflags "-X main.Version=$version -s -w" -o $name github.com/tickstep/cloudpan189-go
+  jtool --sign --inplace --ent ../../entitlements.xml $name
+  cd ../..
+  RicePack $1 $name
+  Pack $1 "ios"
+}
+
 # zip 打包
 Pack() {
   if [ $2 != "windows" ]; then
@@ -78,6 +91,9 @@ CC=$ANDROID_NDK_ROOT/bin/arm-linux-androideabi/bin/clang AndroidBuild $name-$ver
 CC=$ANDROID_NDK_ROOT/bin/aarch64-linux-android/bin/clang AndroidBuild $name-$version"-android-api21-arm64" android arm64 7
 CC=$ANDROID_NDK_ROOT/bin/i686-linux-android/bin/clang    AndroidBuild $name-$version"-android-api16-386" android 386 7
 CC=$ANDROID_NDK_ROOT/bin/x86_64-linux-android/bin/clang  AndroidBuild $name-$version"-android-api21-amd64" android amd64 7
+
+# iOS
+IOSBuild $name-$version"-ios-arm64"
 
 # OS X / macOS
 Build $name-$version"-darwin-macos-amd64" darwin amd64
