@@ -4,8 +4,14 @@
 # 注意事项
 *本项目还处于开发阶段，未经过充分的测试，如有bug欢迎提交issue.*   
 
-# 编译
-(待补充)
+# 版本标签说明
+1. arm / armv5 / armv7 : 适用32位ARM系统
+2. arm64 : 适用64位ARM系统
+3. 386 / x86 : 适用32系统，包括Intel和AMD的CPU系统
+4. amd64 / x64 : 适用64位系统，包括Intel和AMD的CPU系统
+5. mips : 适用MIPS指令集的CPU，例如国产龙芯CPU
+6. macOS amd64适用Intel CPU的机器，macOS arm64目前主要是适用苹果M1芯片的机器
+7. iOS arm64适用iPhone手机，并且必须是越狱的手机才能正常运行
 
 # 目录
 - [特色](#特色)
@@ -52,7 +58,7 @@
 
 
 # 特色
-1. 多平台支持, 支持 Windows, macOS, linux等
+1. 多平台支持, 支持 Windows, macOS, linux, android, iOS等
 2. 天翼云盘多用户支持
 3. 支持个人云，家庭云无缝切换
 4. 支持导入/导出功能，快速备份（导出）和恢复（导入）网盘文件。利用该功能可以进行跨网盘迁移文件
