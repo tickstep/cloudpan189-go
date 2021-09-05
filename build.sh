@@ -13,18 +13,13 @@ fi
 
 output="out"
 
-old_golang() {
-  GOROOT=/usr/local/go
-  go=$GOROOT/bin/go
-}
-
-new_golang() {
-  GOROOT=/usr/local/go
+default_golang() {
+  export GOROOT=/usr/local/go
   go=$GOROOT/bin/go
 }
 
 Build() {
-  old_golang
+  default_golang
   goarm=$4
   if [ "$4" = "" ]; then
     goarm=7
@@ -46,10 +41,10 @@ Build() {
 }
 
 AndroidBuild() {
-  new_golang
+  default_golang
   echo "Building $1..."
   export GOOS=$2 GOARCH=$3 GOARM=$4 CGO_ENABLED=1
-  go build -ldflags "-X main.Version=$version -s -w -linkmode=external -extldflags=-pie" -o "$output/$1/$name"
+  $go build -ldflags "-X main.Version=$version -s -w -linkmode=external -extldflags=-pie" -o "$output/$1/$name"
 
   RicePack $1 $name
   Pack $1 $2
@@ -77,14 +72,12 @@ RicePack() {
   return # 已取消web功能
 }
 
-#touch ./vendor/golang.org/x/sys/windows/windows.s
-
 # Android
-#export NDK_INSTALL=/Users/tickstep/Applications/android/android-ndk-toolchains
-#CC=$NDK_INSTALL/arm-linux-androideabi-4.9/bin/arm-linux-androideabi-gcc AndroidBuild $name-$version"-android-16-armv7" android arm 7
-#CC=$NDK_INSTALL/aarch64-linux-android-4.9/bin/aarch64-linux-android-gcc AndroidBuild $name-$version"-android-21-arm64" android arm64 7
-#CC=$NDK_INSTALL/i686-linux-android-4.9/bin/i686-linux-android-gcc AndroidBuild $name-$version"-android-16-386" android 386 7
-#CC=$NDK_INSTALL/x86_64-linux-android-4.9/bin/x86_64-linux-android-gcc AndroidBuild $name-$version"-android-21-amd64" android amd64 7
+export ANDROID_NDK_ROOT=/Users/tickstep/Applications/android_ndk/android-ndk-r23-darwin
+CC=$ANDROID_NDK_ROOT/bin/arm-linux-androideabi/bin/clang AndroidBuild $name-$version"-android-api16-armv7" android arm 7
+CC=$ANDROID_NDK_ROOT/bin/aarch64-linux-android/bin/clang AndroidBuild $name-$version"-android-api21-arm64" android arm64 7
+CC=$ANDROID_NDK_ROOT/bin/i686-linux-android/bin/clang    AndroidBuild $name-$version"-android-api16-386" android 386 7
+CC=$ANDROID_NDK_ROOT/bin/x86_64-linux-android/bin/clang  AndroidBuild $name-$version"-android-api21-amd64" android amd64 7
 
 # OS X / macOS
 Build $name-$version"-darwin-macos-amd64" darwin amd64
