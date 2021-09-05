@@ -60,6 +60,10 @@ github.com/tickstep/cloudpan189-api v0.0.5 h1:R46M4op2aABKJgR2S8c/KUe/fIQYbUpQGx
 github.com/tickstep/cloudpan189-api v0.0.5/go.mod h1:HYu2wtfBDRldAnohj9UmNpEZipQDMm2wOYszNuLzZ9s=
 github.com/tickstep/cloudpan189-api v0.0.6 h1:b+ctfvWfOVyq/Zot3rCrJxqf85b+toDSNLeGon4OWQo=
 github.com/tickstep/cloudpan189-api v0.0.6/go.mod h1:qhNVXxF1UGOApXy9uG+UuKHReFI1GpwHn0pzL4tqSd8=
+github.com/tickstep/cloudpan189-api v0.0.7 h1:2plOwRf9b1xN4e1aqhCTLHSCNkwzd4KuB0+z1apZM7A=
+github.com/tickstep/cloudpan189-api v0.0.7/go.mod h1:qhNVXxF1UGOApXy9uG+UuKHReFI1GpwHn0pzL4tqSd8=
+github.com/tickstep/cloudpan189-api v0.0.8 h1:J2+hTmtLDIQ1hByPs2v9uzKTSnXBMuns+2dG36Eugyo=
+github.com/tickstep/cloudpan189-api v0.0.8/go.mod h1:qhNVXxF1UGOApXy9uG+UuKHReFI1GpwHn0pzL4tqSd8=
 github.com/tickstep/library-go v0.0.1 h1:UbXeGE6ZxnxA6KTjMofEhG3h2aHJ4UGacfh7U2B4zgw=
 github.com/tickstep/library-go v0.0.1/go.mod h1:egoK/RvOJ3Qs2tHpkq374CWjhNjI91JSCCG1GrhDYSw=
 github.com/tickstep/library-go v0.0.2 h1:0JCxT2ZzRMrydUyqou3d9FI44ULrlxnkFcyioaGUbrE=
