@@ -90,7 +90,7 @@ func main() {
 	app.Name = "cloudpan189-go"
 	app.Version = Version
 	app.Author = "tickstep/cloudpan189-go: https://github.com/tickstep/cloudpan189-go"
-	app.Copyright = "(c) 2020 tickstep."
+	app.Copyright = "(c) 2020-2023 tickstep."
 	app.Usage = "天翼云盘客户端 for " + runtime.GOOS + "/" + runtime.GOARCH
 	app.Description = `cloudpan189-go 使用Go语言编写的天翼云盘命令行客户端, 为操作天翼云盘, 提供实用功能.
 	具体功能, 参见 COMMANDS 列表
@@ -445,31 +445,31 @@ func main() {
 		},
 
 		// 调试用 debug
-		{
-			Name:        "debug",
-			Aliases:     []string{"dg"},
-			Usage:       "开发调试用",
-			Description: "",
-			Category:    "debug",
-			Before:      cmder.ReloadConfigFunc,
-			Action: func(c *cli.Context) error {
-				os.Setenv(config.EnvVerbose, c.String("verbose"))
-				fmt.Println("显示调试日志", logger.IsVerbose)
-				return nil
-			},
-			Flags: []cli.Flag{
-				cli.StringFlag{
-					Name:  "param",
-					Usage: "参数",
-				},
-				cli.BoolFlag{
-					Name:        "verbose",
-					Destination: &logger.IsVerbose,
-					EnvVar:      config.EnvVerbose,
-					Usage:       "显示调试信息",
-				},
-			},
-		},
+		//{
+		//	Name:        "debug",
+		//	Aliases:     []string{"dg"},
+		//	Usage:       "开发调试用",
+		//	Description: "",
+		//	Category:    "debug",
+		//	Before:      cmder.ReloadConfigFunc,
+		//	Action: func(c *cli.Context) error {
+		//		os.Setenv(config.EnvVerbose, c.String("verbose"))
+		//		fmt.Println("显示调试日志", logger.IsVerbose)
+		//		return nil
+		//	},
+		//	Flags: []cli.Flag{
+		//		cli.StringFlag{
+		//			Name:  "param",
+		//			Usage: "参数",
+		//		},
+		//		cli.BoolFlag{
+		//			Name:        "verbose",
+		//			Destination: &logger.IsVerbose,
+		//			EnvVar:      config.EnvVerbose,
+		//			Usage:       "显示调试信息",
+		//		},
+		//	},
+		//},
 	}
 
 	sort.Sort(cli.FlagsByName(app.Flags))
