@@ -216,6 +216,14 @@ func main() {
 				targetDir string
 				isAbs     = path.IsAbs(targetPath)
 				isDir     = strings.LastIndex(targetPath, "/") == len(targetPath)-1
+
+				cmdRuneFunc = func(r rune) bool {
+					switch r {
+					case '\'', '"':
+						return true
+					}
+					return unicode.IsSpace(r)
+				}
 			)
 
 			if isAbs {
@@ -227,6 +235,44 @@ func main() {
 				}
 			}
 
+			// 路径自动补全
+			files, err := activeUser.CacheFilesDirectoriesList(targetDir)
+			if err != nil {
+				return
+			}
+			for _, file := range *files {
+				if file == nil {
+					continue
+				}
+
+				var (
+					appendLine string
+				)
+
+				// 已经有的情况
+				if !closed {
+					if !strings.HasPrefix(file.Path, path.Clean(path.Join(targetDir, path.Base(targetPath)))) {
+						if path.Base(targetDir) == path.Base(targetPath) {
+							appendLine = strings.Join(append(lineArgs[:numArgs-1], escaper.EscapeByRuneFunc(path.Join(targetPath, file.FileName), cmdRuneFunc)), " ")
+							goto handle
+						}
+						continue
+					}
+					appendLine = strings.Join(append(lineArgs[:numArgs-1], escaper.EscapeByRuneFunc(path.Clean(path.Join(path.Dir(targetPath), file.FileName)), cmdRuneFunc)), " ")
+					goto handle
+				}
+				// 没有的情况
+				appendLine = strings.Join(append(lineArgs, escaper.EscapeByRuneFunc(file.FileName, cmdRuneFunc)), " ")
+				goto handle
+
+			handle:
+				if file.IsFolder {
+					s = append(s, appendLine+"/")
+					continue
+				}
+				s = append(s, appendLine+" ")
+				continue
+			}
 			return
 		})
 

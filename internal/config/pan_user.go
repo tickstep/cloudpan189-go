@@ -17,31 +17,33 @@ import (
 	"fmt"
 	"github.com/tickstep/cloudpan189-api/cloudpan"
 	"github.com/tickstep/cloudpan189-api/cloudpan/apierror"
+	"github.com/tickstep/library-go/expires/cachemap"
 	"github.com/tickstep/library-go/logger"
 	"path"
 	"path/filepath"
 )
 
 type PanUser struct {
-	UID      uint64 `json:"uid"`
-	Nickname string `json:"nickname"`
-	AccountName string `json:"accountName"`
-	Sex      string `json:"sex"`
-	Workdir  string `json:"workdir"`
+	UID               uint64                 `json:"uid"`
+	Nickname          string                 `json:"nickname"`
+	AccountName       string                 `json:"accountName"`
+	Sex               string                 `json:"sex"`
+	Workdir           string                 `json:"workdir"`
 	WorkdirFileEntity cloudpan.AppFileEntity `json:"workdirFileEntity"`
 
-	FamilyWorkdir  string `json:"familyWorkdir"`
+	FamilyWorkdir           string                 `json:"familyWorkdir"`
 	FamilyWorkdirFileEntity cloudpan.AppFileEntity `json:"familyWorkdirFileEntity"`
 
-	ActiveFamilyId int64 `json:"activeFamilyId"` // 0代表个人云
+	ActiveFamilyId   int64                  `json:"activeFamilyId"` // 0代表个人云
 	ActiveFamilyInfo cloudpan.AppFamilyInfo `json:"activeFamilyInfo"`
 
-	LoginUserName string `json:"loginUserName"`
+	LoginUserName     string `json:"loginUserName"`
 	LoginUserPassword string `json:"loginUserPassword"`
 
-	WebToken cloudpan.WebLoginToken `json:"webToken"`
-	AppToken cloudpan.AppLoginToken `json:"appToken"`
-	panClient *cloudpan.PanClient
+	WebToken   cloudpan.WebLoginToken `json:"webToken"`
+	AppToken   cloudpan.AppLoginToken `json:"appToken"`
+	panClient  *cloudpan.PanClient
+	cacheOpMap cachemap.CacheOpMap
 }
 
 type PanUserList []*PanUser
@@ -52,12 +54,12 @@ func SetupUserByCookie(webToken *cloudpan.WebLoginToken, appToken *cloudpan.AppL
 doLoginAct:
 	panClient := cloudpan.NewPanClient(*webToken, *appToken)
 	u := &PanUser{
-		WebToken: *webToken,
-		AppToken: *appToken,
-		panClient: panClient,
-		Workdir: "/",
-		WorkdirFileEntity: *cloudpan.NewAppFileEntityForRootDir(),
-		FamilyWorkdir: "/",
+		WebToken:                *webToken,
+		AppToken:                *appToken,
+		panClient:               panClient,
+		Workdir:                 "/",
+		WorkdirFileEntity:       *cloudpan.NewAppFileEntityForRootDir(),
+		FamilyWorkdir:           "/",
 		FamilyWorkdirFileEntity: *cloudpan.NewAppFileEntityForRootDir(),
 	}
 
