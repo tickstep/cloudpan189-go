@@ -21,6 +21,7 @@ import (
 	"github.com/tickstep/library-go/crypto"
 	"github.com/tickstep/library-go/ids"
 	"github.com/tickstep/library-go/logger"
+	"os"
 	"strconv"
 	"strings"
 )
@@ -100,7 +101,7 @@ func DecryptString(text string) string {
 	if text == "" {
 		return ""
 	}
-	d, _  := hex.DecodeString(text)
+	d, _ := hex.DecodeString(text)
 
 	// use the machine unique id as the key
 	// but in some OS, this key will be changed if you reinstall the OS
@@ -110,4 +111,19 @@ func DecryptString(text string) string {
 		return text
 	}
 	return string(r)
+}
+
+// IsFolderExist 判断文件夹是否存在
+func IsFolderExist(pathStr string) bool {
+	fi, err := os.Stat(pathStr)
+	if err != nil {
+		if os.IsExist(err) {
+			return fi.IsDir()
+		}
+		if os.IsNotExist(err) {
+			return false
+		}
+		return false
+	}
+	return fi.IsDir()
 }

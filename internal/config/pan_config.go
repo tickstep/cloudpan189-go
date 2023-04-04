@@ -15,6 +15,7 @@ package config
 
 import (
 	"fmt"
+	"github.com/tickstep/cloudpan189-go/library/homedir"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -250,16 +251,46 @@ func (c *PanConfig) initDefaultConfig() {
 
 // GetConfigDir 获取配置路径
 func GetConfigDir() string {
-	// 从环境变量读取
+	// 按照以下顺序依次获取配置目录
+	// 1.环境变量CLOUD189_CONFIG_DIR => 2. /etc/cloud189/ => 3. ~/.cloud189/ => 4.当前程序目录
+
+	// 1. 从环境变量读取
 	configDir, ok := os.LookupEnv(EnvConfigDir)
 	if ok {
 		if filepath.IsAbs(configDir) {
+			logger.Verboseln("use config dir from CLOUD189_CONFIG_DIR env: ", configDir)
 			return configDir
 		}
 		// 如果不是绝对路径, 从程序目录寻找
-		return cmdutil.ExecutablePathJoin(configDir)
+		configDir = cmdutil.ExecutablePathJoin(configDir)
+		logger.Verboseln("use config dir from CLOUD189_CONFIG_DIR env: ", configDir)
+		return configDir
+	} else {
+		// 2. /etc/cloud189/
+		if runtime.GOOS == "linux" {
+			cd := "/etc/cloud189"
+			if IsFolderExist(cd) {
+				logger.Verboseln("use config dir: ", cd)
+				return cd
+			}
+		}
+
+		// 3. ~/.cloud189/
+		if runtime.GOOS == "linux" || runtime.GOOS == "windows" || runtime.GOOS == "darwin" {
+			cd, er := homedir.Expand("~/.cloud189")
+			if er == nil {
+				if IsFolderExist(cd) {
+					logger.Verboseln("use config dir: ", cd)
+					return cd
+				}
+			}
+		}
 	}
-	return cmdutil.ExecutablePathJoin(configDir)
+
+	// 4.当前程序所在目录
+	configDir = cmdutil.ExecutablePathJoin("")
+	logger.Verboseln("use config dir: ", configDir)
+	return configDir
 }
 
 func (c *PanConfig) ActiveUser() *PanUser {
