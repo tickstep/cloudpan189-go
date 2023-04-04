@@ -17,6 +17,7 @@ import (
 	"fmt"
 	"github.com/tickstep/cloudpan189-go/cmder"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
 	"runtime"
@@ -442,6 +443,29 @@ func main() {
 			},
 			Hidden:   true,
 			HideHelp: true,
+		},
+
+		// 执行系统命令 run
+		{
+			Name:     "run",
+			Usage:    "执行系统命令",
+			Category: "其他",
+			Action: func(c *cli.Context) error {
+				if c.NArg() == 0 {
+					cli.ShowCommandHelp(c, c.Command.Name)
+					return nil
+				}
+
+				cmd := exec.Command(c.Args().First(), c.Args().Tail()...)
+				cmd.Stdout = os.Stdout
+				cmd.Stdin = os.Stdin
+				cmd.Stderr = os.Stderr
+				err := cmd.Run()
+				if err != nil {
+					fmt.Println(err)
+				}
+				return nil
+			},
 		},
 
 		// 调试用 debug
