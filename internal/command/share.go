@@ -134,29 +134,29 @@ func CmdShare() cli.Command {
 					return nil
 				},
 			},
-			{
-				Name:      "save",
-				Usage:     "转存分享的全部文件到指定文件夹",
-				UsageText: cmder.App().Name + " share save [save_dir_path] \"[share_url]\"",
-				Description: `转存分享的全部文件到指定文件夹
-示例:
-    将 https://cloud.189.cn/t/RzUNre7nq2Uf 分享链接里面的全部文件转存到 /我的文档 这个网盘目录里面
-    注意：转存需要一定的时间才能生效，需要等待一会才能完全转存到网盘文件夹里面
-	cloudpan189-go share save /我的文档 https://cloud.189.cn/t/RzUNre7nq2Uf（访问码：io7x）
-`,
-				Action: func(c *cli.Context) error {
-					if c.NArg() < 2 {
-						cli.ShowCommandHelp(c, c.Command.Name)
-						return nil
-					}
-					if config.Config.ActiveUser() == nil {
-						fmt.Println("未登录账号")
-						return nil
-					}
-					RunShareSave(c.Args().Get(1), c.Args().Get(0))
-					return nil
-				},
-			},
+			//			{
+			//				Name:      "save",
+			//				Usage:     "转存分享的全部文件到指定文件夹",
+			//				UsageText: cmder.App().Name + " share save [save_dir_path] \"[share_url]\"",
+			//				Description: `转存分享的全部文件到指定文件夹
+			//示例:
+			//    将 https://cloud.189.cn/t/RzUNre7nq2Uf 分享链接里面的全部文件转存到 /我的文档 这个网盘目录里面
+			//    注意：转存需要一定的时间才能生效，需要等待一会才能完全转存到网盘文件夹里面
+			//	cloudpan189-go share save /我的文档 https://cloud.189.cn/t/RzUNre7nq2Uf（访问码：io7x）
+			//`,
+			//				Action: func(c *cli.Context) error {
+			//					if c.NArg() < 2 {
+			//						cli.ShowCommandHelp(c, c.Command.Name)
+			//						return nil
+			//					}
+			//					if config.Config.ActiveUser() == nil {
+			//						fmt.Println("未登录账号")
+			//						return nil
+			//					}
+			//					RunShareSave(c.Args().Get(1), c.Args().Get(0))
+			//					return nil
+			//				},
+			//			},
 		},
 	}
 }
