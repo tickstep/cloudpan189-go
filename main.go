@@ -433,7 +433,7 @@ func main() {
 		command.CmdImport(),
 
 		// 回收站
-		command.CmdRecycle(),
+		//command.CmdRecycle(),
 
 		// 显示和修改程序配置项 config
 		command.CmdConfig(),

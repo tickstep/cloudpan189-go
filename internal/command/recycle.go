@@ -131,8 +131,8 @@ func RunRecycleList(page int) {
 	tb := cmdtable.NewTable(os.Stdout)
 	tb.SetHeader([]string{"#", "file_id", "文件名", "文件大小", "创建日期", "修改日期"})
 	tb.SetColumnAlignment([]int{tablewriter.ALIGN_DEFAULT, tablewriter.ALIGN_RIGHT, tablewriter.ALIGN_RIGHT, tablewriter.ALIGN_LEFT, tablewriter.ALIGN_LEFT})
-	for k, file := range fdl.Data {
-		tb.Append([]string{strconv.Itoa(k), file.FileId, file.FileName, converter.ConvertFileSize(file.FileSize, 2), file.CreateTime, file.LastOpTime})
+	for k, file := range fdl.FileList {
+		tb.Append([]string{strconv.Itoa(k), strconv.FormatInt(file.FileId, 10), file.FileName, converter.ConvertFileSize(file.FileSize, 2), file.CreateDate, file.LastOpTime})
 	}
 
 	tb.Render()
@@ -152,12 +152,12 @@ func RunRecycleRestore(fidStrList ...string) {
 	}
 	isContinue := true
 	for {
-		if !isContinue || fdl.RecordCount <= 0 {
+		if !isContinue || fdl.Count <= 0 {
 			break
 		}
 		pageNum += 1
-		for _, f := range fdl.Data {
-			if isFileIdInTheRestoreList(f.FileId, fidStrList...) {
+		for _, f := range fdl.FileList {
+			if isFileIdInTheRestoreList(strconv.FormatInt(f.FileId, 10), fidStrList...) {
 				restoreFileList = append(restoreFileList, f)
 				if len(restoreFileList) >= len(fidStrList) {
 					isContinue = false
