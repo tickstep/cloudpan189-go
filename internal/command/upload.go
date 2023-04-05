@@ -60,7 +60,7 @@ type (
 		ShowProgress  bool
 		IsOverwrite   bool // 覆盖已存在的文件，如果同名文件已存在则移到回收站里
 		FamilyId      int64
-		ExcludeNames []string // 排除的文件名，包括文件夹和文件。即这些文件/文件夹不进行上传，支持正则表达式
+		ExcludeNames  []string // 排除的文件名，包括文件夹和文件。即这些文件/文件夹不进行上传，支持正则表达式
 	}
 )
 
@@ -159,7 +159,7 @@ func CmdUpload() cli.Command {
 				ShowProgress:  !c.Bool("np"),
 				IsOverwrite:   c.Bool("ow"),
 				FamilyId:      parseFamilyId(c),
-				ExcludeNames: c.StringSlice("exn"),
+				ExcludeNames:  c.StringSlice("exn"),
 			})
 			return nil
 		},
@@ -227,6 +227,12 @@ func RunUpload(localPaths []string, savePath string, opt *UploadOptions) {
 	// 检测opt
 	if opt.AllParallel <= 0 {
 		opt.AllParallel = config.Config.MaxUploadParallel
+		if opt.AllParallel == 0 {
+			opt.AllParallel = config.DefaultFileUploadParallelNum
+		}
+	}
+	if opt.AllParallel > config.MaxFileUploadParallelNum {
+		opt.AllParallel = config.MaxFileUploadParallelNum
 	}
 	if opt.Parallel <= 0 {
 		opt.Parallel = 1
@@ -436,14 +442,14 @@ func RunUpload(localPaths []string, savePath string, opt *UploadOptions) {
 
 // 是否是排除上传的文件
 func isExcludeFile(filePath string, opt *UploadOptions) bool {
-	if opt == nil || len(opt.ExcludeNames) == 0{
+	if opt == nil || len(opt.ExcludeNames) == 0 {
 		return false
 	}
 
-	for _,pattern := range opt.ExcludeNames {
+	for _, pattern := range opt.ExcludeNames {
 		fileName := path.Base(filePath)
 
-		m,_ := regexp.MatchString(pattern, fileName)
+		m, _ := regexp.MatchString(pattern, fileName)
 		if m {
 			return true
 		}
