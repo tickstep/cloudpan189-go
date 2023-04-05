@@ -80,7 +80,7 @@ func RunRemove(familyId int64, paths ...string) {
 	}
 }
 
-func delFamilyCloudFiles(familyId int64, paths ...string)  {
+func delFamilyCloudFiles(familyId int64, paths ...string) {
 	activeUser := GetActiveUser()
 	infoList, _, delFileInfos := getBatchTaskInfoList(familyId, paths...)
 	if infoList == nil || len(*infoList) == 0 {
@@ -90,7 +90,7 @@ func delFamilyCloudFiles(familyId int64, paths ...string)  {
 
 	// create delete files task
 	delParam := &cloudpan.BatchTaskParam{
-		TypeFlag: cloudpan.BatchTaskTypeDelete,
+		TypeFlag:  cloudpan.BatchTaskTypeDelete,
 		TaskInfos: *infoList,
 	}
 
@@ -123,7 +123,7 @@ func delFamilyCloudFiles(familyId int64, paths ...string)  {
 	}
 }
 
-func delPersonCloudFiles(familyId int64, paths ...string)  {
+func delPersonCloudFiles(familyId int64, paths ...string) {
 	activeUser := GetActiveUser()
 	infoList, _, delFileInfos := getBatchTaskInfoList(familyId, paths...)
 	if infoList == nil || len(*infoList) == 0 {
@@ -133,7 +133,7 @@ func delPersonCloudFiles(familyId int64, paths ...string)  {
 
 	// create delete files task
 	delParam := &cloudpan.BatchTaskParam{
-		TypeFlag: cloudpan.BatchTaskTypeDelete,
+		TypeFlag:  cloudpan.BatchTaskTypeDelete,
 		TaskInfos: *infoList,
 	}
 
@@ -183,9 +183,9 @@ func getBatchTaskInfoList(familyId int64, paths ...string) (*cloudpan.BatchTaskI
 			isFolder = 1
 		}
 		infoItem := &cloudpan.BatchTaskInfo{
-			FileId: fe.FileId,
-			FileName: fe.FileName,
-			IsFolder: isFolder,
+			FileId:      fe.FileId,
+			FileName:    fe.FileName,
+			IsFolder:    isFolder,
 			SrcParentId: fe.ParentId,
 		}
 		infoList = append(infoList, infoItem)
