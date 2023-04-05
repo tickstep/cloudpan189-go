@@ -15,16 +15,15 @@ package command
 
 import (
 	"fmt"
-	"github.com/tickstep/cloudpan189-api/cloudpan"
-	"github.com/tickstep/cloudpan189-api/cloudpan/apierror"
 	"github.com/tickstep/cloudpan189-go/cmder"
 	"github.com/tickstep/cloudpan189-go/cmder/cmdtable"
 	"github.com/tickstep/cloudpan189-go/internal/config"
 	"github.com/tickstep/cloudpan189-go/internal/file/downloader"
 	"github.com/tickstep/cloudpan189-go/internal/functions/pandownload"
 	"github.com/tickstep/cloudpan189-go/internal/taskframework"
-	"github.com/tickstep/library-go/converter"
+	"github.com/tickstep/cloudpan189-go/internal/utils"
 	"github.com/tickstep/cloudpan189-go/library/requester/transfer"
+	"github.com/tickstep/library-go/converter"
 	"github.com/urfave/cli"
 	"os"
 	"path/filepath"
@@ -39,11 +38,11 @@ type (
 		IsOverwrite          bool
 		SaveTo               string
 		Parallel             int
-		Load                 int
 		MaxRetry             int
 		NoCheck              bool
 		ShowProgress         bool
 		FamilyId             int64
+		ExcludeNames         []string // 排除的文件名，包括文件夹和文件。即这些文件/文件夹不进行下载，支持正则表达式
 	}
 
 	// LocateDownloadOption 获取下载链接可选参数
@@ -81,13 +80,24 @@ func CmdDownload() cli.Command {
 	cloudpan189-go config set -savedir D:/Downloads
 
 	下载 /我的资源/1.mp4
-	cloudpan189-go d /我的资源/1.mp4
+	cloudpan189-go download /我的资源/1.mp4
 
 	下载 /我的资源 整个目录!!
-	cloudpan189-go d /我的资源
+	cloudpan189-go download /我的资源
+
+	下载 /我的资源 整个目录，但是排除里面所有的jpg文件
+	cloudpan189-go download -exn "\.jpg$" /我的资源
 
     下载 /我的资源/1.mp4 并保存下载的文件到本地的 d:/panfile
-	cloudpan189-go d --saveto d:/panfile /我的资源/1.mp4
+	cloudpan189-go download --saveto d:/panfile /我的资源/1.mp4
+
+  参考：
+    以下是典型的排除特定文件或者文件夹的例子，注意：参数值必须是正则表达式。在正则表达式中，^表示匹配开头，$表示匹配结尾。
+    1)排除@eadir文件或者文件夹：-exn "^@eadir$"
+    2)排除.jpg文件：-exn "\.jpg$"
+    3)排除.号开头的文件：-exn "^\."
+    4)排除~号开头的文件：-exn "^~"
+    5)排除 myfile.txt 文件：-exn "^myfile.txt$"
 `,
 		Category: "天翼云盘",
 		Before:   cmder.ReloadConfigFunc,
@@ -113,11 +123,11 @@ func CmdDownload() cli.Command {
 				IsOverwrite:          c.Bool("ow"),
 				SaveTo:               saveTo,
 				Parallel:             c.Int("p"),
-				Load:                 c.Int("l"),
 				MaxRetry:             c.Int("retry"),
 				NoCheck:              c.Bool("nocheck"),
 				ShowProgress:         !c.Bool("np"),
 				FamilyId:             parseFamilyId(c),
+				ExcludeNames:         c.StringSlice("exn"),
 			}
 
 			RunDownload(c.Args(), do)
@@ -146,11 +156,7 @@ func CmdDownload() cli.Command {
 			},
 			cli.IntFlag{
 				Name:  "p",
-				Usage: "指定下载线程数",
-			},
-			cli.IntFlag{
-				Name:  "l",
-				Usage: "指定同时进行下载文件的数量",
+				Usage: "指定同时进行下载文件的数量（取值范围:1 ~ 20）",
 			},
 			cli.IntFlag{
 				Name:  "retry",
@@ -170,14 +176,16 @@ func CmdDownload() cli.Command {
 				Usage: "家庭云ID",
 				Value: "",
 			},
+			cli.StringSliceFlag{
+				Name:  "exn",
+				Usage: "exclude name，指定排除的文件夹或者文件的名称，被排除的文件不会进行下载，只支持正则表达式。支持同时排除多个名称，每一个名称就是一个exn参数",
+				Value: nil,
+			},
 		},
 	}
 }
 
-func downloadPrintFormat(load int) string {
-	if load <= 1 {
-		return pandownload.DefaultPrintFormat
-	}
+func downloadPrintFormat() string {
 	return "\r[%s] ↓ %s/%s %s/s in %s, left %s ..."
 }
 
@@ -185,10 +193,6 @@ func downloadPrintFormat(load int) string {
 func RunDownload(paths []string, options *DownloadOptions) {
 	if options == nil {
 		options = &DownloadOptions{}
-	}
-
-	if options.Load <= 0 {
-		options.Load = config.Config.MaxDownloadLoad
 	}
 
 	if options.MaxRetry < 0 {
@@ -207,7 +211,8 @@ func RunDownload(paths []string, options *DownloadOptions) {
 		BlockSize:                  MaxDownloadRangeSize,
 		MaxRate:                    config.Config.MaxDownloadRate,
 		InstanceStateStorageFormat: downloader.InstanceStateStorageFormatJSON,
-		ShowProgress: options.ShowProgress,
+		ShowProgress:               options.ShowProgress,
+		ExcludeNames:               options.ExcludeNames,
 	}
 	if cfg.CacheSize == 0 {
 		cfg.CacheSize = int(DownloadCacheSize)
@@ -216,9 +221,15 @@ func RunDownload(paths []string, options *DownloadOptions) {
 	// 设置下载最大并发量
 	if options.Parallel < 1 {
 		options.Parallel = config.Config.MaxDownloadParallel
+		if options.Parallel == 0 {
+			options.Parallel = config.DefaultFileDownloadParallelNum
+		}
+	}
+	if options.Parallel > config.MaxFileDownloadParallelNum {
+		options.Parallel = config.MaxFileDownloadParallelNum
 	}
 
-	paths, err := matchPathByShellPattern(options.FamilyId, paths...)
+	paths, err := makePathAbsolute(options.FamilyId, paths...)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -229,41 +240,41 @@ func RunDownload(paths []string, options *DownloadOptions) {
 
 	var (
 		panClient = GetActivePanClient()
-		loadCount = 0
 	)
+	cfg.MaxParallel = options.Parallel
 
 	// 预测要下载的文件数量
-	for k := range paths {
-		// 使用递归获取文件的方法计算路径包含的文件的总数量
-		panClient.AppFilesDirectoriesRecurseList(options.FamilyId, paths[k], func(depth int, _ string, fd *cloudpan.AppFileEntity, apiError *apierror.ApiError) bool {
-			if apiError != nil {
-				panCommandVerbose.Warnf("%s\n", apiError)
-				return true
-			}
-
-			// 忽略统计文件夹数量
-			if !fd.IsFolder {
-				loadCount++
-				if loadCount >= options.Load { // 文件的总数量超过指定的指定数量，则不再进行下层的递归查找文件
-					return false
-				}
-			}
-			return true
-		})
-
-		if loadCount >= options.Load {
-			break
-		}
-	}
+	//for k := range paths {
+	//	// 使用递归获取文件的方法计算路径包含的文件的总数量
+	//	panClient.AppFilesDirectoriesRecurseList(options.FamilyId, paths[k], func(depth int, _ string, fd *cloudpan.AppFileEntity, apiError *apierror.ApiError) bool {
+	//		if apiError != nil {
+	//			panCommandVerbose.Warnf("%s\n", apiError)
+	//			return true
+	//		}
+	//
+	//		// 忽略统计文件夹数量
+	//		if !fd.IsFolder {
+	//			loadCount++
+	//			if loadCount >= options.Load { // 文件的总数量超过指定的指定数量，则不再进行下层的递归查找文件
+	//				return false
+	//			}
+	//		}
+	//		return true
+	//	})
+	//
+	//	if loadCount >= options.Load {
+	//		break
+	//	}
+	//}
 
 	// 修改Load, 设置MaxParallel
-	if loadCount > 0 {
-		options.Load = loadCount
-		// 取平均值
-		cfg.MaxParallel = config.AverageParallel(options.Parallel, loadCount)
-	} else {
-		cfg.MaxParallel = options.Parallel
-	}
+	//if loadCount > 0 {
+	//	options.Load = loadCount
+	//	// 取平均值
+	//	cfg.MaxParallel = config.AverageParallel(options.Parallel, loadCount)
+	//} else {
+	//	cfg.MaxParallel = options.Parallel
+	//}
 
 	var (
 		executor = taskframework.TaskExecutor{
@@ -271,35 +282,56 @@ func RunDownload(paths []string, options *DownloadOptions) {
 		}
 		statistic = &pandownload.DownloadStatistic{}
 	)
+	executor.SetParallel(cfg.MaxParallel)
+
 	// 处理队列
 	for k := range paths {
-		newCfg := *cfg
-		unit := pandownload.DownloadTaskUnit{
-			Cfg:                  &newCfg, // 复制一份新的cfg
-			PanClient:            panClient,
-			VerbosePrinter:       panCommandVerbose,
-			PrintFormat:          downloadPrintFormat(options.Load),
-			ParentTaskExecutor:   &executor,
-			DownloadStatistic:    statistic,
-			IsPrintStatus:        options.IsPrintStatus,
-			IsExecutedPermission: options.IsExecutedPermission,
-			IsOverwrite:          options.IsOverwrite,
-			NoCheck:              options.NoCheck,
-			FilePanPath:          paths[k],
-			FamilyId:             options.FamilyId,
+		// 使用通配符匹配
+		fileList, err2 := matchPathByShellPattern(options.FamilyId, paths[k])
+		if err2 != nil {
+			fmt.Printf("获取文件出错，请稍后重试: %s\n", paths[k])
+			continue
+		}
+		if fileList == nil || len(fileList) == 0 {
+			// 文件不存在
+			fmt.Printf("文件不存在: %s\n", paths[k])
+			continue
 		}
 
-		// 设置储存的路径
-		if options.SaveTo != "" {
-			unit.OriginSaveRootPath = options.SaveTo
-			unit.SavePath = filepath.Join(options.SaveTo, filepath.Base(paths[k]))
-		} else {
-			// 使用默认的保存路径
-			unit.OriginSaveRootPath = GetActiveUser().GetSavePath("")
-			unit.SavePath = GetActiveUser().GetSavePath(paths[k])
+		for _, f := range fileList {
+			newCfg := *cfg
+			// 是否排除下载
+			if utils.IsExcludeFile(f.Path, &newCfg.ExcludeNames) {
+				fmt.Printf("排除文件: %s\n", f.Path)
+				continue
+			}
+			unit := pandownload.DownloadTaskUnit{
+				Cfg:                  &newCfg, // 复制一份新的cfg
+				PanClient:            panClient,
+				VerbosePrinter:       panCommandVerbose,
+				PrintFormat:          downloadPrintFormat(),
+				ParentTaskExecutor:   &executor,
+				DownloadStatistic:    statistic,
+				IsPrintStatus:        options.IsPrintStatus,
+				IsExecutedPermission: options.IsExecutedPermission,
+				IsOverwrite:          options.IsOverwrite,
+				NoCheck:              options.NoCheck,
+				FilePanPath:          f.Path,
+				FamilyId:             options.FamilyId,
+			}
+
+			// 设置储存的路径
+			if options.SaveTo != "" {
+				unit.OriginSaveRootPath = options.SaveTo
+				unit.SavePath = filepath.Join(options.SaveTo, f.Path)
+			} else {
+				// 使用默认的保存路径
+				unit.OriginSaveRootPath = GetActiveUser().GetSavePath("")
+				unit.SavePath = GetActiveUser().GetSavePath(f.Path)
+			}
+			info := executor.Append(&unit, options.MaxRetry)
+			fmt.Printf("[%s] 加入下载队列: %s\n", info.Id(), f.Path)
 		}
-		info := executor.Append(&unit, options.MaxRetry)
-		fmt.Printf("[%s] 加入下载队列: %s\n", info.Id(), paths[k])
 	}
 
 	// 开始计时

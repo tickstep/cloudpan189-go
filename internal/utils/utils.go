@@ -20,6 +20,8 @@ import (
 	"io/ioutil"
 	"net/http/cookiejar"
 	"net/url"
+	"path"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -102,13 +104,29 @@ func ParseVersionNum(versionStr string) int {
 	versionStr = strings.ReplaceAll(versionStr, "-dev", "")
 	versionStr = strings.ReplaceAll(versionStr, "v", "")
 	versionParts := strings.Split(versionStr, ".")
-	verNum := parseInt(versionParts[0]) * 1e4 + parseInt(versionParts[1]) * 1e2 + parseInt(versionParts[2])
+	verNum := parseInt(versionParts[0])*1e4 + parseInt(versionParts[1])*1e2 + parseInt(versionParts[2])
 	return verNum
 }
 func parseInt(numStr string) int {
-	num,e := strconv.Atoi(numStr)
+	num, e := strconv.Atoi(numStr)
 	if e != nil {
 		return 0
 	}
 	return num
+}
+
+// IsExcludeFile 是否是指定排除的文件
+func IsExcludeFile(filePath string, excludeNames *[]string) bool {
+	if excludeNames == nil || len(*excludeNames) == 0 {
+		return false
+	}
+
+	for _, pattern := range *excludeNames {
+		fileName := path.Base(strings.ReplaceAll(filePath, "\\", "/"))
+		m, _ := regexp.MatchString(pattern, fileName)
+		if m {
+			return true
+		}
+	}
+	return false
 }

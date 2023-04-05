@@ -20,12 +20,12 @@ import (
 	"github.com/tickstep/cloudpan189-api/cloudpan/apierror"
 	"github.com/tickstep/cloudpan189-go/cmder/cmdutil"
 	"github.com/tickstep/cloudpan189-go/internal/waitgroup"
+	"github.com/tickstep/cloudpan189-go/library/requester/transfer"
 	"github.com/tickstep/library-go/cachepool"
 	"github.com/tickstep/library-go/logger"
 	"github.com/tickstep/library-go/prealloc"
 	"github.com/tickstep/library-go/requester"
 	"github.com/tickstep/library-go/requester/rio/speeds"
-	"github.com/tickstep/cloudpan189-go/library/requester/transfer"
 	"io"
 	"net/http"
 	"sync"
@@ -50,8 +50,8 @@ type (
 
 		monitorCancelFunc context.CancelFunc
 
-		fileInfo               *cloudpan.AppFileEntity      // 下载的文件信息
-		familyId               int64
+		fileInfo                *cloudpan.AppFileEntity // 下载的文件信息
+		familyId                int64
 		loadBalancerCompareFunc LoadBalancerCompareFunc // 负载均衡检测函数
 		durlCheckFunc           DURLCheckFunc           // 下载url检测函数
 		statusCodeBodyCheckFunc StatusCodeBodyCheckFunc
@@ -74,8 +74,8 @@ type (
 //NewDownloader 初始化Downloader
 func NewDownloader(writer io.WriterAt, config *Config, p *cloudpan.PanClient) (der *Downloader) {
 	der = &Downloader{
-		config: config,
-		writer: writer,
+		config:    config,
+		writer:    writer,
 		panClient: p,
 	}
 
@@ -133,7 +133,7 @@ func (der *Downloader) SelectParallel(single bool, maxParallel int, totalSize in
 	} else if isRange {
 		parallel = len(instanceRangeList)
 	} else {
-		parallel = der.config.MaxParallel
+		parallel = maxParallel
 		if int64(parallel) > totalSize/int64(MinParallelSize) {
 			parallel = int(totalSize/int64(MinParallelSize)) + 1
 		}
@@ -214,7 +214,7 @@ func (der *Downloader) checkLoadBalancers() *LoadBalancerResponseList {
 			}
 
 			loadBalancer := &LoadBalancerResponse{
-				URL:     req.URL.String(),
+				URL: req.URL.String(),
 			}
 
 			loadBalancerResponses = append(loadBalancerResponses, loadBalancer)
@@ -298,7 +298,7 @@ func (der *Downloader) Execute() error {
 	var (
 		isInstance = bii != nil // 是否存在断点信息
 		status     *transfer.DownloadStatus
-		single = false // 开启多线程下载
+		single     = false // 开启多线程下载
 	)
 	if !isInstance {
 		bii = &transfer.DownloadInstanceInfo{}
@@ -321,7 +321,7 @@ func (der *Downloader) Execute() error {
 	}
 
 	// 数据处理
-	parallel := der.SelectParallel(single, der.config.MaxParallel, status.TotalSize(), bii.Ranges) // 实际的下载并行量
+	parallel := der.SelectParallel(single, MaxParallelWorkerCount, status.TotalSize(), bii.Ranges) // 实际的下载并行量
 	blockSize, err := der.SelectBlockSizeAndInitRangeGen(single, status, parallel)                 // 实际的BlockSize
 	if err != nil {
 		return err

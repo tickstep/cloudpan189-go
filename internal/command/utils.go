@@ -63,7 +63,20 @@ func GetFileInfoByPaths(paths ...string) (fileInfoList []*cloudpan.FileEntity, f
 	return
 }
 
-func matchPathByShellPattern(familyId int64, patterns ...string) (panpaths []string, err error) {
+// matchPathByShellPattern 通配符匹配路径，允许返回多个匹配结果
+func matchPathByShellPattern(familyId int64, patterns ...string) (files []*cloudpan.AppFileEntity, e error) {
+	acUser := GetActiveUser()
+	for k := range patterns {
+		ps, err := acUser.PanClient().MatchPathByShellPattern(familyId, acUser.PathJoin(familyId, patterns[k]))
+		if err != nil {
+			return nil, err
+		}
+		files = append(files, *ps...)
+	}
+	return files, nil
+}
+
+func makePathAbsolute(familyId int64, patterns ...string) (panpaths []string, err error) {
 	acUser := GetActiveUser()
 	for k := range patterns {
 		ps := acUser.PathJoin(familyId, patterns[k])

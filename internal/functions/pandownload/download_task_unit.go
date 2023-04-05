@@ -22,13 +22,15 @@ import (
 	"github.com/tickstep/cloudpan189-go/internal/file/downloader"
 	"github.com/tickstep/cloudpan189-go/internal/functions"
 	"github.com/tickstep/cloudpan189-go/internal/taskframework"
+	"github.com/tickstep/cloudpan189-go/internal/utils"
+	"github.com/tickstep/cloudpan189-go/library/requester/transfer"
 	"github.com/tickstep/library-go/converter"
 	"github.com/tickstep/library-go/logger"
 	"github.com/tickstep/library-go/requester"
-	"github.com/tickstep/cloudpan189-go/library/requester/transfer"
 	"io"
 	"net/http"
 	"os"
+	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -54,10 +56,10 @@ type (
 		IsOverwrite          bool // 是否覆盖已存在的文件
 		NoCheck              bool // 不校验文件
 
-		FilePanPath string // 要下载的网盘文件路径
-		SavePath    string // 文件保存在本地的路径
-		OriginSaveRootPath    string // 文件保存在本地的根目录路径
-		FamilyId    int64 // 家庭云ID, 个人云默认为0
+		FilePanPath        string // 要下载的网盘文件路径
+		SavePath           string // 文件保存在本地的路径
+		OriginSaveRootPath string // 文件保存在本地的根目录路径
+		FamilyId           int64  // 家庭云ID, 个人云默认为0
 
 		fileInfo *cloudpan.AppFileEntity // 文件或目录详情
 	}
@@ -142,7 +144,7 @@ func (dtu *DownloadTaskUnit) download() (err error) {
 		if dtu.IsPrintStatus {
 			// 输出所有的worker状态
 			var (
-				tb      = cmdtable.NewTable(builder)
+				tb = cmdtable.NewTable(builder)
 			)
 			tb.SetHeader([]string{"#", "status", "range", "left", "speeds", "error"})
 			workersCallback(func(key int, worker *downloader.Worker) bool {
@@ -359,18 +361,32 @@ func (dtu *DownloadTaskUnit) Run() (result *taskframework.TaskUnitRunResult) {
 		}
 
 		// 获取该目录下的文件列表
-		fileList := dtu.PanClient.AppFilesDirectoriesRecurseList(dtu.FamilyId, dtu.FilePanPath, nil)
-		if fileList == nil {
+		fileListParam := cloudpan.NewAppFileListParam()
+		fileListParam.FamilyId = dtu.FamilyId
+		fileListParam.FileId = dtu.fileInfo.FileId
+		fileListResult, apierr := dtu.PanClient.AppGetAllFileList(fileListParam)
+		//fileList := dtu.PanClient.AppFilesDirectoriesRecurseList(dtu.FamilyId, dtu.FilePanPath, nil)
+		if apierr != nil {
 			result.ResultMessage = "获取目录信息错误"
 			result.Err = err
 			result.NeedRetry = true
 			return
 		}
 
+		fileList := fileListResult.FileList
 		for k := range fileList {
-			if fileList[k].IsFolder {
+			fileList[k].Path = path.Join(dtu.FilePanPath, fileList[k].FileName)
+
+			// 是否排除下载
+			if utils.IsExcludeFile(fileList[k].Path, &dtu.Cfg.ExcludeNames) {
+				fmt.Printf("排除文件: %s\n", fileList[k].Path)
 				continue
 			}
+			if fileList[k].IsFolder {
+				logger.Verbosef("[%s] create sub folder download task: %s\n",
+					dtu.taskInfo.Id(), fileList[k].Path)
+			}
+
 			// 添加子任务
 			subUnit := *dtu
 			newCfg := *dtu.Cfg
