@@ -145,9 +145,20 @@ func delPersonCloudFiles(familyId int64, paths ...string) {
 	logger.Verboseln("delete file task id: " + taskId)
 
 	// check task
-	time.Sleep(time.Duration(200) * time.Millisecond)
-	taskRes, err := activeUser.PanClient().CheckBatchTask(cloudpan.BatchTaskTypeDelete, taskId)
-	if err != nil || taskRes.TaskStatus != cloudpan.BatchTaskStatusOk {
+	checkTime := 5
+	var taskRes *cloudpan.CheckTaskResult
+	for checkTime >= 0 {
+		checkTime--
+		time.Sleep(time.Duration(1000) * time.Millisecond)
+		taskRes, err = activeUser.PanClient().CheckBatchTask(cloudpan.BatchTaskTypeDelete, taskId)
+		if err == nil {
+			if taskRes.TaskStatus == cloudpan.BatchTaskStatusOk {
+				// success
+				break
+			}
+		}
+	}
+	if taskRes == nil || taskRes.TaskStatus != cloudpan.BatchTaskStatusOk {
 		fmt.Println("无法删除文件，请稍后重试")
 		return
 	}
