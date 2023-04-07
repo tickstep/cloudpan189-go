@@ -1,23 +1,4 @@
-# 关于
-天翼云盘CLI，基于GO语言实现。仿 Linux shell 文件处理命令的天翼云盘命令行客户端。
-
-# 注意事项
-*本项目还处于开发阶段，未经过充分的测试，如有bug欢迎提交issue.*   
-
-# 版本标签说明
-1. arm / armv5 / armv7 : 适用32位ARM系统
-2. arm64 : 适用64位ARM系统
-3. 386 / x86 : 适用32系统，包括Intel和AMD的CPU系统
-4. amd64 / x64 : 适用64位系统，包括Intel和AMD的CPU系统
-5. mips : 适用MIPS指令集的CPU，例如国产龙芯CPU
-6. macOS amd64适用Intel CPU的机器，macOS arm64目前主要是适用苹果M1芯片的机器
-7. iOS arm64适用iPhone手机，并且必须是越狱的手机才能正常运行
-
 # 目录
-- [特色](#特色)
-- [下载/运行 说明](#下载运行说明)
-  * [Windows](#windows)
-  * [Linux / macOS](#linux--macos)
 - [命令列表及说明](#命令列表及说明)
   * [注意](#注意)
   * [检测程序更新](#检测程序更新)
@@ -53,47 +34,6 @@
   * [显示和修改程序配置项](#显示和修改程序配置项)
 - [常见问题Q&A](#常见问题Q&A)  
   * [1. 如何开启Debug调试日志](#1-如何开启Debug调试日志)
-- [交流反馈](#交流反馈)
-- [鸣谢](#鸣谢)
-
-
-# 特色
-1. 多平台支持, 支持 Windows, macOS, linux, android, iOS等
-2. 天翼云盘多用户支持
-3. 支持个人云，家庭云无缝切换
-4. 支持导入/导出功能，快速备份（导出）和恢复（导入）网盘文件。利用该功能可以进行跨网盘迁移文件
-5. [下载](#下载文件目录)网盘内文件, 支持多个文件或目录下载, 支持断点续传和单文件并行下载
-6. [上传](#上传文件目录)本地文件, 支持多个文件或目录上传
-
-
-# 下载/运行说明
-
-可以直接在[发布页](https://github.com/tickstep/cloudpan189-go/releases)下载使用.
-
-也可以使用这个天翼云盘分享链接进行下载：[天翼云盘下载链接](https://cloud.189.cn/t/RzUNre7nq2Uf)（访问码：io7x）
-
-如果程序运行时输出乱码, 请检查下终端的编码方式是否为 `UTF-8`.
-
-使用本程序之前, 非常建议先学习一些 linux 基础命令知识.
-
-如果没有带任何参数运行程序, 程序将会进入仿Linux shell系统用户界面的cli交互模式, 可直接运行相关命令.
-
-cli交互模式下, 光标所在行的前缀应为 `cloudpan189-go >`, 如果登录了帐号则格式为 `cloudpan189-go:<工作目录> <用户ID>$ `
-
-程序会提供相关命令的使用说明.
-
-## Windows
-
-程序应在 命令提示符 (Command Prompt) 或 PowerShell 中运行.
-
-也可直接双击程序运行, 具体使用方法请参见 [命令列表及说明](#命令列表及说明) 和 [初级使用教程](#初级使用教程).
-
-## Linux / macOS
-
-程序应在 终端 (Terminal) 运行.
-
-具体使用方法请参见 [命令列表及说明](#命令列表及说明) .
-
 
 # 命令列表及说明
 
@@ -591,13 +531,3 @@ Windows
 打开cloudpan189-go命令行程序，任何云盘命令都有类似如下日志输出
 ![](../assets/images/debug-log-screenshot.png)
 
-
-# 交流反馈
-
-提交issue: [issues页面](https://github.com/tickstep/cloudpan189-go/issues)   
-联系邮箱: tickstep@outlook.com
-
-# 鸣谢
-本项目大量借鉴了以下相关项目的功能&成果   
-> [iikira/BaiduPCS-Go](https://github.com/iikira/BaiduPCS-Go)   
-> [Aruelius/cloud189](https://github.com/Aruelius/cloud189)   
