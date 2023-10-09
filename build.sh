@@ -137,3 +137,6 @@ Build $name-$version"-freebsd-amd64" freebsd amd64
 # Build $name-$version"-nacl-amd64p32" nacl amd64p32
 # Build $name-$version"-nacl-arm" nacl arm
 # Build $name-$version"-dragonflybsd-amd64" dragonfly amd64
+
+# 龙芯 LoongArch
+Build $name-$version"-linux-loong64" linux loong64

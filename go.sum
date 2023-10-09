@@ -70,8 +70,8 @@ github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
 github.com/stretchr/testify v1.6.1 h1:hDPOHmpOpP40lSULcqw7IrRb/u7w6RpDC9399XyoNd0=
 github.com/stretchr/testify v1.6.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
-github.com/tickstep/bolt v1.3.3 h1:3abb88T5JJocnBlYTJE3EqKvwWV6+D/JZD2Fsdt1QHI=
-github.com/tickstep/bolt v1.3.3/go.mod h1:Y24RwCywbOsKAyHiVcJ4K2QQfED+q67x7PEOH9OG7Q4=
+github.com/tickstep/bolt v1.3.4 h1:UN1txRsauOfR8a5mUWm5So0ng233PsIMVR5/+3WowCE=
+github.com/tickstep/bolt v1.3.4/go.mod h1:Y24RwCywbOsKAyHiVcJ4K2QQfED+q67x7PEOH9OG7Q4=
 github.com/tickstep/cloudpan189-api v0.1.0 h1:kgg2y8Hcb9s2sNkVjgloiCTTXW7gS+B/y6GSwNkA1dI=
 github.com/tickstep/cloudpan189-api v0.1.0/go.mod h1:qhNVXxF1UGOApXy9uG+UuKHReFI1GpwHn0pzL4tqSd8=
 github.com/tickstep/library-go v0.0.5/go.mod h1:egoK/RvOJ3Qs2tHpkq374CWjhNjI91JSCCG1GrhDYSw=
