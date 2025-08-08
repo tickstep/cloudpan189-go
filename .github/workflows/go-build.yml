@@ -1,4 +1,4 @@
-name: CI
+name: go-build
 
 on: [push, pull_request]
 
