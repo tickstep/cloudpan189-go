@@ -75,8 +75,8 @@ github.com/tickstep/bolt v1.3.4/go.mod h1:Y24RwCywbOsKAyHiVcJ4K2QQfED+q67x7PEOH9
 github.com/tickstep/cloudpan189-api v0.1.0 h1:kgg2y8Hcb9s2sNkVjgloiCTTXW7gS+B/y6GSwNkA1dI=
 github.com/tickstep/cloudpan189-api v0.1.0/go.mod h1:qhNVXxF1UGOApXy9uG+UuKHReFI1GpwHn0pzL4tqSd8=
 github.com/tickstep/library-go v0.0.5/go.mod h1:egoK/RvOJ3Qs2tHpkq374CWjhNjI91JSCCG1GrhDYSw=
-github.com/tickstep/library-go v0.1.1 h1:xPAyddCJkZy5S3qUxCg0hoEG9PR8/rdIQiLMrt2OtWI=
-github.com/tickstep/library-go v0.1.1/go.mod h1:uAHeNOIpoywCzlaeLrWmmRSupn03m9kJVZKOEmuarmA=
+github.com/tickstep/library-go v0.1.3 h1:OUj6nkimTsqhHXh5s+PbmHq5hR0m739Y1tu9QpfA2ng=
+github.com/tickstep/library-go v0.1.3/go.mod h1:uAHeNOIpoywCzlaeLrWmmRSupn03m9kJVZKOEmuarmA=
 github.com/urfave/cli v1.21.1-0.20190817182405-23c83030263f h1:xKDKjIsL76VUyHcA0G4Qe1cIAUB/nrq6Pt8D411bd1g=
 github.com/urfave/cli v1.21.1-0.20190817182405-23c83030263f/go.mod h1:qXyCeJubPqsgeiLd3kvHOGHHSrQcNdjZ2ScXIcVZK/I=
 golang.org/x/crypto v0.0.0-20170930174604-9419663f5a44/go.mod h1:6SG95UA2DQfeDnfUPMdvaQW0Q7yPrPDi9nlGo2tz2b4=
