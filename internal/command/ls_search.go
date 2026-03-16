@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+//	http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,7 +14,11 @@
 package command
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
+	"strconv"
+
 	"github.com/olekukonko/tablewriter"
 	"github.com/tickstep/cloudpan189-api/cloudpan"
 	"github.com/tickstep/cloudpan189-go/cmder"
@@ -23,8 +27,6 @@ import (
 	"github.com/tickstep/library-go/converter"
 	"github.com/tickstep/library-go/text"
 	"github.com/urfave/cli"
-	"os"
-	"strconv"
 )
 
 type (
@@ -67,6 +69,9 @@ func CmdLs() cli.Command {
 
 	按文件大小降序排序
 	cloudpan189-go ls -size -desc 我的资源
+
+	json 格式输出
+	cloudpan189-go ls -json 我的资源
 `,
 		Category: "天翼云盘",
 		Before:   cmder.ReloadConfigFunc,
@@ -99,10 +104,14 @@ func CmdLs() cli.Command {
 			default:
 				orderBy = cloudpan.OrderByTime
 			}
+			var json_output bool = false
+			if c.IsSet("json") {
+				json_output = true
+			}
 
 			RunLs(parseFamilyId(c), c.Args().Get(0), &LsOptions{
 				Total: c.Bool("l") || c.Parent().Args().Get(0) == "ll",
-			}, orderBy, orderSort)
+			}, orderBy, orderSort, json_output)
 
 			return nil
 		},
@@ -136,15 +145,19 @@ func CmdLs() cli.Command {
 				Usage: "家庭云ID",
 				Value: "",
 			},
+			cli.BoolFlag{
+				Name:  "json",
+				Usage: "JSON 格式输出",
+			},
 		},
 	}
 }
 
-func RunLs(familyId int64, targetPath string, lsOptions *LsOptions, orderBy cloudpan.OrderBy, orderSort cloudpan.OrderSort)  {
+func RunLs(familyId int64, targetPath string, lsOptions *LsOptions, orderBy cloudpan.OrderBy, orderSort cloudpan.OrderSort, isJson bool) {
 	activeUser := config.Config.ActiveUser()
 	targetPath = activeUser.PathJoin(familyId, targetPath)
-	if targetPath[len(targetPath) - 1] == '/' {
-		targetPath = text.Substr(targetPath, 0, len(targetPath) - 1)
+	if targetPath[len(targetPath)-1] == '/' {
+		targetPath = text.Substr(targetPath, 0, len(targetPath)-1)
 	}
 
 	targetPathInfo, err := activeUser.PanClient().AppFileInfoByPath(familyId, targetPath)
@@ -183,9 +196,17 @@ func RunLs(familyId int64, targetPath string, lsOptions *LsOptions, orderBy clou
 	} else {
 		fileList = append(fileList, targetPathInfo)
 	}
-	renderTable(opLs, lsOptions.Total, targetPath, fileList)
+	if isJson {
+		data, err := json.Marshal(fileList)
+		if err != nil {
+			fmt.Print("{\"error\":\"", err.Error(), "\"}")
+		} else {
+			fmt.Print(string(data))
+		}
+	} else {
+		renderTable(opLs, lsOptions.Total, targetPath, fileList)
+	}
 }
-
 
 func renderTable(op int, isTotal bool, path string, files cloudpan.AppFileList) {
 	tb := cmdtable.NewTable(os.Stdout)
